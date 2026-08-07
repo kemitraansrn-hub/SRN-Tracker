@@ -76,9 +76,13 @@
                     Data Mitra
                 </a>
 
-                @php $segmenList = \App\Models\TargetBulanan::currentMonthSegments(); @endphp
-                @if ($segmenList->isNotEmpty())
-                    <a class="nav-item nav-item-toggle" tabindex="0" onclick="toggleSegmentasi()">
+                @php
+                    $segmenList = \App\Models\TargetBulanan::currentMonthSegments();
+                    if ($segmenList->isEmpty()) {
+                        $segmenList = collect(['PARETO', 'RTP (ROAD TO PARETO)', 'REGULER', 'SPECIAL REGULER']);
+                    }
+                @endphp
+                <a class="nav-item nav-item-toggle" tabindex="0" onclick="toggleSegmentasi()">
                         <span>Segmentasi Mitra</span>
                         <svg class="chevron" id="segChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="{{ request()->routeIs('segmentasi.*') ? 'transform:rotate(90deg);' : '' }}"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </a>
@@ -87,7 +91,6 @@
                             <a href="{{ route('segmentasi.show', $s) }}" class="nav-subitem {{ request()->routeIs('segmentasi.*') && request()->route('segmen') === $s ? 'active' : '' }}">{{ $s }}</a>
                         @endforeach
                     </div>
-                @endif
 
                 <a href="{{ route('followup.index') }}" class="nav-item {{ request()->routeIs('followup.*') ? 'active' : '' }}">
                     Follow-up Log
