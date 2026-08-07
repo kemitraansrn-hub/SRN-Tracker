@@ -41,6 +41,13 @@
                         @endfor
                     </select>
                 </div>
+                <div class="field" style="margin-bottom:0; justify-content:flex-end;">
+                    <label>&nbsp;</label>
+                    <a href="{{ route('import.template', 'order_harian') }}" id="templateLink" class="btn" style="width:auto; display:inline-flex; align-items:center; gap:6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v13.5"/><path d="M7 12l5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 20h16" stroke-linecap="round"/></svg>
+                        Download Template
+                    </a>
+                </div>
             </div>
 
             <label class="dropzone" style="display:block; margin-top:16px;">
@@ -54,10 +61,16 @@
     </section>
 
     <script>
+        const templateUrls = {
+            order_harian: "{{ route('import.template', 'order_harian') }}",
+            target_bulanan: "{{ route('import.template', 'target_bulanan') }}",
+        };
         function toggleTargetFields() {
-            const isTarget = document.getElementById('jenisSelect').value === 'target_bulanan';
+            const jenis = document.getElementById('jenisSelect').value;
+            const isTarget = jenis === 'target_bulanan';
             document.getElementById('bulanField').style.display = isTarget ? '' : 'none';
             document.getElementById('tahunField').style.display = isTarget ? '' : 'none';
+            document.getElementById('templateLink').href = templateUrls[jenis];
         }
         toggleTargetFields();
     </script>

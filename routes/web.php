@@ -20,6 +20,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin')->prefix('import')->name('import.')->group(function () {
         Route::get('/', [ImportController::class, 'index'])->name('index');
         Route::post('/', [ImportController::class, 'store'])->name('store');
+        Route::get('/template/{jenis}', [ImportController::class, 'downloadTemplate'])->name('template');
     });
 
     Route::prefix('mitra')->name('mitra.')->group(function () {

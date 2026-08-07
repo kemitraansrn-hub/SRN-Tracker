@@ -4,19 +4,40 @@ namespace App\Http\Controllers;
 
 use App\Models\ImportBatch;
 use App\Models\Order;
+use App\Services\ImportTemplateService;
 use App\Services\OrderImportService;
 use App\Services\TargetImportService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ImportController extends Controller
 {
     public function __construct(
         private readonly OrderImportService $orderImporter,
         private readonly TargetImportService $targetImporter,
+        private readonly ImportTemplateService $templates,
     ) {}
+
+    public function downloadTemplate(string $jenis): StreamedResponse
+    {
+        abort_unless(in_array($jenis, ['order_harian', 'target_bulanan'], true), 404);
+
+        $spreadsheet = $jenis === 'target_bulanan'
+            ? $this->templates->targetBulanan()
+            : $this->templates->orderHarian();
+
+        $filename = $jenis === 'target_bulanan' ? 'template_target_bulanan.xlsx' : 'template_order_harian.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
 
     public function index(): View
     {
