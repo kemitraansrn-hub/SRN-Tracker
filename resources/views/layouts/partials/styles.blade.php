@@ -101,4 +101,6 @@
   .modal-body b { color: var(--ink); font-weight: 600; }
   .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
   .btn-danger { background: var(--critical); border-color: var(--critical); color: var(--surface); font-weight: 600; }
+  .growth-pos { color: var(--good); }
+  .growth-neg { color: var(--critical); }
 </style>

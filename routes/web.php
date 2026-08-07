@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FollowupLogController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\MitraController;
+use App\Http\Controllers\TrendController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -16,6 +17,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/trend', [TrendController::class, 'index'])->name('trend.index');
 
     Route::middleware('role:admin')->prefix('import')->name('import.')->group(function () {
         Route::get('/', [ImportController::class, 'index'])->name('index');
