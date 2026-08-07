@@ -63,6 +63,9 @@
                 <a href="{{ route('mitra.index') }}" class="nav-item {{ request()->routeIs('mitra.*') ? 'active' : '' }}">
                     Data Mitra
                 </a>
+                <a href="{{ route('followup.index') }}" class="nav-item {{ request()->routeIs('followup.*') ? 'active' : '' }}">
+                    Follow-up Log
+                </a>
                 @if (auth()->user()->isAdmin())
                     <a href="{{ route('import.index') }}" class="nav-item {{ request()->routeIs('import.*') ? 'active' : '' }}">
                         Import Data

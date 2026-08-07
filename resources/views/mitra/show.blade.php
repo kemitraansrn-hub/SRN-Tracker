@@ -100,7 +100,74 @@
         </div>
     </section>
 
-    <div class="card" style="margin-top:16px; color:var(--ink-muted); font-size:12.5px;">
-        Target Mingguan &amp; Follow-up Log belum tersedia untuk mitra ini &mdash; menyusul setelah fitur Target Bulanan &amp; Follow-up dibangun.
-    </div>
+    @if ($targetBulanIni)
+        <section class="card" style="margin-top:16px;">
+            <div class="card-title" style="margin-bottom:14px;">Target {{ $periodeLabel }} &mdash; Segmen {{ $targetBulanIni->segmen }}</div>
+            <div class="info-grid">
+                <div>
+                    <div class="info-label">Komit</div>
+                    <div class="info-value tnum">{{ $rp($targetBulanIni->komit ?? 0) }}</div>
+                </div>
+                <div>
+                    <div class="info-label">Target</div>
+                    <div class="info-value tnum">{{ $rp($targetBulanIni->target) }}</div>
+                </div>
+                <div>
+                    <div class="info-label">Stretch</div>
+                    <div class="info-value tnum">{{ $rp($targetBulanIni->stretch ?? 0) }}</div>
+                </div>
+                <div>
+                    <div class="info-label">Pencapaian</div>
+                    <div class="info-value tnum">{{ $targetBulanIni->target > 0 ? round($omsetBulanIni / $targetBulanIni->target * 100, 1) : 0 }}%</div>
+                </div>
+            </div>
+        </section>
+    @else
+        <div class="card" style="margin-top:16px; color:var(--ink-muted); font-size:12.5px;">
+            Belum ada Target Bulanan untuk {{ $periodeLabel }} pada mitra ini.
+        </div>
+    @endif
+
+    <section class="card table-card" style="padding:0; margin-top:16px;">
+        <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px;">
+            <div>
+                <div class="card-title">Follow-up Log</div>
+                <div class="card-hint">{{ $followupLogs->count() }} catatan terakhir</div>
+            </div>
+            <a href="{{ route('followup.create', ['mitra_id' => $mitra->id]) }}" class="btn" style="width:auto;">+ Catat Follow-up</a>
+        </div>
+        <div class="table-scroll">
+            <table>
+                <thead><tr><th>Tanggal</th><th>KAE</th><th>Status FU</th><th>Status Belanja</th><th>Kendala</th><th>Catatan</th></tr></thead>
+                <tbody>
+                    @forelse ($followupLogs as $log)
+                        <tr>
+                            <td class="tnum">{{ $log->tanggal_fu->format('d/m/Y') }} <span style="color:var(--ink-faint);">({{ $log->minggu }})</span></td>
+                            <td>{{ $log->kae->name ?? '—' }}</td>
+                            <td>
+                                @if ($log->status_followup === 'Terhubung')
+                                    <span class="chip chip-good">Terhubung</span>
+                                @else
+                                    <span class="chip chip-critical">Tidak ada respon</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if ($log->status_belanja === 'Belanja Penuh')
+                                    <span class="chip chip-good">Belanja Penuh</span>
+                                @elseif ($log->status_belanja === 'Belanja Sebagian')
+                                    <span class="chip chip-warn">Sebagian</span>
+                                @else
+                                    <span class="chip chip-critical">Belum Belanja</span>
+                                @endif
+                            </td>
+                            <td style="font-size:12px; color:var(--ink-muted);">{{ $log->alasan_kendala ?: '—' }}</td>
+                            <td style="font-size:12px; color:var(--ink-muted); max-width:220px;">{{ \Illuminate\Support\Str::limit($log->catatan, 60) ?: '—' }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="6" style="color:var(--ink-muted);">Belum ada follow-up untuk mitra ini.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </section>
 @endsection

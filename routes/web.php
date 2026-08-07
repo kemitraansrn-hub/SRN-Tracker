@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FollowupLogController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\MitraController;
 use Illuminate\Support\Facades\Route;
@@ -32,5 +33,11 @@ Route::middleware('auth')->group(function () {
         });
 
         Route::get('/{mitra}', [MitraController::class, 'show'])->name('show');
+    });
+
+    Route::prefix('followup')->name('followup.')->group(function () {
+        Route::get('/', [FollowupLogController::class, 'index'])->name('index');
+        Route::get('/create', [FollowupLogController::class, 'create'])->name('create');
+        Route::post('/', [FollowupLogController::class, 'store'])->name('store');
     });
 });
