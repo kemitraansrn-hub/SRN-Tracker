@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ImportBatch;
 use App\Models\Order;
 use App\Services\OrderImportService;
+use App\Services\TargetImportService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -12,7 +13,10 @@ use Illuminate\View\View;
 
 class ImportController extends Controller
 {
-    public function __construct(private readonly OrderImportService $importer) {}
+    public function __construct(
+        private readonly OrderImportService $orderImporter,
+        private readonly TargetImportService $targetImporter,
+    ) {}
 
     public function index(): View
     {
@@ -24,17 +28,25 @@ class ImportController extends Controller
 
     public function store(Request $request): View|RedirectResponse
     {
-        // Step 2: user already saw the "data already exists" warning and confirmed.
         if ($request->filled('confirm_token')) {
             return $this->handleConfirmedReplace($request);
         }
 
+        $jenis = $request->input('jenis', 'order_harian');
+
+        return $jenis === 'target_bulanan'
+            ? $this->storeTargetBulanan($request)
+            : $this->storeOrderHarian($request);
+    }
+
+    private function storeOrderHarian(Request $request): View|RedirectResponse
+    {
         $request->validate([
             'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:10240'],
         ], [], ['file' => 'File']);
 
         $file = $request->file('file');
-        $parsed = $this->importer->parse($file);
+        $parsed = $this->orderImporter->parse($file);
 
         if (! $parsed['ok']) {
             return back()->withErrors(['file' => implode(' ', $parsed['errors'])]);
@@ -66,10 +78,37 @@ class ImportController extends Controller
             ]);
         }
 
-        $batch = $this->importer->commit($parsed, $request->user(), $file->getClientOriginalName(), replace: false);
+        $batch = $this->orderImporter->commit($parsed, $request->user(), $file->getClientOriginalName(), replace: false);
 
         return redirect()->route('import.index')
             ->with('status', 'Import berhasil: '.$batch->jumlah_baris.' baris untuk tanggal '.$batch->tanggal_data->format('d/m/Y').'.');
+    }
+
+    private function storeTargetBulanan(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:10240'],
+            'bulan' => ['required', 'integer', 'min:1', 'max:12'],
+            'tahun' => ['required', 'integer', 'min:2020', 'max:2100'],
+        ], [], ['file' => 'File']);
+
+        $file = $request->file('file');
+        $result = $this->targetImporter->import(
+            $file,
+            (int) $request->input('bulan'),
+            (int) $request->input('tahun'),
+            $request->user(),
+            $file->getClientOriginalName(),
+        );
+
+        if (! $result['ok']) {
+            return back()->withErrors(['file' => implode(' ', $result['errors'])]);
+        }
+
+        $periode = \Carbon\Carbon::create((int) $request->input('tahun'), (int) $request->input('bulan'))->translatedFormat('F Y');
+
+        return redirect()->route('import.index')
+            ->with('status', 'Import target bulanan berhasil: '.$result['jumlah_baris'].' mitra untuk periode '.$periode.'.');
     }
 
     private function handleConfirmedReplace(Request $request): RedirectResponse
@@ -84,7 +123,7 @@ class ImportController extends Controller
                 ->withErrors(['file' => 'Sesi konfirmasi import sudah kedaluwarsa. Silakan upload ulang file-nya.']);
         }
 
-        $batch = $this->importer->commit($cached['parsed'], $request->user(), $cached['filename'], replace: true);
+        $batch = $this->orderImporter->commit($cached['parsed'], $request->user(), $cached['filename'], replace: true);
         Cache::forget($cacheKey);
 
         return redirect()->route('import.index')

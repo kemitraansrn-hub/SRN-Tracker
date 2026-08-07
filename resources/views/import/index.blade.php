@@ -17,11 +17,28 @@
     <section class="card" style="margin-bottom:20px;">
         <form method="POST" action="{{ route('import.store') }}" enctype="multipart/form-data">
             @csrf
-            <div class="field-row">
+            <div class="field-row" id="jenisFields">
                 <div class="field" style="margin-bottom:0;">
                     <label>Jenis Data</label>
-                    <select class="select-pill" disabled>
-                        <option>Order Harian</option>
+                    <select class="select-pill" name="jenis" id="jenisSelect" onchange="toggleTargetFields()">
+                        <option value="order_harian">Order Harian</option>
+                        <option value="target_bulanan">Target Bulanan</option>
+                    </select>
+                </div>
+                <div class="field" style="margin-bottom:0; display:none;" id="bulanField">
+                    <label>Bulan</label>
+                    <select class="select-pill" name="bulan">
+                        @foreach (['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'] as $i => $namaBulan)
+                            <option value="{{ $i + 1 }}" {{ (old('bulan') ?: now()->month) == $i + 1 ? 'selected' : '' }}>{{ $namaBulan }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="field" style="margin-bottom:0; display:none;" id="tahunField">
+                    <label>Tahun</label>
+                    <select class="select-pill" name="tahun">
+                        @for ($y = now()->year - 1; $y <= now()->year + 1; $y++)
+                            <option value="{{ $y }}" {{ (old('tahun') ?: now()->year) == $y ? 'selected' : '' }}>{{ $y }}</option>
+                        @endfor
                     </select>
                 </div>
             </div>
@@ -35,6 +52,15 @@
             <button type="submit" class="btn btn-primary" style="margin-top:16px; width:auto;">Upload &amp; Proses</button>
         </form>
     </section>
+
+    <script>
+        function toggleTargetFields() {
+            const isTarget = document.getElementById('jenisSelect').value === 'target_bulanan';
+            document.getElementById('bulanField').style.display = isTarget ? '' : 'none';
+            document.getElementById('tahunField').style.display = isTarget ? '' : 'none';
+        }
+        toggleTargetFields();
+    </script>
 
     <section class="card table-card">
         <div class="card-head">
@@ -52,8 +78,16 @@
                 <tbody>
                     @forelse ($history as $batch)
                         <tr>
-                            <td class="tnum">{{ optional($batch->tanggal_data)->format('d/m/Y') ?? '—' }}</td>
-                            <td>{{ $batch->jenis === 'order_harian' ? 'Order Harian' : $batch->jenis }}</td>
+                            <td class="tnum">
+                                @if ($batch->tanggal_data)
+                                    {{ $batch->tanggal_data->format('d/m/Y') }}
+                                @elseif ($batch->bulan && $batch->tahun)
+                                    {{ \Carbon\Carbon::create($batch->tahun, $batch->bulan)->translatedFormat('F Y') }}
+                                @else
+                                    —
+                                @endif
+                            </td>
+                            <td>{{ $batch->jenis === 'order_harian' ? 'Order Harian' : 'Target Bulanan' }}</td>
                             <td>{{ $batch->nama_file }}</td>
                             <td>{{ $batch->uploader->name ?? '—' }}</td>
                             <td class="tnum">{{ $batch->created_at->format('d/m/Y H:i') }}</td>

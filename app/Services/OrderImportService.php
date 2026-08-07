@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Produk;
 use App\Models\User;
+use App\Services\Concerns\ParsesSpreadsheetHeaders;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +24,8 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
  */
 class OrderImportService
 {
+    use ParsesSpreadsheetHeaders;
+
     private const HEADER_ALIASES_TRANSAKSI = [
         'tanggal' => ['TANGGAL'],
         'id_transaksi' => ['ID TRANSAKSI (CORE)', 'ID TRANSAKSI'],
@@ -257,25 +260,6 @@ class OrderImportService
         return mb_strlen(trim($value)) > 4;
     }
 
-    private function readHeaderMap(Worksheet $sheet): array
-    {
-        $map = [];
-        $highestColumn = $sheet->getHighestDataColumn(1);
-        $columnIndex = 1;
-
-        foreach ($sheet->getRowIterator(1, 1) as $row) {
-            foreach ($row->getCellIterator() as $cell) {
-                $value = trim((string) $cell->getValue());
-                if ($value !== '') {
-                    $map[strtoupper($value)] = $columnIndex;
-                }
-                $columnIndex++;
-            }
-        }
-
-        return $map;
-    }
-
     private function matchesDetail(array $headerMap): bool
     {
         return isset($headerMap['BRAND'], $headerMap['PRODUK'], $headerMap['ID SALESMAN']);
@@ -285,22 +269,6 @@ class OrderImportService
     {
         return isset($headerMap['RESELLER'], $headerMap['TOTAL'], $headerMap['STATUS PEMBAYARAN'])
             && ! isset($headerMap['BRAND'], $headerMap['PRODUK']);
-    }
-
-    private function resolveAliases(array $headerMap, array $aliasGroups): array
-    {
-        $resolved = [];
-
-        foreach ($aliasGroups as $key => $aliases) {
-            foreach ($aliases as $alias) {
-                if (isset($headerMap[$alias])) {
-                    $resolved[$key] = $headerMap[$alias];
-                    break;
-                }
-            }
-        }
-
-        return $resolved;
     }
 
     private function extractRows(Worksheet $sheet, array $columnMap): array
