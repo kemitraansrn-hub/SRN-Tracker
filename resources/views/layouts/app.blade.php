@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ $title ?? 'SRN' }}</title>
+    @include('layouts.partials.styles')
+    <style>
+        .shell { display: grid; grid-template-columns: 244px 1fr; min-height: 100vh; }
+        .sidebar {
+            background: var(--surface-alt); border-right: 1px solid var(--line);
+            padding: 22px 16px; display: flex; flex-direction: column; gap: 26px;
+        }
+        .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; }
+        .brand-mark {
+            width: 30px; height: 30px; border-radius: 8px; background: var(--accent); color: var(--surface);
+            display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;
+        }
+        .brand-name { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+        .brand-sub { font-size: 11px; color: var(--ink-muted); margin-top: -2px; }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px;
+            color: var(--ink-muted); text-decoration: none; font-size: 13.5px;
+        }
+        .nav-item:hover { background: var(--accent-soft); color: var(--ink); }
+        .nav-item.active { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+        .sidebar-foot {
+            margin-top: auto; border-top: 1px solid var(--line); padding-top: 14px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .avatar {
+            width: 32px; height: 32px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-ink);
+            display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 700;
+        }
+        .who-name { font-size: 13px; font-weight: 600; }
+        .who-role { font-size: 11px; color: var(--ink-muted); }
+        .logout-btn {
+            background: none; border: none; color: var(--ink-faint); cursor: pointer;
+            font-size: 11.5px; text-decoration: underline; padding: 0; margin-top: 2px;
+        }
+        .main { padding: 26px 34px 60px; max-width: 1240px; }
+        @media (max-width: 980px) {
+            .shell { grid-template-columns: 1fr; }
+            .sidebar { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-mark">S</div>
+                <div>
+                    <div class="brand-name">SRN</div>
+                    <div class="brand-sub">Monitoring Mitra</div>
+                </div>
+            </div>
+
+            <nav style="display:flex; flex-direction:column; gap:2px;">
+                <a href="{{ route('dashboard') }}" class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                    Dashboard
+                </a>
+            </nav>
+
+            <div class="sidebar-foot">
+                <div class="avatar">{{ collect(explode(' ', auth()->user()->name))->map(fn($w) => mb_substr($w, 0, 1))->take(2)->implode('') }}</div>
+                <div>
+                    <div class="who-name">{{ auth()->user()->name }}</div>
+                    <div class="who-role">{{ auth()->user()->role === 'admin' ? 'Admin' : 'KAE' }}</div>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="logout-btn">Keluar</button>
+                    </form>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main">
+            @yield('content')
+        </main>
+    </div>
+</body>
+</html>
