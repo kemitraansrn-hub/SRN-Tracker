@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ImportController;
+use App\Http\Controllers\MitraController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -18,5 +19,18 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin')->prefix('import')->name('import.')->group(function () {
         Route::get('/', [ImportController::class, 'index'])->name('index');
         Route::post('/', [ImportController::class, 'store'])->name('store');
+    });
+
+    Route::prefix('mitra')->name('mitra.')->group(function () {
+        Route::get('/', [MitraController::class, 'index'])->name('index');
+
+        Route::middleware('role:admin')->group(function () {
+            Route::get('/create', [MitraController::class, 'create'])->name('create');
+            Route::post('/', [MitraController::class, 'store'])->name('store');
+            Route::get('/{mitra}/edit', [MitraController::class, 'edit'])->name('edit');
+            Route::put('/{mitra}', [MitraController::class, 'update'])->name('update');
+        });
+
+        Route::get('/{mitra}', [MitraController::class, 'show'])->name('show');
     });
 });

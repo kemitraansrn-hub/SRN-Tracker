@@ -46,11 +46,11 @@
   .btn-primary:hover { background: var(--accent-ink); border-color: var(--accent-ink); }
   .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
   .field label { font-size: 12px; font-weight: 600; color: var(--ink-muted); }
-  .field input {
+  .field input, .field select {
     font-family: inherit; font-size: 14px; padding: 10px 12px;
     border: 1px solid var(--line); border-radius: 8px; background: var(--surface-alt); color: var(--ink);
   }
-  .field input:focus { outline: 2px solid var(--accent); outline-offset: 1px; background: var(--surface); }
+  .field input:focus, .field select:focus { outline: 2px solid var(--accent); outline-offset: 1px; background: var(--surface); }
   .field-error { font-size: 12px; color: var(--critical); margin-top: 4px; }
   .alert-error {
     background: var(--critical-soft); color: var(--critical);

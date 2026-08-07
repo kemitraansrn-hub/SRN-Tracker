@@ -60,6 +60,9 @@
                 <a href="{{ route('dashboard') }}" class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                     Dashboard
                 </a>
+                <a href="{{ route('mitra.index') }}" class="nav-item {{ request()->routeIs('mitra.*') ? 'active' : '' }}">
+                    Data Mitra
+                </a>
                 @if (auth()->user()->isAdmin())
                     <a href="{{ route('import.index') }}" class="nav-item {{ request()->routeIs('import.*') ? 'active' : '' }}">
                         Import Data
