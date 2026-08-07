@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\TrendSetting;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -49,7 +51,27 @@ class TrendController extends Controller
             'laluSelesai' => $laluSelesai,
             'result' => $result,
             'error' => $error,
+            'activeSetting' => TrendSetting::active(),
         ]);
+    }
+
+    public function saveDashboardCard(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'label' => ['nullable', 'string', 'max:60'],
+            'ini_mulai' => ['required', 'date'],
+            'ini_selesai' => ['required', 'date', 'after_or_equal:ini_mulai'],
+            'lalu_mulai' => ['required', 'date'],
+            'lalu_selesai' => ['required', 'date', 'after_or_equal:lalu_mulai'],
+        ]);
+
+        TrendSetting::create([
+            ...$data,
+            'updated_by' => $request->user()->id,
+        ]);
+
+        return redirect()->route('trend.index', $request->only(['ini_mulai', 'ini_selesai', 'lalu_mulai', 'lalu_selesai']))
+            ->with('status', 'Card perbandingan berhasil ditampilkan di Dashboard.');
     }
 
     private function omsetPeriode($user, string $mulai, string $selesai): float

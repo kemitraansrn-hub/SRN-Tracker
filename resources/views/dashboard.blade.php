@@ -28,7 +28,8 @@
             @endif
         </div>
     @else
-        <section style="display:grid; grid-template-columns:repeat({{ $adaTargetBulanIni ? 4 : 3 }}, 1fr); gap:16px; margin-bottom:20px;">
+        @php $kpiCount = 3 + ($adaTargetBulanIni ? 1 : 0) + ($trendCard ? 1 : 0); @endphp
+        <section style="display:grid; grid-template-columns:repeat({{ $kpiCount }}, 1fr); gap:16px; margin-bottom:20px;">
             <div class="card">
                 <div class="info-label" style="margin-bottom:10px;">Omset Bulan Ini</div>
                 <div style="font-size:25px; font-weight:700;" class="tnum">{{ $rp($totalOmsetBulanIni) }}</div>
@@ -61,6 +62,27 @@
                     <div style="margin-top:10px;">
                         <span class="chip chip-critical">{{ $kritis }} kritis</span>
                         <span class="chip chip-warn" style="margin-left:6px;">{{ $warning }} warning</span>
+                    </div>
+                </div>
+            @endif
+            @if ($trendCard)
+                <div class="card">
+                    <div class="info-label" style="margin-bottom:10px;">{{ $trendCard['label'] }}</div>
+                    <div style="font-size:25px; font-weight:700;" class="tnum">{{ $rp($trendCard['omset_ini']) }}</div>
+                    @php $g = $trendCard['growth']; @endphp
+                    <div style="margin-top:10px; display:flex; align-items:center; gap:5px;">
+                        @if ($g === null)
+                            <span style="font-size:12px; color:var(--ink-faint);">Tidak ada data pembanding</span>
+                        @else
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="{{ $g >= 0 ? 'var(--good)' : 'var(--critical)' }}" stroke-width="2.5">
+                                @if ($g >= 0)
+                                    <path d="M6 15l6-6 6 6" stroke-linecap="round" stroke-linejoin="round"/>
+                                @else
+                                    <path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/>
+                                @endif
+                            </svg>
+                            <span class="tnum" style="font-weight:700; font-size:14px; color:{{ $g >= 0 ? 'var(--good)' : 'var(--critical)' }};">{{ $g >= 0 ? '+' : '' }}{{ $g }}%</span>
+                        @endif
                     </div>
                 </div>
             @endif

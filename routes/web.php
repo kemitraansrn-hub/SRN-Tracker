@@ -19,6 +19,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/trend', [TrendController::class, 'index'])->name('trend.index');
+    Route::post('/trend/dashboard-card', [TrendController::class, 'saveDashboardCard'])
+        ->middleware('role:admin')->name('trend.saveDashboardCard');
     Route::get('/segmentasi/{segmen}', [SegmentasiController::class, 'show'])->name('segmentasi.show');
 
     Route::middleware('role:admin')->prefix('import')->name('import.')->group(function () {

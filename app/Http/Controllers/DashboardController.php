@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Mitra;
 use App\Models\Order;
 use App\Models\TargetBulanan;
+use App\Models\TrendSetting;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -89,7 +90,29 @@ class DashboardController extends Controller
 
         $orderTerbaru = (clone $ordersThisMonth)->with('mitra')->latest('tanggal_order')->limit(8)->get();
 
+        $trendCard = null;
+        $activeTrend = TrendSetting::active();
+
+        if ($activeTrend) {
+            $omsetTrendIni = Order::query()
+                ->whereBetween('tanggal_order', [$activeTrend->ini_mulai->copy()->startOfDay(), $activeTrend->ini_selesai->copy()->endOfDay()])
+                ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_code', $user->kae_code))
+                ->sum('total_transaksi');
+
+            $omsetTrendLalu = Order::query()
+                ->whereBetween('tanggal_order', [$activeTrend->lalu_mulai->copy()->startOfDay(), $activeTrend->lalu_selesai->copy()->endOfDay()])
+                ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_code', $user->kae_code))
+                ->sum('total_transaksi');
+
+            $trendCard = [
+                'label' => $activeTrend->label ?: 'Perbandingan Periode',
+                'omset_ini' => $omsetTrendIni,
+                'growth' => $omsetTrendLalu > 0 ? round((($omsetTrendIni - $omsetTrendLalu) / $omsetTrendLalu) * 100, 2) : null,
+            ];
+        }
+
         return view('dashboard', [
+            'trendCard' => $trendCard,
             'totalOmsetBulanIni' => $totalOmsetBulanIni,
             'jumlahOrderBulanIni' => $jumlahOrderBulanIni,
             'mitraAktifBulanIni' => $mitraAktifBulanIni,

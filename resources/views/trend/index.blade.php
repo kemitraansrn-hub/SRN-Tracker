@@ -11,6 +11,17 @@
         Bandingkan omset antar 2 rentang tanggal bebas &mdash; kamu tentukan sendiri kedua periodenya.
     </div>
 
+    @if (session('status'))
+        <div class="alert-success">{{ session('status') }}</div>
+    @endif
+
+    @if ($activeSetting)
+        <div class="card" style="margin-bottom:20px; font-size:12.5px; color:var(--ink-muted);">
+            Card di Dashboard saat ini: <b style="color:var(--ink);">{{ $activeSetting->label ?: 'Perbandingan Periode' }}</b>
+            ({{ $fmt($activeSetting->ini_mulai) }}&ndash;{{ $fmt($activeSetting->ini_selesai) }} vs {{ $fmt($activeSetting->lalu_mulai) }}&ndash;{{ $fmt($activeSetting->lalu_selesai) }})
+        </div>
+    @endif
+
     <form method="GET" action="{{ route('trend.index') }}" class="card" style="margin-bottom:20px;">
         <div class="field-row">
             <div class="field" style="flex:1;">
@@ -72,5 +83,22 @@
                 </p>
             @endif
         </section>
+
+        @if (auth()->user()->isAdmin())
+            <form method="POST" action="{{ route('trend.saveDashboardCard') }}" class="card" style="margin-top:16px;">
+                @csrf
+                <input type="hidden" name="ini_mulai" value="{{ $iniMulai }}">
+                <input type="hidden" name="ini_selesai" value="{{ $iniSelesai }}">
+                <input type="hidden" name="lalu_mulai" value="{{ $laluMulai }}">
+                <input type="hidden" name="lalu_selesai" value="{{ $laluSelesai }}">
+                <div class="field-row" style="align-items:flex-end;">
+                    <div class="field" style="flex:1; margin-bottom:0;">
+                        <label>Label Card (opsional)</label>
+                        <input type="text" name="label" placeholder="mis. vs Minggu Lalu" maxlength="60">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:auto;">Tampilkan di Dashboard</button>
+                </div>
+            </form>
+        @endif
     @endif
 @endsection
