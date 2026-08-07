@@ -11,6 +11,13 @@ use Illuminate\Database\Eloquent\Model;
 ])]
 class ImportBatch extends Model
 {
+    protected function casts(): array
+    {
+        return [
+            'tanggal_data' => 'date',
+        ];
+    }
+
     public function uploader()
     {
         return $this->belongsTo(User::class, 'uploaded_by');

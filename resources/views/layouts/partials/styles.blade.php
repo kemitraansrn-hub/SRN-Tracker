@@ -56,4 +56,49 @@
     background: var(--critical-soft); color: var(--critical);
     border-radius: 8px; padding: 10px 14px; font-size: 12.5px; margin-bottom: 16px;
   }
+  .alert-success {
+    background: var(--good-soft); color: var(--good);
+    border-radius: 8px; padding: 10px 14px; font-size: 12.5px; margin-bottom: 16px;
+  }
+  .select-pill {
+    font-family: inherit; font-size: 12.5px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--surface); color: var(--ink); padding: 8px 12px;
+  }
+  .card-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
+  .card-title { font-size: 14.5px; font-weight: 600; }
+  .card-hint { font-size: 11.5px; color: var(--ink-muted); }
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 560px; }
+  thead th {
+    text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--ink-faint); font-weight: 600; padding: 10px 20px;
+    border-bottom: 1px solid var(--line); background: var(--surface-alt);
+  }
+  tbody td { padding: 12px 20px; border-bottom: 1px solid var(--line); font-size: 13px; }
+  tbody tr:last-child td { border-bottom: none; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 100px; font-size: 11px; font-weight: 600; }
+  .chip-good { background: var(--good-soft); color: var(--good); }
+  .chip-warn { background: var(--warn-soft); color: var(--warn); }
+  .chip-critical { background: var(--critical-soft); color: var(--critical); }
+  .dropzone {
+    border: 1.5px dashed var(--line); border-radius: var(--radius); padding: 34px 24px;
+    text-align: center; background: var(--surface-alt); cursor: pointer;
+  }
+  .dropzone:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .dropzone-title { font-size: 13.5px; font-weight: 600; margin-bottom: 4px; }
+  .dropzone-hint { font-size: 12px; color: var(--ink-muted); }
+  .field-row { display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(20, 18, 15, 0.45);
+    display: flex; align-items: center; justify-content: center; z-index: 50; padding: 20px;
+  }
+  .modal-box {
+    background: var(--surface); border-radius: 12px; border: 1px solid var(--line);
+    box-shadow: var(--shadow); max-width: 440px; width: 100%; padding: 24px;
+  }
+  .modal-title { font-size: 15.5px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.01em; }
+  .modal-body { font-size: 13px; color: var(--ink-muted); line-height: 1.6; margin-bottom: 20px; }
+  .modal-body b { color: var(--ink); font-weight: 600; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+  .btn-danger { background: var(--critical); border-color: var(--critical); color: var(--surface); font-weight: 600; }
 </style>

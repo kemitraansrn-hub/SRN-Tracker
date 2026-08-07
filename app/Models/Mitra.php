@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Model;
 ])]
 class Mitra extends Model
 {
+    protected $table = 'mitra';
+
     public function user()
     {
         return $this->belongsTo(User::class);

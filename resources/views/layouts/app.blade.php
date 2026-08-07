@@ -60,6 +60,11 @@
                 <a href="{{ route('dashboard') }}" class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                     Dashboard
                 </a>
+                @if (auth()->user()->isAdmin())
+                    <a href="{{ route('import.index') }}" class="nav-item {{ request()->routeIs('import.*') ? 'active' : '' }}">
+                        Import Data
+                    </a>
+                @endif
             </nav>
 
             <div class="sidebar-foot">
