@@ -28,10 +28,19 @@
             @endif
         </div>
     @else
-        <section style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-bottom:20px;">
+        <section style="display:grid; grid-template-columns:repeat({{ $adaTargetBulanIni ? 4 : 3 }}, 1fr); gap:16px; margin-bottom:20px;">
             <div class="card">
                 <div class="info-label" style="margin-bottom:10px;">Omset Bulan Ini</div>
                 <div style="font-size:25px; font-weight:700;" class="tnum">{{ $rp($totalOmsetBulanIni) }}</div>
+                @if ($achievementPct !== null)
+                    @php $achColor = $achievementPct >= 80 ? 'good' : ($achievementPct >= 60 ? 'warn' : 'critical'); @endphp
+                    <div style="margin-top:10px;">
+                        <span class="chip chip-{{ $achColor }}">{{ $achievementPct }}% dari target</span>
+                    </div>
+                    <div style="height:6px; border-radius:4px; background:var(--line); overflow:hidden; margin-top:10px;">
+                        <div style="height:100%; border-radius:4px; background:var(--accent); width:{{ min($achievementPct, 100) }}%;"></div>
+                    </div>
+                @endif
             </div>
             <div class="card">
                 <div class="info-label" style="margin-bottom:10px;">Jumlah Order</div>
@@ -41,6 +50,20 @@
                 <div class="info-label" style="margin-bottom:10px;">Mitra Aktif</div>
                 <div style="font-size:25px; font-weight:700;" class="tnum">{{ $mitraAktifBulanIni }} <small style="font-size:13px; color:var(--ink-muted); font-weight:500;">/ {{ $totalMitra }}</small></div>
             </div>
+            @if ($adaTargetBulanIni)
+                <div class="card">
+                    <div class="info-label" style="margin-bottom:10px;">Mitra Perlu Perhatian</div>
+                    <div style="font-size:25px; font-weight:700;" class="tnum">{{ $mitraPerluPerhatian->count() }}</div>
+                    @php
+                        $kritis = $mitraPerluPerhatian->where('pct', '<', 60)->count();
+                        $warning = $mitraPerluPerhatian->count() - $kritis;
+                    @endphp
+                    <div style="margin-top:10px;">
+                        <span class="chip chip-critical">{{ $kritis }} kritis</span>
+                        <span class="chip chip-warn" style="margin-left:6px;">{{ $warning }} warning</span>
+                    </div>
+                </div>
+            @endif
         </section>
 
         <section style="display:grid; grid-template-columns:1.4fr 1fr; gap:16px; margin-bottom:20px; align-items:start;">
@@ -87,6 +110,41 @@
                 </div>
             </div>
         </section>
+
+        @if ($adaTargetBulanIni && $mitraPerluPerhatian->isNotEmpty())
+            <section class="card table-card" style="padding:0; margin-bottom:20px;">
+                <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px;">
+                    <div class="card-title">Mitra Perlu Perhatian</div>
+                    <div class="card-hint">Diurutkan dari pencapaian terendah</div>
+                </div>
+                <div class="table-scroll">
+                    <table>
+                        <thead><tr><th>Mitra</th><th>Segmen</th><th>Omset</th><th>Target</th><th>% vs Target</th><th>Status</th></tr></thead>
+                        <tbody>
+                            @foreach ($mitraPerluPerhatian as $m)
+                                <tr>
+                                    <td>
+                                        <div style="font-weight:600;">{{ $m->nama }}</div>
+                                        <div style="font-size:11.5px; color:var(--ink-muted);">{{ $m->kode_mitra }}</div>
+                                    </td>
+                                    <td>{{ $m->segmen }}</td>
+                                    <td class="tnum">{{ $rp($m->omset) }}</td>
+                                    <td class="tnum">{{ $rp($m->target) }}</td>
+                                    <td class="tnum">{{ $m->pct }}%</td>
+                                    <td>
+                                        @if ($m->pct < 60)
+                                            <span class="chip chip-critical">Kritis</span>
+                                        @else
+                                            <span class="chip chip-warn">Warning</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        @endif
 
         <section style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
             <div class="card table-card" style="padding:0;">

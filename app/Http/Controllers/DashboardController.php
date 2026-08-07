@@ -31,6 +31,35 @@ class DashboardController extends Controller
 
         $adaTargetBulanIni = TargetBulanan::where('bulan', $now->month)->where('tahun', $now->year)->exists();
 
+        $totalTargetBulanIni = 0;
+        $mitraPerluPerhatian = collect();
+
+        if ($adaTargetBulanIni) {
+            $targetVsOmset = DB::table('target_bulanan')
+                ->join('mitra', 'mitra.id', '=', 'target_bulanan.mitra_id')
+                ->leftJoin('orders', function ($join) use ($now) {
+                    $join->on('orders.mitra_id', '=', 'mitra.id')
+                        ->whereYear('orders.tanggal_order', $now->year)
+                        ->whereMonth('orders.tanggal_order', $now->month);
+                })
+                ->where('target_bulanan.bulan', $now->month)
+                ->where('target_bulanan.tahun', $now->year)
+                ->when(! $user->isAdmin(), fn ($q) => $q->where('mitra.kae_code', $user->kae_code))
+                ->groupBy('mitra.id', 'mitra.nama', 'mitra.kode_mitra', 'target_bulanan.segmen', 'target_bulanan.target')
+                ->selectRaw('mitra.id, mitra.nama, mitra.kode_mitra, target_bulanan.segmen, target_bulanan.target, COALESCE(SUM(orders.total_transaksi), 0) as omset')
+                ->get()
+                ->map(function ($r) {
+                    $r->pct = $r->target > 0 ? round($r->omset / $r->target * 100, 1) : 0;
+
+                    return $r;
+                });
+
+            $totalTargetBulanIni = $targetVsOmset->sum('target');
+            $mitraPerluPerhatian = $targetVsOmset->filter(fn ($r) => $r->pct < 80)->sortBy('pct')->take(10)->values();
+        }
+
+        $achievementPct = $totalTargetBulanIni > 0 ? round($totalOmsetBulanIni / $totalTargetBulanIni * 100, 1) : null;
+
         $omsetPerBrand = DB::table('order_items')
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->whereYear('orders.tanggal_order', $now->year)
@@ -66,6 +95,9 @@ class DashboardController extends Controller
             'mitraAktifBulanIni' => $mitraAktifBulanIni,
             'totalMitra' => $totalMitra,
             'adaTargetBulanIni' => $adaTargetBulanIni,
+            'totalTargetBulanIni' => $totalTargetBulanIni,
+            'achievementPct' => $achievementPct,
+            'mitraPerluPerhatian' => $mitraPerluPerhatian,
             'omsetPerBrand' => $omsetPerBrand,
             'totalItemOmset' => $totalItemOmset,
             'trenMingguan' => $trenMingguan,
