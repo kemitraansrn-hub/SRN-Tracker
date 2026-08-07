@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'role', 'kae_code', 'status'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -28,5 +28,20 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function mitra()
+    {
+        return $this->hasMany(Mitra::class);
+    }
+
+    public function followupLogs()
+    {
+        return $this->hasMany(FollowupLog::class, 'kae_user_id');
     }
 }
