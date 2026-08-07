@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FollowupLogController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\MitraController;
+use App\Http\Controllers\SegmentasiController;
 use App\Http\Controllers\TrendController;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +19,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/trend', [TrendController::class, 'index'])->name('trend.index');
+    Route::get('/segmentasi/{segmen}', [SegmentasiController::class, 'show'])->name('segmentasi.show');
 
     Route::middleware('role:admin')->prefix('import')->name('import.')->group(function () {
         Route::get('/', [ImportController::class, 'index'])->name('index');

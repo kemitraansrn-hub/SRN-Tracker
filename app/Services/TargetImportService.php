@@ -23,6 +23,7 @@ class TargetImportService
     private const HEADER_ALIASES = [
         'kode_mitra' => ['KODE MITRA', 'RESELLER', 'KODE RESELLER', 'ID'],
         'nama' => ['NAMA MITRA', 'NAMA', 'NAME'],
+        'kae' => ['KAE'],
         'segmen' => ['SEGMEN'],
         'komit' => ['KOMIT (RP)', 'KOMIT'],
         'target' => ['TARGET (RP)', 'TARGET'],
@@ -93,7 +94,9 @@ class TargetImportService
             return ['ok' => false, 'errors' => ['Sheet tidak berisi data.']];
         }
 
-        $batch = DB::transaction(function () use ($rows, $bulan, $tahun, $user, $namaFile) {
+        $kaeCodeByName = User::where('role', 'kae')->get()->keyBy(fn ($u) => mb_strtolower($u->name));
+
+        $batch = DB::transaction(function () use ($rows, $bulan, $tahun, $user, $namaFile, $kaeCodeByName) {
             $batch = ImportBatch::create([
                 'jenis' => 'target_bulanan',
                 'bulan' => $bulan,
@@ -110,9 +113,24 @@ class TargetImportService
                 }
 
                 $mitra = Mitra::firstOrNew(['kode_mitra' => $row['kode_mitra']]);
-                if (! $mitra->exists) {
+                $isNew = ! $mitra->exists;
+
+                if ($isNew) {
                     $mitra->nama = $row['nama'] ?: $row['kode_mitra'];
                     $mitra->status = 'aktif';
+                }
+
+                // Order import (ID SALESMAN) is the authoritative KAE binding.
+                // Only use the Target file's KAE column as a fallback for mitra
+                // that don't have a binding yet (e.g. targeted before their first order).
+                if (empty($mitra->kae_code) && ! empty($row['kae'])) {
+                    $kaeUser = $kaeCodeByName->get(mb_strtolower($row['kae']));
+                    if ($kaeUser) {
+                        $mitra->kae_code = $kaeUser->kae_code;
+                    }
+                }
+
+                if ($isNew || $mitra->isDirty()) {
                     $mitra->save();
                 }
 

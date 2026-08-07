@@ -24,6 +24,18 @@
         }
         .nav-item:hover { background: var(--accent-soft); color: var(--ink); }
         .nav-item.active { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+        .nav-item-toggle { justify-content: space-between; cursor: pointer; }
+        .chevron { width: 13px; height: 13px; flex: none; opacity: 0.6; transition: transform 0.16s ease; }
+        .nav-sub {
+            display: flex; flex-direction: column; gap: 1px; padding-left: 14px; margin: 2px 0 0 21px;
+            border-left: 1px solid var(--line);
+        }
+        .nav-subitem {
+            display: block; padding: 7px 10px 7px 14px; border-radius: 7px;
+            font-size: 13px; color: var(--ink-muted); text-decoration: none;
+        }
+        .nav-subitem:hover { background: var(--accent-soft); color: var(--ink); }
+        .nav-subitem.active { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
         .sidebar-foot {
             margin-top: auto; border-top: 1px solid var(--line); padding-top: 14px;
             display: flex; align-items: center; gap: 10px;
@@ -63,6 +75,20 @@
                 <a href="{{ route('mitra.index') }}" class="nav-item {{ request()->routeIs('mitra.*') ? 'active' : '' }}">
                     Data Mitra
                 </a>
+
+                @php $segmenList = \App\Models\TargetBulanan::currentMonthSegments(); @endphp
+                @if ($segmenList->isNotEmpty())
+                    <a class="nav-item nav-item-toggle" tabindex="0" onclick="toggleSegmentasi()">
+                        <span>Segmentasi Mitra</span>
+                        <svg class="chevron" id="segChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="{{ request()->routeIs('segmentasi.*') ? 'transform:rotate(90deg);' : '' }}"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </a>
+                    <div class="nav-sub" id="segSubmenu" style="display:{{ request()->routeIs('segmentasi.*') ? 'flex' : 'none' }};">
+                        @foreach ($segmenList as $s)
+                            <a href="{{ route('segmentasi.show', $s) }}" class="nav-subitem {{ request()->routeIs('segmentasi.*') && request()->route('segmen') === $s ? 'active' : '' }}">{{ $s }}</a>
+                        @endforeach
+                    </div>
+                @endif
+
                 <a href="{{ route('followup.index') }}" class="nav-item {{ request()->routeIs('followup.*') ? 'active' : '' }}">
                     Follow-up Log
                 </a>
@@ -93,5 +119,15 @@
             @yield('content')
         </main>
     </div>
+
+    <script>
+        function toggleSegmentasi() {
+            const sub = document.getElementById('segSubmenu');
+            const chevron = document.getElementById('segChevron');
+            const isOpen = sub.style.display === 'flex';
+            sub.style.display = isOpen ? 'none' : 'flex';
+            chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
+        }
+    </script>
 </body>
 </html>

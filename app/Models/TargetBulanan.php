@@ -22,4 +22,20 @@ class TargetBulanan extends Model
     {
         return $this->belongsTo(ImportBatch::class);
     }
+
+    /**
+     * Distinct segmen values that have target data for the current month,
+     * used to build the Segmentasi Mitra sidebar without hardcoding names.
+     */
+    public static function currentMonthSegments(): \Illuminate\Support\Collection
+    {
+        $now = now();
+
+        return static::where('bulan', $now->month)
+            ->where('tahun', $now->year)
+            ->whereNotNull('segmen')
+            ->distinct()
+            ->orderBy('segmen')
+            ->pluck('segmen');
+    }
 }
