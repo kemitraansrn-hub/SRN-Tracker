@@ -54,6 +54,7 @@ class MitraController extends Controller
 
         $historiOrder = $mitra->orders()->latest('tanggal_order')->limit(20)->get();
         $followupLogs = $mitra->followupLogs()->with('kae')->latest('tanggal_fu')->limit(10)->get();
+        $specialDeals = $mitra->specialDeals()->with('kae')->latest()->limit(10)->get();
         $targetBulanIni = $mitra->targetBulanan()->where('bulan', $now->month)->where('tahun', $now->year)->first();
 
         return view('mitra.show', [
@@ -62,6 +63,7 @@ class MitraController extends Controller
             'jumlahOrderBulanIni' => $jumlahOrderBulanIni,
             'historiOrder' => $historiOrder,
             'followupLogs' => $followupLogs,
+            'specialDeals' => $specialDeals,
             'targetBulanIni' => $targetBulanIni,
             'periodeLabel' => $now->translatedFormat('F Y'),
         ]);

@@ -6,6 +6,7 @@ use App\Http\Controllers\FollowupLogController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\MitraController;
 use App\Http\Controllers\SegmentasiController;
+use App\Http\Controllers\SpecialDealController;
 use App\Http\Controllers\TrendController;
 use App\Http\Controllers\WeekPeriodController;
 use App\Http\Controllers\WeeklyPlanController;
@@ -55,5 +56,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/export', [FollowupLogController::class, 'export'])->name('export');
         Route::get('/create', [FollowupLogController::class, 'create'])->name('create');
         Route::post('/', [FollowupLogController::class, 'store'])->name('store');
+    });
+
+    Route::prefix('special-deal')->name('special-deal.')->group(function () {
+        Route::get('/', [SpecialDealController::class, 'index'])->name('index');
+        Route::get('/create', [SpecialDealController::class, 'create'])->name('create');
+        Route::post('/', [SpecialDealController::class, 'store'])->name('store');
+        Route::get('/{specialDeal}/edit', [SpecialDealController::class, 'edit'])->name('edit');
+        Route::put('/{specialDeal}', [SpecialDealController::class, 'update'])->name('update');
     });
 });

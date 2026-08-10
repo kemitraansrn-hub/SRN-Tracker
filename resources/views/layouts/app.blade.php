@@ -95,6 +95,9 @@
                 <a href="{{ route('followup.index') }}" class="nav-item {{ request()->routeIs('followup.*') ? 'active' : '' }}">
                     Follow-up Log
                 </a>
+                <a href="{{ route('special-deal.index') }}" class="nav-item {{ request()->routeIs('special-deal.*') ? 'active' : '' }}">
+                    Special Deal
+                </a>
                 <a href="{{ route('trend.index') }}" class="nav-item {{ request()->routeIs('trend.*') ? 'active' : '' }}">
                     Trend Mitra
                 </a>

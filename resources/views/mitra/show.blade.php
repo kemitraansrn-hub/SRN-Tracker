@@ -170,4 +170,39 @@
             </table>
         </div>
     </section>
+
+    <section class="card table-card" style="padding:0; margin-top:16px;">
+        <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px;">
+            <div>
+                <div class="card-title">Special Deal</div>
+                <div class="card-hint">{{ $specialDeals->count() }} deal terakhir</div>
+            </div>
+            <a href="{{ route('special-deal.create', ['mitra_id' => $mitra->id]) }}" class="btn" style="width:auto;">+ Ajukan Deal</a>
+        </div>
+        <div class="table-scroll">
+            <table>
+                <thead><tr><th>Deskripsi</th><th>Nilai</th><th>Periode</th><th>Status</th><th></th></tr></thead>
+                <tbody>
+                    @forelse ($specialDeals as $deal)
+                        <tr>
+                            <td style="font-size:12.5px; color:var(--ink-muted); max-width:260px;">{{ \Illuminate\Support\Str::limit($deal->deskripsi, 70) }}</td>
+                            <td class="tnum">{{ $deal->nilai ? $rp($deal->nilai) : '—' }}</td>
+                            <td class="tnum" style="font-size:12px;">{{ $deal->tanggal_mulai?->format('d/m/Y') ?? '—' }} &ndash; {{ $deal->tanggal_selesai?->format('d/m/Y') ?? '—' }}</td>
+                            <td>
+                                @switch($deal->status)
+                                    @case('diajukan') <span class="chip chip-warn">Diajukan</span> @break
+                                    @case('berjalan') <span class="chip chip-good">Berjalan</span> @break
+                                    @case('selesai') <span class="chip" style="background:var(--surface-alt); color:var(--ink-muted);">Selesai</span> @break
+                                    @case('batal') <span class="chip chip-critical">Batal</span> @break
+                                @endswitch
+                            </td>
+                            <td><a href="{{ route('special-deal.edit', $deal) }}" class="link-action" style="color:var(--accent-ink); font-size:12.5px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 10px;">Edit</a></td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="5" style="color:var(--ink-muted);">Belum ada special deal untuk mitra ini.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </section>
 @endsection
