@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FollowupLogController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\MitraController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\SegmentasiController;
 use App\Http\Controllers\SpecialDealController;
 use App\Http\Controllers\TrendController;
@@ -58,6 +59,16 @@ Route::middleware('auth')->group(function () {
         });
 
         Route::get('/{mitra}', [MitraController::class, 'show'])->name('show');
+    });
+
+    Route::prefix('order')->name('order.')->group(function () {
+        Route::get('/', [OrderController::class, 'index'])->name('index');
+        Route::get('/{order}', [OrderController::class, 'show'])->name('show');
+
+        Route::middleware('role:admin')->group(function () {
+            Route::get('/{order}/edit', [OrderController::class, 'edit'])->name('edit');
+            Route::put('/{order}', [OrderController::class, 'update'])->name('update');
+        });
     });
 
     Route::prefix('followup')->name('followup.')->group(function () {

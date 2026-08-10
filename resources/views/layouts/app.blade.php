@@ -75,6 +75,9 @@
                 <a href="{{ route('mitra.index') }}" class="nav-item {{ request()->routeIs('mitra.*') ? 'active' : '' }}">
                     Data Mitra
                 </a>
+                <a href="{{ route('order.index') }}" class="nav-item {{ request()->routeIs('order.*') ? 'active' : '' }}">
+                    Order / Transaksi
+                </a>
 
                 @php
                     $segmenList = \App\Models\TargetBulanan::currentMonthSegments();
