@@ -111,6 +111,9 @@
                     <a href="{{ route('pengaturan.minggu') }}" class="nav-item {{ request()->routeIs('pengaturan.*') ? 'active' : '' }}">
                         Periode Mingguan
                     </a>
+                    <a href="{{ route('users.index') }}" class="nav-item {{ request()->routeIs('users.*') ? 'active' : '' }}">
+                        User Management
+                    </a>
                 @endif
             </nav>
 

@@ -8,6 +8,7 @@ use App\Http\Controllers\MitraController;
 use App\Http\Controllers\SegmentasiController;
 use App\Http\Controllers\SpecialDealController;
 use App\Http\Controllers\TrendController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\WeekPeriodController;
 use App\Http\Controllers\WeeklyPlanController;
 use Illuminate\Support\Facades\Route;
@@ -30,6 +31,14 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin')->prefix('pengaturan/minggu')->name('pengaturan.')->group(function () {
         Route::get('/', [WeekPeriodController::class, 'edit'])->name('minggu');
         Route::post('/', [WeekPeriodController::class, 'update'])->name('minggu.update');
+    });
+
+    Route::middleware('role:admin')->prefix('users')->name('users.')->group(function () {
+        Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::get('/create', [UserController::class, 'create'])->name('create');
+        Route::post('/', [UserController::class, 'store'])->name('store');
+        Route::get('/{targetUser}/edit', [UserController::class, 'edit'])->name('edit');
+        Route::put('/{targetUser}', [UserController::class, 'update'])->name('update');
     });
 
     Route::middleware('role:admin')->prefix('import')->name('import.')->group(function () {
