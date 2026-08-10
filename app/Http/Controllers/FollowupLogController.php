@@ -104,19 +104,16 @@ class FollowupLogController extends Controller
             ->orderBy('tanggal_fu')
             ->get();
 
-        $headers = [
-            'Tanggal', 'Minggu', 'Nama Mitra', 'Kode Mitra', 'KAE', 'Status Follow-up', 'Status Belanja',
-            'Nominal Belanja (Rp)', 'Alasan / Kendala', 'Catatan', 'Jam Mulai', 'Jam Selesai', 'Total Menit',
-        ];
+        $headers = ['Tanggal', 'Minggu', 'KAE', 'Nama Mitra', 'Alasan / Kendala', 'Catatan'];
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Follow-up Log');
         $sheet->fromArray($headers, null, 'A1');
-        $sheet->getStyle('A1:M1')->getFont()->setBold(true);
-        $sheet->getStyle('A1:M1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('EBE5EF');
-        foreach (range(1, 13) as $col) {
-            $sheet->getColumnDimensionByColumn($col)->setWidth(18);
+        $sheet->getStyle('A1:F1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:F1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('EBE5EF');
+        foreach ([14, 10, 14, 24, 28, 40] as $col => $width) {
+            $sheet->getColumnDimensionByColumn($col + 1)->setWidth($width);
         }
 
         $row = 2;
@@ -124,17 +121,10 @@ class FollowupLogController extends Controller
             $sheet->fromArray([
                 $log->tanggal_fu->format('d/m/Y'),
                 $log->minggu,
-                $log->mitra->nama ?? '—',
-                $log->mitra->kode_mitra ?? '—',
                 $log->kae->name ?? '—',
-                $log->status_followup,
-                $log->status_belanja,
-                $log->nominal_belanja,
+                $log->mitra->nama ?? '—',
                 $log->alasan_kendala,
                 $log->catatan,
-                $log->jam_mulai,
-                $log->jam_selesai,
-                $log->total_menit,
             ], null, 'A'.$row);
             $row++;
         }
