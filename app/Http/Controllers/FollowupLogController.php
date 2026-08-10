@@ -8,6 +8,10 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FollowupLogController extends Controller
 {
@@ -88,5 +92,59 @@ class FollowupLogController extends Controller
         ]);
 
         return redirect()->route('mitra.show', $mitra)->with('status', 'Follow-up berhasil dicatat.');
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $user = $request->user();
+
+        $logs = FollowupLog::with(['mitra', 'kae'])
+            ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_user_id', $user->id))
+            ->when($request->filled('mitra_id'), fn ($q) => $q->where('mitra_id', $request->input('mitra_id')))
+            ->orderBy('tanggal_fu')
+            ->get();
+
+        $headers = [
+            'Tanggal', 'Minggu', 'Nama Mitra', 'Kode Mitra', 'KAE', 'Status Follow-up', 'Status Belanja',
+            'Nominal Belanja (Rp)', 'Alasan / Kendala', 'Catatan', 'Jam Mulai', 'Jam Selesai', 'Total Menit',
+        ];
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Follow-up Log');
+        $sheet->fromArray($headers, null, 'A1');
+        $sheet->getStyle('A1:M1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:M1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('EBE5EF');
+        foreach (range(1, 13) as $col) {
+            $sheet->getColumnDimensionByColumn($col)->setWidth(18);
+        }
+
+        $row = 2;
+        foreach ($logs as $log) {
+            $sheet->fromArray([
+                $log->tanggal_fu->format('d/m/Y'),
+                $log->minggu,
+                $log->mitra->nama ?? '—',
+                $log->mitra->kode_mitra ?? '—',
+                $log->kae->name ?? '—',
+                $log->status_followup,
+                $log->status_belanja,
+                $log->nominal_belanja,
+                $log->alasan_kendala,
+                $log->catatan,
+                $log->jam_mulai,
+                $log->jam_selesai,
+                $log->total_menit,
+            ], null, 'A'.$row);
+            $row++;
+        }
+
+        $filename = 'followup_log_'.now()->format('Y-m-d').'.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 }

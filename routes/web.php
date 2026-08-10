@@ -44,6 +44,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('followup')->name('followup.')->group(function () {
         Route::get('/', [FollowupLogController::class, 'index'])->name('index');
+        Route::get('/export', [FollowupLogController::class, 'export'])->name('export');
         Route::get('/create', [FollowupLogController::class, 'create'])->name('create');
         Route::post('/', [FollowupLogController::class, 'store'])->name('store');
     });

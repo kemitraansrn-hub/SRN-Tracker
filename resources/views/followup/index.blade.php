@@ -12,7 +12,13 @@
                 {{ $logs->total() }} catatan follow-up {{ auth()->user()->isAdmin() ? '' : 'kamu' }}
             </div>
         </div>
-        <a href="{{ route('followup.create') }}" class="btn btn-primary" style="width:auto;">+ Catat Follow-up</a>
+        <div style="display:flex; gap:10px;">
+            <a href="{{ route('followup.export') }}" class="btn" style="width:auto; display:inline-flex; align-items:center; gap:6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v13.5"/><path d="M7 12l5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 20h16" stroke-linecap="round"/></svg>
+                Download Excel
+            </a>
+            <a href="{{ route('followup.create') }}" class="btn btn-primary" style="width:auto;">+ Catat Follow-up</a>
+        </div>
     </div>
 
     @if (session('status'))
