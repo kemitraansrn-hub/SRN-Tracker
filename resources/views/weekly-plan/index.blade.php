@@ -24,8 +24,9 @@
                     <tr>
                         <th>Mitra</th><th>KAE</th><th>Minggu Andalan</th>
                         @foreach ($weeks as $w)
-                            <th>{{ $w }}{{ $w === $currentWeekLabel ? ' (skrg)' : '' }}</th>
+                            <th>{{ $w }}{{ $w === $currentWeekLabel ? ' (skrg)' : '' }}<br><span style="font-weight:400; text-transform:none; font-size:10px;">Realisasi / Target</span></th>
                         @endforeach
+                        <th>Target Bulan</th><th>Realisasi Bulan</th><th>% Bulan</th>
                         <th>Status</th>
                     </tr>
                 </thead>
@@ -51,10 +52,21 @@
                                 @endif
                             </td>
                             @foreach ($weeks as $w)
-                                <td class="tnum" style="{{ $w === $p->minggu_andalan ? 'font-weight:700; background:var(--accent-soft);' : '' }}">
-                                    {{ $p->actual[$w] > 0 ? $rp($p->actual[$w]) : '—' }}
+                                <td class="tnum" style="{{ $w === $p->minggu_andalan ? 'background:var(--accent-soft);' : '' }}">
+                                    <div style="font-weight:700;">{{ $p->actual[$w] > 0 ? $rp($p->actual[$w]) : '—' }}</div>
+                                    <div style="font-size:11px; color:var(--ink-muted);">{{ $p->target_per_week[$w] > 0 ? $rp($p->target_per_week[$w]) : '—' }}</div>
                                 </td>
                             @endforeach
+                            <td class="tnum">{{ $p->target_bulan > 0 ? $rp($p->target_bulan) : '—' }}</td>
+                            <td class="tnum" style="font-weight:700;">{{ $rp($p->realisasi_bulan) }}</td>
+                            <td class="tnum">
+                                @if ($p->pct_bulan === null)
+                                    —
+                                @else
+                                    @php $pctColor = $p->pct_bulan >= 80 ? 'good' : ($p->pct_bulan >= 60 ? 'warn' : 'critical'); @endphp
+                                    <span class="chip chip-{{ $pctColor }}">{{ $p->pct_bulan }}%</span>
+                                @endif
+                            </td>
                             <td>
                                 @switch($p->status)
                                     @case('oke')
@@ -75,7 +87,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" style="color:var(--ink-muted);">Belum ada mitra.</td></tr>
+                        <tr><td colspan="11" style="color:var(--ink-muted);">Belum ada mitra.</td></tr>
                     @endforelse
                 </tbody>
             </table>

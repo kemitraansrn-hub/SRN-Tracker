@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Mitra;
+use App\Models\TargetBulanan;
 use App\Models\WeekPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -65,7 +66,12 @@ class WeeklyPlanController extends Controller
         $currentWeekLabel = WeekPeriod::resolveWeek($now);
         $weekIndex = fn (?string $w) => $w ? (int) substr($w, 1) : null;
 
-        $plan = $mitraList->map(function ($m) use ($historyTotals, $actualByMitra, $currentWeekLabel, $weekIndex) {
+        $targetByMitra = TargetBulanan::where('bulan', $now->month)->where('tahun', $now->year)
+            ->when(! $user->isAdmin(), fn ($q) => $q->whereHas('mitra', fn ($qq) => $qq->where('kae_code', $user->kae_code)))
+            ->get()
+            ->keyBy('mitra_id');
+
+        $plan = $mitraList->map(function ($m) use ($historyTotals, $actualByMitra, $currentWeekLabel, $weekIndex, $targetByMitra) {
             $hist = $historyTotals[$m->id] ?? [];
             $mingguAndalan = null;
 
@@ -79,6 +85,20 @@ class WeeklyPlanController extends Controller
             foreach (self::WEEKS as $w) {
                 $actualPerWeek[$w] = $actual[$w] ?? 0;
             }
+
+            // Target bulanan disebar proporsional sesuai porsi omset tiap
+            // minggu dari histori 6 bulan; kalau belum ada histori, rata 4 minggu.
+            $targetBulan = (float) ($targetByMitra[$m->id]->target ?? 0);
+            $totalHist = array_sum($hist);
+            $targetPerWeek = [];
+            foreach (self::WEEKS as $w) {
+                $targetPerWeek[$w] = $totalHist > 0
+                    ? round($targetBulan * (($hist[$w] ?? 0) / $totalHist))
+                    : round($targetBulan / 4);
+            }
+
+            $realisasiBulan = array_sum($actualPerWeek);
+            $pctBulan = $targetBulan > 0 ? round($realisasiBulan / $targetBulan * 100, 1) : null;
 
             $status = 'belum-ada-data';
             if ($mingguAndalan) {
@@ -98,6 +118,10 @@ class WeeklyPlanController extends Controller
                 'mitra' => $m,
                 'minggu_andalan' => $mingguAndalan,
                 'actual' => $actualPerWeek,
+                'target_per_week' => $targetPerWeek,
+                'target_bulan' => $targetBulan,
+                'realisasi_bulan' => $realisasiBulan,
+                'pct_bulan' => $pctBulan,
                 'status' => $status,
             ];
         });
