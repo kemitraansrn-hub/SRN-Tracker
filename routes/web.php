@@ -7,6 +7,8 @@ use App\Http\Controllers\ImportController;
 use App\Http\Controllers\MitraController;
 use App\Http\Controllers\SegmentasiController;
 use App\Http\Controllers\TrendController;
+use App\Http\Controllers\WeekPeriodController;
+use App\Http\Controllers\WeeklyPlanController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -22,6 +24,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/trend/dashboard-card', [TrendController::class, 'saveDashboardCard'])
         ->middleware('role:admin')->name('trend.saveDashboardCard');
     Route::get('/segmentasi/{segmen}', [SegmentasiController::class, 'show'])->name('segmentasi.show');
+    Route::get('/weekly-plan', [WeeklyPlanController::class, 'index'])->name('weekly-plan.index');
+
+    Route::middleware('role:admin')->prefix('pengaturan/minggu')->name('pengaturan.')->group(function () {
+        Route::get('/', [WeekPeriodController::class, 'edit'])->name('minggu');
+        Route::post('/', [WeekPeriodController::class, 'update'])->name('minggu.update');
+    });
 
     Route::middleware('role:admin')->prefix('import')->name('import.')->group(function () {
         Route::get('/', [ImportController::class, 'index'])->name('index');

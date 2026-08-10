@@ -96,18 +96,18 @@
                 </div>
                 @php $maxMinggu = $trenMingguan->max('total') ?: 1; @endphp
                 <div style="display:flex; flex-direction:column; gap:12px;">
-                    @for ($w = 1; $w <= 5; $w++)
+                    @foreach (['W1','W2','W3','W4','W5'] as $w)
                         @php $val = $trenMingguan[$w]->total ?? 0; @endphp
-                        @if ($val > 0 || $w <= 4)
+                        @if ($val > 0 || in_array($w, ['W1','W2','W3','W4']))
                             <div style="display:grid; grid-template-columns:36px 1fr 110px; align-items:center; gap:10px;">
-                                <div style="font-size:12px; font-weight:700; color:var(--ink-muted);">W{{ $w }}</div>
+                                <div style="font-size:12px; font-weight:700; color:var(--ink-muted);">{{ $w }}</div>
                                 <div style="height:8px; border-radius:4px; background:var(--line); overflow:hidden;">
                                     <div style="height:100%; border-radius:4px; background:var(--accent); width:{{ $maxMinggu ? round($val / $maxMinggu * 100) : 0 }}%;"></div>
                                 </div>
                                 <div class="tnum" style="font-size:12px; color:var(--ink-muted); text-align:right;">{{ $rp($val) }}</div>
                             </div>
                         @endif
-                    @endfor
+                    @endforeach
                 </div>
             </div>
 

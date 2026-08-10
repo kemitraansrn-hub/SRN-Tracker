@@ -87,7 +87,7 @@ class FollowupLogController extends Controller
         FollowupLog::create([
             ...$data,
             'kae_user_id' => $user->id,
-            'minggu' => 'W'.min(4, (int) ceil($tanggal->day / 7)),
+            'minggu' => \App\Models\WeekPeriod::resolveWeek($tanggal),
             'total_menit' => $totalMenit,
         ]);
 

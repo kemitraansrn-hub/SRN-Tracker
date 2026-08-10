@@ -73,12 +73,12 @@ class DashboardController extends Controller
 
         $totalItemOmset = $omsetPerBrand->sum('total');
 
+        $weekCase = \App\Models\WeekPeriod::sqlCase($now->month, $now->year, 'tanggal_order');
         $trenMingguan = (clone $ordersThisMonth)
-            ->selectRaw('CEIL(DAY(tanggal_order) / 7) as minggu_ke, SUM(total_transaksi) as total')
-            ->groupBy('minggu_ke')
-            ->orderBy('minggu_ke')
+            ->selectRaw("$weekCase as minggu_label, SUM(total_transaksi) as total")
+            ->groupBy('minggu_label')
             ->get()
-            ->keyBy('minggu_ke');
+            ->keyBy('minggu_label');
 
         $topMitra = (clone $ordersThisMonth)
             ->join('mitra', 'mitra.id', '=', 'orders.mitra_id')

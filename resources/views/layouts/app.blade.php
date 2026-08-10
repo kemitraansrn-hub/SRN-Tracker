@@ -98,9 +98,15 @@
                 <a href="{{ route('trend.index') }}" class="nav-item {{ request()->routeIs('trend.*') ? 'active' : '' }}">
                     Trend Mitra
                 </a>
+                <a href="{{ route('weekly-plan.index') }}" class="nav-item {{ request()->routeIs('weekly-plan.*') ? 'active' : '' }}">
+                    Weekly Plan
+                </a>
                 @if (auth()->user()->isAdmin())
                     <a href="{{ route('import.index') }}" class="nav-item {{ request()->routeIs('import.*') ? 'active' : '' }}">
                         Import Data
+                    </a>
+                    <a href="{{ route('pengaturan.minggu') }}" class="nav-item {{ request()->routeIs('pengaturan.*') ? 'active' : '' }}">
+                        Periode Mingguan
                     </a>
                 @endif
             </nav>
