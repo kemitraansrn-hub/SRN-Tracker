@@ -33,9 +33,12 @@ class MitraController extends Controller
             }], 'total_transaksi')
             ->orderBy('nama');
 
+        $mitraList = $query->paginate(20)->withQueryString();
+
         return view('mitra.index', [
-            'mitraList' => $query->paginate(20)->withQueryString(),
+            'mitraList' => $mitraList,
             'kaeOptions' => $user->isAdmin() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
+            'stabilitasByMitra' => StabilitasService::bulkForPreviousQuarter(),
         ]);
     }
 

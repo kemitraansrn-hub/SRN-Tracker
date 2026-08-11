@@ -53,12 +53,13 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Mitra</th><th>KAE</th><th>Status</th>
+                        <th>Mitra</th><th>KAE</th><th>Status</th><th>Stabilitas</th>
                         <th>Order Bulan Ini</th><th>Omset Bulan Ini</th><th></th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($mitraList as $m)
+                        @php $stab = $stabilitasByMitra[$m->id] ?? ['bln_aktif' => 0, 'stabilitas' => 'Pasif']; @endphp
                         <tr>
                             <td>
                                 <div style="font-weight:600;">{{ $m->nama }}</div>
@@ -78,12 +79,16 @@
                                     <span class="chip chip-critical">Nonaktif</span>
                                 @endif
                             </td>
+                            <td>
+                                @php $stabColor = $stab['stabilitas'] === 'Stabil' ? 'good' : ($stab['stabilitas'] === 'Naik-turun' ? 'warn' : 'critical'); @endphp
+                                <span class="chip chip-{{ $stabColor }}">{{ $stab['stabilitas'] }}</span>
+                            </td>
                             <td class="tnum">{{ $m->order_bulan_ini_count }}</td>
                             <td class="tnum">{{ $rp($m->omset_bulan_ini ?? 0) }}</td>
                             <td><a href="{{ route('mitra.show', $m) }}" class="link-action" style="color:var(--accent-ink); font-size:12.5px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 10px;">Lihat detail</a></td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" style="color:var(--ink-muted);">Belum ada mitra.</td></tr>
+                        <tr><td colspan="7" style="color:var(--ink-muted);">Belum ada mitra.</td></tr>
                     @endforelse
                 </tbody>
             </table>
