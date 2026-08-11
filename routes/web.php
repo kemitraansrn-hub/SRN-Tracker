@@ -8,6 +8,7 @@ use App\Http\Controllers\MitraController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\SegmentasiController;
 use App\Http\Controllers\SpecialDealController;
+use App\Http\Controllers\TierTargetController;
 use App\Http\Controllers\TrendController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WeekPeriodController;
@@ -32,6 +33,11 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin')->prefix('pengaturan/minggu')->name('pengaturan.')->group(function () {
         Route::get('/', [WeekPeriodController::class, 'edit'])->name('minggu');
         Route::post('/', [WeekPeriodController::class, 'update'])->name('minggu.update');
+    });
+
+    Route::middleware('role:admin')->prefix('pengaturan/tier-target')->name('tier-target.')->group(function () {
+        Route::get('/', [TierTargetController::class, 'index'])->name('index');
+        Route::post('/{targetBulanan}', [TierTargetController::class, 'update'])->name('update');
     });
 
     Route::middleware('role:admin')->prefix('users')->name('users.')->group(function () {

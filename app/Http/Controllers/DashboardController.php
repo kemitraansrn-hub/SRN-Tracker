@@ -36,6 +36,7 @@ class DashboardController extends Controller
         $mitraPerluPerhatian = collect();
 
         if ($adaTargetBulanIni) {
+            $targetSql = \App\Models\TargetBulanan::effectiveTargetSql();
             $targetVsOmset = DB::table('target_bulanan')
                 ->join('mitra', 'mitra.id', '=', 'target_bulanan.mitra_id')
                 ->leftJoin('orders', function ($join) use ($now) {
@@ -46,8 +47,8 @@ class DashboardController extends Controller
                 ->where('target_bulanan.bulan', $now->month)
                 ->where('target_bulanan.tahun', $now->year)
                 ->when(! $user->isAdmin(), fn ($q) => $q->where('mitra.kae_code', $user->kae_code))
-                ->groupBy('mitra.id', 'mitra.nama', 'mitra.kode_mitra', 'target_bulanan.segmen', 'target_bulanan.target')
-                ->selectRaw('mitra.id, mitra.nama, mitra.kode_mitra, target_bulanan.segmen, target_bulanan.target, COALESCE(SUM(orders.total_transaksi), 0) as omset')
+                ->groupBy('mitra.id', 'mitra.nama', 'mitra.kode_mitra', 'target_bulanan.segmen', 'target_bulanan.komit', 'target_bulanan.target', 'target_bulanan.stretch', 'target_bulanan.tier_dipakai')
+                ->selectRaw("mitra.id, mitra.nama, mitra.kode_mitra, target_bulanan.segmen, $targetSql as target, COALESCE(SUM(orders.total_transaksi), 0) as omset")
                 ->get()
                 ->map(function ($r) {
                     $r->pct = $r->target > 0 ? round($r->omset / $r->target * 100, 1) : 0;

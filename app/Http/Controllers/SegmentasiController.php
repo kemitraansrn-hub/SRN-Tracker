@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\TargetBulanan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -12,6 +13,7 @@ class SegmentasiController extends Controller
     {
         $user = $request->user();
         $now = now();
+        $targetSql = TargetBulanan::effectiveTargetSql();
 
         $rows = DB::table('target_bulanan')
             ->join('mitra', 'mitra.id', '=', 'target_bulanan.mitra_id')
@@ -24,8 +26,8 @@ class SegmentasiController extends Controller
             ->where('target_bulanan.tahun', $now->year)
             ->where('target_bulanan.segmen', $segmen)
             ->when(! $user->isAdmin(), fn ($q) => $q->where('mitra.kae_code', $user->kae_code))
-            ->groupBy('mitra.id', 'mitra.nama', 'mitra.kode_mitra', 'mitra.kae_code', 'target_bulanan.target')
-            ->selectRaw('mitra.id, mitra.nama, mitra.kode_mitra, mitra.kae_code, target_bulanan.target, COALESCE(SUM(orders.total_transaksi), 0) as omset')
+            ->groupBy('mitra.id', 'mitra.nama', 'mitra.kode_mitra', 'mitra.kae_code', 'target_bulanan.komit', 'target_bulanan.target', 'target_bulanan.stretch', 'target_bulanan.tier_dipakai')
+            ->selectRaw("mitra.id, mitra.nama, mitra.kode_mitra, mitra.kae_code, $targetSql as target, COALESCE(SUM(orders.total_transaksi), 0) as omset")
             ->orderByDesc('omset')
             ->get()
             ->map(function ($r) {

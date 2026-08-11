@@ -147,6 +147,9 @@
                     <a href="{{ route('pengaturan.minggu') }}" class="nav-item {{ request()->routeIs('pengaturan.*') ? 'active' : '' }}">
                         Periode Mingguan
                     </a>
+                    <a href="{{ route('tier-target.index') }}" class="nav-item {{ request()->routeIs('tier-target.*') ? 'active' : '' }}">
+                        Tier Target
+                    </a>
                     <a href="{{ route('users.index') }}" class="nav-item {{ request()->routeIs('users.*') ? 'active' : '' }}">
                         User Management
                     </a>

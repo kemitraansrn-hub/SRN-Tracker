@@ -102,23 +102,26 @@
 
     @if ($targetBulanIni)
         <section class="card" style="margin-top:16px;">
-            <div class="card-title" style="margin-bottom:14px;">Target {{ $periodeLabel }} &mdash; Segmen {{ $targetBulanIni->segmen }}</div>
+            <div class="card-title" style="margin-bottom:14px;">
+                Target {{ $periodeLabel }} &mdash; Segmen {{ $targetBulanIni->segmen }}
+                <span class="chip" style="background:var(--accent-soft); color:var(--accent-ink); margin-left:6px;">Tier: {{ ucfirst($targetBulanIni->tier_dipakai) }}</span>
+            </div>
             <div class="info-grid">
                 <div>
                     <div class="info-label">Komit</div>
-                    <div class="info-value tnum">{{ $rp($targetBulanIni->komit ?? 0) }}</div>
+                    <div class="info-value tnum" style="{{ $targetBulanIni->tier_dipakai === 'komit' ? 'font-weight:700; color:var(--accent-ink);' : '' }}">{{ $rp($targetBulanIni->komit ?? 0) }}</div>
                 </div>
                 <div>
                     <div class="info-label">Target</div>
-                    <div class="info-value tnum">{{ $rp($targetBulanIni->target) }}</div>
+                    <div class="info-value tnum" style="{{ $targetBulanIni->tier_dipakai === 'target' ? 'font-weight:700; color:var(--accent-ink);' : '' }}">{{ $rp($targetBulanIni->target) }}</div>
                 </div>
                 <div>
                     <div class="info-label">Stretch</div>
-                    <div class="info-value tnum">{{ $rp($targetBulanIni->stretch ?? 0) }}</div>
+                    <div class="info-value tnum" style="{{ $targetBulanIni->tier_dipakai === 'stretch' ? 'font-weight:700; color:var(--accent-ink);' : '' }}">{{ $rp($targetBulanIni->stretch ?? 0) }}</div>
                 </div>
                 <div>
-                    <div class="info-label">Pencapaian</div>
-                    <div class="info-value tnum">{{ $targetBulanIni->target > 0 ? round($omsetBulanIni / $targetBulanIni->target * 100, 1) : 0 }}%</div>
+                    <div class="info-label">Pencapaian (vs Tier Dipakai)</div>
+                    <div class="info-value tnum">{{ $targetBulanIni->effectiveTarget() > 0 ? round($omsetBulanIni / $targetBulanIni->effectiveTarget() * 100, 1) : 0 }}%</div>
                 </div>
             </div>
         </section>

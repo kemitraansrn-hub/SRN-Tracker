@@ -34,7 +34,7 @@
                 <div class="info-label" style="margin-bottom:10px;">Omset Bulan Ini</div>
                 <div style="font-size:25px; font-weight:700;" class="tnum">{{ $rp($totalOmsetBulanIni) }}</div>
                 @if ($achievementPct !== null)
-                    @php $achColor = $achievementPct >= 80 ? 'good' : ($achievementPct >= 60 ? 'warn' : 'critical'); @endphp
+                    @php $achColor = $achievementPct >= 100 ? 'good' : ($achievementPct >= 70 ? 'warn' : 'critical'); @endphp
                     <div style="margin-top:10px;">
                         <span class="chip chip-{{ $achColor }}">{{ $achievementPct }}% dari target</span>
                     </div>

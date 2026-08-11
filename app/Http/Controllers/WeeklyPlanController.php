@@ -88,7 +88,7 @@ class WeeklyPlanController extends Controller
 
             // Target bulanan disebar proporsional sesuai porsi omset tiap
             // minggu dari histori 6 bulan; kalau belum ada histori, rata 4 minggu.
-            $targetBulan = (float) ($targetByMitra[$m->id]->target ?? 0);
+            $targetBulan = $targetByMitra[$m->id]?->effectiveTarget() ?? 0.0;
             $totalHist = array_sum($hist);
             $targetPerWeek = [];
             foreach (self::WEEKS as $w) {

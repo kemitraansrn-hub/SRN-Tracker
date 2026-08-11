@@ -63,7 +63,7 @@
                                 @if ($p->pct_bulan === null)
                                     —
                                 @else
-                                    @php $pctColor = $p->pct_bulan >= 80 ? 'good' : ($p->pct_bulan >= 60 ? 'warn' : 'critical'); @endphp
+                                    @php $pctColor = $p->pct_bulan >= 100 ? 'good' : ($p->pct_bulan >= 70 ? 'warn' : 'critical'); @endphp
                                     <span class="chip chip-{{ $pctColor }}">{{ $p->pct_bulan }}%</span>
                                 @endif
                             </td>

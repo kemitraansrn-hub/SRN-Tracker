@@ -46,7 +46,7 @@
                             <td class="tnum">{{ $rp($m->omset) }}</td>
                             <td class="tnum">{{ $rp($m->target) }}</td>
                             <td class="tnum">
-                                @php $color = $m->pct >= 80 ? 'good' : ($m->pct >= 60 ? 'warn' : 'critical'); @endphp
+                                @php $color = $m->pct >= 100 ? 'good' : ($m->pct >= 70 ? 'warn' : 'critical'); @endphp
                                 <span class="chip chip-{{ $color }}">{{ $m->pct }}%</span>
                             </td>
                             <td><a href="{{ route('mitra.show', $m->id) }}" class="link-action" style="color:var(--accent-ink); font-size:12.5px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 10px;">Lihat detail</a></td>
