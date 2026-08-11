@@ -17,6 +17,28 @@
         @endif
     </div>
 
+    <section style="display:grid; grid-template-columns:repeat({{ count($weeks) }}, 1fr); gap:16px; margin-bottom:20px;">
+        @foreach ($weeks as $w)
+            @php $wt = $weekTotals[$w]; @endphp
+            <div class="card">
+                <div class="info-label" style="margin-bottom:10px;">{{ $w }}{{ $w === $currentWeekLabel ? ' (berjalan)' : '' }}</div>
+                <div style="font-size:20px; font-weight:700;" class="tnum">{{ $rp($wt['realisasi']) }}</div>
+                <div style="font-size:11.5px; color:var(--ink-muted); margin-top:2px;">dari target {{ $rp($wt['target']) }}</div>
+                <div style="height:6px; border-radius:4px; background:var(--line); overflow:hidden; margin-top:10px;">
+                    <div style="height:100%; border-radius:4px; background:var(--accent); width:{{ $wt['pct'] !== null ? min($wt['pct'], 100) : 0 }}%;"></div>
+                </div>
+                <div style="margin-top:8px;">
+                    @if ($wt['pct'] === null)
+                        <span style="font-size:11.5px; color:var(--ink-faint);">Belum ada target</span>
+                    @else
+                        @php $wColor = $wt['pct'] >= 100 ? 'good' : ($wt['pct'] >= 70 ? 'warn' : 'critical'); @endphp
+                        <span class="chip chip-{{ $wColor }}">{{ $wt['pct'] }}%</span>
+                    @endif
+                </div>
+            </div>
+        @endforeach
+    </section>
+
     <section class="card table-card" style="padding:0;">
         <div class="table-scroll">
             <table>

@@ -126,9 +126,21 @@ class WeeklyPlanController extends Controller
             ];
         });
 
+        $weekTotals = [];
+        foreach (self::WEEKS as $w) {
+            $target = $plan->sum(fn ($p) => $p->target_per_week[$w]);
+            $realisasi = $plan->sum(fn ($p) => $p->actual[$w]);
+            $weekTotals[$w] = [
+                'target' => $target,
+                'realisasi' => $realisasi,
+                'pct' => $target > 0 ? round($realisasi / $target * 100, 1) : null,
+            ];
+        }
+
         return view('weekly-plan.index', [
             'plan' => $plan,
             'weeks' => self::WEEKS,
+            'weekTotals' => $weekTotals,
             'currentWeekLabel' => $currentWeekLabel,
             'periodeLabel' => $now->translatedFormat('F Y'),
         ]);
