@@ -6,10 +6,12 @@
     <title>{{ $title ?? 'SRN' }}</title>
     @include('layouts.partials.styles')
     <style>
-        .shell { display: grid; grid-template-columns: 244px 1fr; min-height: 100vh; }
+        html, body { height: 100%; margin: 0; overflow: hidden; }
+        .shell { display: grid; grid-template-columns: 244px 1fr; height: 100vh; }
         .sidebar {
             background: var(--surface-alt); border-right: 1px solid var(--line);
             padding: 22px 16px; display: flex; flex-direction: column; gap: 26px;
+            height: 100vh; overflow-y: auto; flex: none;
         }
         .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; }
         .brand-mark {
@@ -50,10 +52,41 @@
             background: none; border: none; color: var(--ink-faint); cursor: pointer;
             font-size: 11.5px; text-decoration: underline; padding: 0; margin-top: 2px;
         }
-        .main { padding: 26px 34px 60px; max-width: 1240px; }
+        .main {
+            padding: 26px 34px 60px; max-width: 1240px;
+            height: 100vh; overflow-y: auto; overflow-x: auto; min-width: 0;
+        }
+
+        .mobile-topbar { display: none; }
+        .sidebar-backdrop { display: none; }
+
         @media (max-width: 980px) {
             .shell { grid-template-columns: 1fr; }
-            .sidebar { display: none; }
+            .sidebar {
+                position: fixed; top: 0; left: 0; bottom: 0;
+                width: 244px; height: 100vh;
+                transform: translateX(-100%);
+                transition: transform 0.2s ease;
+                z-index: 60;
+            }
+            .sidebar.open { transform: translateX(0); box-shadow: var(--shadow); }
+            .mobile-topbar {
+                display: flex; align-items: center; gap: 12px;
+                padding: 14px 20px; border-bottom: 1px solid var(--line);
+                background: var(--surface-alt); flex: none;
+            }
+            .menu-btn {
+                width: 34px; height: 34px; border-radius: 8px;
+                border: 1px solid var(--line); background: var(--surface);
+                display: flex; align-items: center; justify-content: center; cursor: pointer;
+                flex: none;
+            }
+            .menu-btn:hover { border-color: var(--ink-faint); }
+            .sidebar-backdrop.open {
+                display: block;
+                position: fixed; inset: 0; background: rgba(20, 18, 15, 0.4); z-index: 55;
+            }
+            .main { height: calc(100vh - 63px); padding: 20px; }
         }
     </style>
 </head>
@@ -133,7 +166,15 @@
             </div>
         </aside>
 
+        <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()"></div>
+
         <main class="main">
+            <div class="mobile-topbar">
+                <button class="menu-btn" onclick="toggleSidebar()" aria-label="Buka menu">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3.5 6h17M3.5 12h17M3.5 18h17" stroke-linecap="round"/></svg>
+                </button>
+                <div class="brand-name">SRN</div>
+            </div>
             @yield('content')
         </main>
     </div>
@@ -145,6 +186,11 @@
             const isOpen = sub.style.display === 'flex';
             sub.style.display = isOpen ? 'none' : 'flex';
             chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
+        }
+
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('open');
+            document.getElementById('sidebarBackdrop').classList.toggle('open');
         }
     </script>
 </body>
