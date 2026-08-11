@@ -25,6 +25,7 @@ class TargetImportService
         'nama' => ['NAMA MITRA', 'NAMA', 'NAME'],
         'kae' => ['KAE'],
         'segmen' => ['SEGMEN'],
+        'tier_dipakai' => ['TIER DIPAKAI', 'TIER'],
         'komit' => ['KOMIT (RP)', 'KOMIT'],
         'target' => ['TARGET (RP)', 'TARGET'],
         'stretch' => ['STRETCH (RP)', 'STRETCH'],
@@ -134,16 +135,27 @@ class TargetImportService
                     $mitra->save();
                 }
 
+                $attributes = [
+                    'segmen' => $row['segmen'] ?? 'REGULER',
+                    'komit' => $row['komit'] ?? null,
+                    'target' => $row['target'],
+                    'stretch' => $row['stretch'] ?? null,
+                    'target_mou' => $row['target_mou'] ?? null,
+                    'import_batch_id' => $batch->id,
+                ];
+
+                // Only set tier_dipakai from the file when it has a
+                // recognizable value, so re-importing without that column
+                // doesn't wipe out a tier someone picked manually.
+                $tierRaw = $row['tier_dipakai'] ?? null;
+                $tierNormalized = $tierRaw ? mb_strtolower(trim($tierRaw)) : null;
+                if (in_array($tierNormalized, \App\Models\TargetBulanan::TIERS, true)) {
+                    $attributes['tier_dipakai'] = $tierNormalized;
+                }
+
                 TargetBulanan::updateOrCreate(
                     ['mitra_id' => $mitra->id, 'bulan' => $bulan, 'tahun' => $tahun],
-                    [
-                        'segmen' => $row['segmen'] ?? 'REGULER',
-                        'komit' => $row['komit'] ?? null,
-                        'target' => $row['target'],
-                        'stretch' => $row['stretch'] ?? null,
-                        'target_mou' => $row['target_mou'] ?? null,
-                        'import_batch_id' => $batch->id,
-                    ]
+                    $attributes
                 );
             }
 
