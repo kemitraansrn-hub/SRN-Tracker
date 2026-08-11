@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\TargetBulanan;
+use App\Services\StabilitasService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -21,11 +22,17 @@ class TierTargetController extends Controller
             ->sortBy(fn ($r) => $r->mitra->nama ?? '')
             ->values();
 
+        $referenceDate = \Carbon\Carbon::create($tahun, $bulan, 1);
+        $stabilitasByMitra = StabilitasService::bulkForPreviousQuarter($referenceDate);
+        $quarterRange = StabilitasService::previousQuarterRange($referenceDate);
+
         return view('pengaturan.tier-target', [
             'rows' => $rows,
             'bulan' => $bulan,
             'tahun' => $tahun,
             'periodeLabel' => \Carbon\Carbon::create($tahun, $bulan)->translatedFormat('F Y'),
+            'stabilitasByMitra' => $stabilitasByMitra,
+            'quarterLabel' => 'Q'.$quarterRange['kuartal'].' '.$quarterRange['tahun'],
         ]);
     }
 

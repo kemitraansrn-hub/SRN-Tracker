@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Mitra;
 use App\Models\User;
+use App\Services\StabilitasService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -56,6 +57,7 @@ class MitraController extends Controller
         $followupLogs = $mitra->followupLogs()->with('kae')->latest('tanggal_fu')->limit(10)->get();
         $specialDeals = $mitra->specialDeals()->with('kae')->latest()->limit(10)->get();
         $targetBulanIni = $mitra->targetBulanan()->where('bulan', $now->month)->where('tahun', $now->year)->first();
+        $stabilitas = StabilitasService::forMitra($mitra->id);
 
         return view('mitra.show', [
             'mitra' => $mitra,
@@ -65,6 +67,7 @@ class MitraController extends Controller
             'followupLogs' => $followupLogs,
             'specialDeals' => $specialDeals,
             'targetBulanIni' => $targetBulanIni,
+            'stabilitas' => $stabilitas,
             'periodeLabel' => $now->translatedFormat('F Y'),
         ]);
     }

@@ -8,6 +8,7 @@
     <h1 class="display" style="font-size:24px;">Tier Target per Mitra</h1>
     <div style="color:var(--ink-muted); font-size:13px; margin-top:4px; margin-bottom:24px;">
         {{ $periodeLabel }} &middot; pilih Komit / Target / Stretch mana yang jadi acuan pencapaian tiap mitra &mdash; dipakai di Dashboard, Weekly Plan, dan Segmentasi.
+        Stabilitas dihitung otomatis dari data order {{ $quarterLabel }}.
     </div>
 
     @if (session('status'))
@@ -38,18 +39,24 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Mitra</th><th>Segmen</th><th>Komit</th><th>Target</th><th>Stretch</th>
+                        <th>Mitra</th><th>Segmen</th><th>Stabilitas</th><th>Komit</th><th>Target</th><th>Stretch</th>
                         <th>Tier Dipakai</th><th>Target Efektif</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($rows as $r)
+                        @php $stab = $stabilitasByMitra[$r->mitra_id] ?? ['bln_aktif' => 0, 'stabilitas' => 'Pasif']; @endphp
                         <tr>
                             <td>
                                 <a href="{{ route('mitra.show', $r->mitra) }}" style="color:var(--ink); text-decoration:none; font-weight:600;">{{ $r->mitra->nama ?? '—' }}</a>
                                 <div style="font-size:11.5px; color:var(--ink-muted);">{{ $r->mitra->kode_mitra ?? '—' }}</div>
                             </td>
                             <td>{{ $r->segmen }}</td>
+                            <td>
+                                @php $stabColor = $stab['stabilitas'] === 'Stabil' ? 'good' : ($stab['stabilitas'] === 'Naik-turun' ? 'warn' : 'critical'); @endphp
+                                <span class="chip chip-{{ $stabColor }}">{{ $stab['stabilitas'] }}</span>
+                                <div style="font-size:10.5px; color:var(--ink-faint); margin-top:2px;">{{ $stab['bln_aktif'] }}/3 bulan aktif</div>
+                            </td>
                             <td class="tnum">{{ $rp($r->komit) }}</td>
                             <td class="tnum">{{ $rp($r->target) }}</td>
                             <td class="tnum">{{ $rp($r->stretch) }}</td>
@@ -66,7 +73,7 @@
                             <td class="tnum" style="font-weight:700;">{{ $rp($r->effectiveTarget()) }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" style="color:var(--ink-muted);">Belum ada Target Bulanan untuk periode ini.</td></tr>
+                        <tr><td colspan="8" style="color:var(--ink-muted);">Belum ada Target Bulanan untuk periode ini.</td></tr>
                     @endforelse
                 </tbody>
             </table>

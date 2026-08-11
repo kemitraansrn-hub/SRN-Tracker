@@ -35,7 +35,7 @@
         <div class="alert-success">{{ session('status') }}</div>
     @endif
 
-    <section style="display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; margin-bottom:20px;">
+    <section style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-bottom:20px;">
         <div class="card">
             <div class="info-label" style="margin-bottom:10px;">Omset Bulan Ini ({{ $periodeLabel }})</div>
             <div style="font-size:24px; font-weight:700;" class="tnum">{{ $rp($omsetBulanIni) }}</div>
@@ -43,6 +43,12 @@
         <div class="card">
             <div class="info-label" style="margin-bottom:10px;">Total Order Bulan Ini</div>
             <div style="font-size:24px; font-weight:700;" class="tnum">{{ $jumlahOrderBulanIni }}</div>
+        </div>
+        <div class="card">
+            <div class="info-label" style="margin-bottom:10px;">Stabilitas (Q{{ $stabilitas['kuartal'] }} {{ $stabilitas['tahun'] }})</div>
+            @php $stabColor = $stabilitas['stabilitas'] === 'Stabil' ? 'good' : ($stabilitas['stabilitas'] === 'Naik-turun' ? 'warn' : 'critical'); @endphp
+            <div style="margin-top:4px;"><span class="chip chip-{{ $stabColor }}">{{ $stabilitas['stabilitas'] }}</span></div>
+            <div style="font-size:11.5px; color:var(--ink-muted); margin-top:8px;">{{ $stabilitas['bln_aktif'] }} dari 3 bulan aktif bertransaksi</div>
         </div>
     </section>
 
