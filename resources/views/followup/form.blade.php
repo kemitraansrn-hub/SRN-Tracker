@@ -5,14 +5,20 @@
         &larr; Kembali
     </a>
 
-    <h1 class="display" style="font-size:22px; margin-bottom:20px;">Catat Follow-up</h1>
+    <h1 class="display" style="font-size:22px; margin-bottom:20px;">{{ isset($log) ? 'Edit Follow-up' : 'Catat Follow-up' }}</h1>
 
+    @if (session('status'))
+        <div class="alert-success">{{ session('status') }}</div>
+    @endif
     @if ($errors->any())
         <div class="alert-error">{{ $errors->first() }}</div>
     @endif
 
-    <form method="POST" action="{{ route('followup.store') }}" class="card" style="max-width:640px;">
+    <form method="POST" action="{{ isset($log) ? route('followup.update', $log) : route('followup.store') }}" class="card" style="max-width:640px;">
         @csrf
+        @if (isset($log))
+            @method('PUT')
+        @endif
 
         <div class="field-row">
             <div class="field" style="flex:1;">
@@ -26,7 +32,7 @@
             </div>
             <div class="field" style="width:180px;">
                 <label>Tanggal Follow-up</label>
-                <input type="date" name="tanggal_fu" value="{{ old('tanggal_fu', now()->toDateString()) }}" required>
+                <input type="date" name="tanggal_fu" value="{{ old('tanggal_fu', isset($log) ? $log->tanggal_fu->toDateString() : now()->toDateString()) }}" required>
             </div>
         </div>
 
@@ -34,16 +40,16 @@
             <div class="field" style="flex:1;">
                 <label>Status Follow-up</label>
                 <select name="status_followup" required>
-                    <option value="Terhubung" {{ old('status_followup') === 'Terhubung' ? 'selected' : '' }}>Terhubung</option>
-                    <option value="Tidak ada respon" {{ old('status_followup') === 'Tidak ada respon' ? 'selected' : '' }}>Tidak ada respon</option>
+                    <option value="Terhubung" {{ old('status_followup', $log->status_followup ?? '') === 'Terhubung' ? 'selected' : '' }}>Terhubung</option>
+                    <option value="Tidak ada respon" {{ old('status_followup', $log->status_followup ?? '') === 'Tidak ada respon' ? 'selected' : '' }}>Tidak ada respon</option>
                 </select>
             </div>
             <div class="field" style="flex:1;">
                 <label>Status Belanja</label>
                 <select name="status_belanja" id="statusBelanja" onchange="toggleNominalKendala()" required>
-                    <option value="Belanja Penuh" {{ old('status_belanja') === 'Belanja Penuh' ? 'selected' : '' }}>Belanja Penuh</option>
-                    <option value="Belanja Sebagian" {{ old('status_belanja') === 'Belanja Sebagian' ? 'selected' : '' }}>Belanja Sebagian</option>
-                    <option value="Belum Belanja" {{ old('status_belanja') === 'Belum Belanja' ? 'selected' : '' }}>Belum Belanja</option>
+                    <option value="Belanja Penuh" {{ old('status_belanja', $log->status_belanja ?? '') === 'Belanja Penuh' ? 'selected' : '' }}>Belanja Penuh</option>
+                    <option value="Belanja Sebagian" {{ old('status_belanja', $log->status_belanja ?? '') === 'Belanja Sebagian' ? 'selected' : '' }}>Belanja Sebagian</option>
+                    <option value="Belum Belanja" {{ old('status_belanja', $log->status_belanja ?? '') === 'Belum Belanja' ? 'selected' : '' }}>Belum Belanja</option>
                 </select>
             </div>
         </div>
@@ -51,14 +57,14 @@
         <div class="field-row">
             <div class="field" style="flex:1;" id="nominalField">
                 <label>Nominal Belanja (Rp)</label>
-                <input type="number" step="1" min="0" name="nominal_belanja" value="{{ old('nominal_belanja') }}">
+                <input type="number" step="1" min="0" name="nominal_belanja" value="{{ old('nominal_belanja', $log->nominal_belanja ?? '') }}">
             </div>
             <div class="field" style="flex:1;" id="kendalaField">
                 <label>Alasan / Kendala</label>
                 <select name="alasan_kendala">
                     <option value="">— Tidak ada —</option>
                     @foreach ($alasanOptions as $alasan)
-                        <option value="{{ $alasan }}" {{ old('alasan_kendala') === $alasan ? 'selected' : '' }}>{{ $alasan }}</option>
+                        <option value="{{ $alasan }}" {{ old('alasan_kendala', $log->alasan_kendala ?? '') === $alasan ? 'selected' : '' }}>{{ $alasan }}</option>
                     @endforeach
                 </select>
             </div>
@@ -66,21 +72,21 @@
 
         <div class="field">
             <label>Catatan / Tindak Lanjut</label>
-            <textarea name="catatan" rows="3" style="font-family:inherit; font-size:14px; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:var(--surface-alt); color:var(--ink); resize:vertical;">{{ old('catatan') }}</textarea>
+            <textarea name="catatan" rows="3" style="resize:vertical;">{{ old('catatan', $log->catatan ?? '') }}</textarea>
         </div>
 
         <div class="field-row">
             <div class="field" style="flex:1;">
                 <label>Jam Mulai</label>
-                <input type="time" name="jam_mulai" value="{{ old('jam_mulai') }}">
+                <input type="time" name="jam_mulai" value="{{ old('jam_mulai', isset($log) ? substr((string) $log->jam_mulai, 0, 5) : '') }}">
             </div>
             <div class="field" style="flex:1;">
                 <label>Jam Selesai</label>
-                <input type="time" name="jam_selesai" value="{{ old('jam_selesai') }}">
+                <input type="time" name="jam_selesai" value="{{ old('jam_selesai', isset($log) ? substr((string) $log->jam_selesai, 0, 5) : '') }}">
             </div>
         </div>
 
-        <button type="submit" class="btn btn-primary" style="width:auto; margin-top:8px;">Simpan Follow-up</button>
+        <button type="submit" class="btn btn-primary" style="width:auto; margin-top:8px;">{{ isset($log) ? 'Update Follow-up' : 'Simpan Follow-up' }}</button>
     </form>
 
     <script>

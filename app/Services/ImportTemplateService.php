@@ -18,26 +18,26 @@ class ImportTemplateService
         $mt = $ss->getActiveSheet();
         $mt->setTitle('Master Transaksi');
         $mt->fromArray([
-            'TANGGAL', 'BULAN ORDER', 'ID TRANSAKSI (core)', 'ID TRANSAKSI (Perpack)', 'RESELLER', 'NAME', 'ADDRESS',
+            'TANGGAL', 'BULAN ORDER', 'ID TRANSAKSI (Perpack)', 'RESELLER', 'NAME', 'ADDRESS',
             'QTY', 'TOTAL', 'DISKON', 'DISKON CLAIM', 'DISKON RETURN', 'BIAYA PENDAFTARAN', 'DISKON RETURN ID',
             'ONGKIR', 'BIAYA PENANGANAN', 'TOTAL TRANSFER', 'STATUS PEMBAYARAN', 'STATUS',
         ], null, 'A1');
         $mt->fromArray([[
-            '2026-08-07', 'August', '90001', '320260807000000', 'REB2025080001', 'Contoh Nama Mitra', 'Contoh Alamat',
+            '2026-08-07', 'August', '320260807000000', 'REB2025080001', 'Contoh Nama Mitra', 'Contoh Alamat',
             10, 2000000, 0, null, null, 0, null, 50000, null, 2050000, 'Lunas', 'Konfirmasi',
         ]], null, 'A2');
-        $this->styleHeader($mt, 19);
-        $this->styleExampleRow($mt, 2, 19);
+        $this->styleHeader($mt, 18);
+        $this->styleExampleRow($mt, 2, 18);
 
         $md = $ss->createSheet();
         $md->setTitle('Master Detail Transaksi');
         $md->fromArray([
-            'TANGGAL ORDER', 'BULAN ORDER', 'ID TRANSAKSI', 'ID TRANSAKSI (Perpack)', 'RESELLER', 'NAME', 'ADDRESS',
-            'BRAND', 'PRODUK', 'HARGA', 'QTY', 'TOTAL', 'ID SALESMAN', 'ID CHANNEL',
+            'TANGGAL ORDER', 'BULAN ORDER', 'ID TRANSAKSI (Perpack)', 'RESELLER', 'NAME', 'ADDRESS',
+            'BRAND', 'SKU', 'NAMA PRODUK', 'HARGA', 'QTY', 'TOTAL', 'ID SALESMAN', 'ID CHANNEL',
         ], null, 'A1');
         $md->fromArray([[
-            '2026-08-07', 'August', '90001', '320260807000000', 'REB2025080001', 'Contoh Nama Mitra', 'Contoh Alamat',
-            'Reglow', 'New Reglow Serum (20ml)', 200000, 10, 2000000, 'B', 'RE',
+            '2026-08-07', 'August', '320260807000000', 'REB2025080001', 'Contoh Nama Mitra', 'Contoh Alamat',
+            'Reglow', 'RGL-SRM-20', 'New Reglow Serum (20ml)', 200000, 10, 2000000, 'B', 'RE',
         ]], null, 'A2');
         $this->styleHeader($md, 14);
         $this->styleExampleRow($md, 2, 14);
@@ -58,6 +58,25 @@ class ImportTemplateService
         ]], null, 'A2');
         $this->styleHeader($sheet, 9);
         $this->styleExampleRow($sheet, 2, 9);
+
+        return $ss;
+    }
+
+    public function specialDeal(): Spreadsheet
+    {
+        $ss = new Spreadsheet();
+        $sheet = $ss->getActiveSheet();
+        $sheet->setTitle('Special Deal');
+        $sheet->fromArray([
+            'KODE MITRA', 'NAMA MITRA', 'KAE', 'SEGMENTASI', 'DESKRIPSI', 'KUARTAL', 'TAHUN',
+            'TARGET KUARTAL (RP)', 'BUDGET (%)', 'SUBSIDI', 'STATUS MOU',
+        ], null, 'A1');
+        $sheet->fromArray([[
+            'REB2025080001', 'Contoh Nama Mitra', 'DITA', 'PARETO', 'Program subsidi Iklan Q3 2026', 3, 2026,
+            900000000, 4, 'Iklan', 'Proses',
+        ]], null, 'A2');
+        $this->styleHeader($sheet, 11);
+        $this->styleExampleRow($sheet, 2, 11);
 
         return $ss;
     }

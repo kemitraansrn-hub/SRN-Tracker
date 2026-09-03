@@ -22,7 +22,7 @@
             <div style="color:var(--ink-muted); font-size:13px; margin-top:6px;">
                 {{ $mitra->kode_mitra }}
                 @if ($mitra->kae_code)
-                    &middot; KAE <span class="kae-tag" style="display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:6px; background:var(--accent-soft); color:var(--accent-ink); font-size:10.5px; font-weight:700; vertical-align:middle;">{{ $mitra->kae_code }}</span>
+                    &middot; KAE <span style="display:inline-block; padding:2px 8px; border-radius:6px; background:var(--accent-soft); color:var(--accent-ink); font-size:11px; font-weight:600; vertical-align:middle;">{{ \App\Models\User::kaeNameMap()[$mitra->kae_code] ?? $mitra->kae_code }}</span>
                 @endif
             </div>
         </div>
@@ -111,6 +111,9 @@
             <div class="card-title" style="margin-bottom:14px;">
                 Target {{ $periodeLabel }} &mdash; Segmen {{ $targetBulanIni->segmen }}
                 <span class="chip" style="background:var(--accent-soft); color:var(--accent-ink); margin-left:6px;">Tier: {{ ucfirst($targetBulanIni->tier_dipakai) }}</span>
+                @if ($targetBulanIni->kategori)
+                    <span class="chip" style="margin-left:6px;">{{ $targetBulanIni->kategori }}</span>
+                @endif
             </div>
             <div class="info-grid">
                 <div>
@@ -130,6 +133,11 @@
                     <div class="info-value tnum">{{ $targetBulanIni->effectiveTarget() > 0 ? round($omsetBulanIni / $targetBulanIni->effectiveTarget() * 100, 1) : 0 }}%</div>
                 </div>
             </div>
+            @if ($targetBulanIni->keterangan)
+                <div style="margin-top:14px; font-size:12.5px; color:var(--ink-muted);">
+                    <strong style="color:var(--ink);">Keterangan:</strong> {{ $targetBulanIni->keterangan }}
+                </div>
+            @endif
         </section>
     @else
         <div class="card" style="margin-top:16px; color:var(--ink-muted); font-size:12.5px;">
@@ -170,7 +178,7 @@
                                 @endif
                             </td>
                             <td style="font-size:12px; color:var(--ink-muted);">{{ $log->alasan_kendala ?: '—' }}</td>
-                            <td style="font-size:12px; color:var(--ink-muted); max-width:220px;">{{ \Illuminate\Support\Str::limit($log->catatan, 60) ?: '—' }}</td>
+                            <td style="font-size:12px; color:var(--ink-muted); max-width:280px; white-space:normal;">{{ $log->catatan ?: '—' }}</td>
                         </tr>
                     @empty
                         <tr><td colspan="6" style="color:var(--ink-muted);">Belum ada follow-up untuk mitra ini.</td></tr>
@@ -190,25 +198,37 @@
         </div>
         <div class="table-scroll">
             <table>
-                <thead><tr><th>Deskripsi</th><th>Nilai</th><th>Periode</th><th>Status</th><th></th></tr></thead>
+                <thead><tr><th>Segmen</th><th>Deskripsi</th><th>Target Kuartal</th><th>Periode</th><th>Status</th><th></th></tr></thead>
                 <tbody>
                     @forelse ($specialDeals as $deal)
                         <tr>
-                            <td style="font-size:12.5px; color:var(--ink-muted); max-width:260px;">{{ \Illuminate\Support\Str::limit($deal->deskripsi, 70) }}</td>
-                            <td class="tnum">{{ $deal->nilai ? $rp($deal->nilai) : '—' }}</td>
-                            <td class="tnum" style="font-size:12px;">{{ $deal->tanggal_mulai?->format('d/m/Y') ?? '—' }} &ndash; {{ $deal->tanggal_selesai?->format('d/m/Y') ?? '—' }}</td>
+                            <td style="font-size:12px;">{{ $deal->segmen ?: '—' }}</td>
+                            <td style="font-size:12.5px; color:var(--ink-muted); max-width:220px;">{{ \Illuminate\Support\Str::limit($deal->deskripsi, 70) }}</td>
+                            <td class="tnum">{{ $deal->target_kuartal ? $rp($deal->target_kuartal) : '—' }}</td>
+                            <td class="tnum" style="font-size:12px;">{{ $deal->periodeLabel() ?? '—' }}</td>
                             <td>
                                 @switch($deal->status)
-                                    @case('diajukan') <span class="chip chip-warn">Diajukan</span> @break
-                                    @case('berjalan') <span class="chip chip-good">Berjalan</span> @break
-                                    @case('selesai') <span class="chip" style="background:var(--surface-alt); color:var(--ink-muted);">Selesai</span> @break
+                                    @case('proses') <span class="chip chip-warn">Proses</span> @break
+                                    @case('done') <span class="chip chip-good">Done</span> @break
                                     @case('batal') <span class="chip chip-critical">Batal</span> @break
                                 @endswitch
                             </td>
-                            <td><a href="{{ route('special-deal.edit', $deal) }}" class="link-action" style="color:var(--accent-ink); font-size:12.5px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 10px;">Edit</a></td>
+                            <td>
+                                <div style="display:flex; gap:6px;">
+                                    <a href="{{ route('special-deal.edit', $deal) }}" class="link-action" style="color:var(--accent-ink); font-size:12.5px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 10px;">Edit</a>
+                                    <a href="{{ route('special-deal.mou', $deal) }}" class="link-action" style="color:var(--ink); font-size:12.5px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 10px;">Cetak MOU</a>
+                                    @if (auth()->user()->isAdmin())
+                                        <form method="POST" action="{{ route('special-deal.destroy', $deal) }}" onsubmit="return confirm('Hapus special deal ini? Data tidak bisa dikembalikan.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger" style="width:auto; font-size:11.5px; padding:5px 10px;">Hapus</button>
+                                        </form>
+                                    @endif
+                                </div>
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" style="color:var(--ink-muted);">Belum ada special deal untuk mitra ini.</td></tr>
+                        <tr><td colspan="6" style="color:var(--ink-muted);">Belum ada special deal untuk mitra ini.</td></tr>
                     @endforelse
                 </tbody>
             </table>

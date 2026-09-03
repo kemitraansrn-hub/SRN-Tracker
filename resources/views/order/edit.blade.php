@@ -36,7 +36,7 @@
 
         <div class="field">
             <label>Alasan Koreksi</label>
-            <textarea name="alasan_edit" rows="3" required style="font-family:inherit; font-size:14px; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:var(--surface-alt); color:var(--ink); resize:vertical;" placeholder="mis. Salah input total saat import, sudah dicek ulang dengan mitra">{{ old('alasan_edit') }}</textarea>
+            <textarea name="alasan_edit" rows="3" required style="resize:vertical;" placeholder="mis. Salah input total saat import, sudah dicek ulang dengan mitra">{{ old('alasan_edit') }}</textarea>
         </div>
 
         <button type="submit" class="btn btn-primary" style="width:auto; margin-top:8px;">Simpan Koreksi</button>

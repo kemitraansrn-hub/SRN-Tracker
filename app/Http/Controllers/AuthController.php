@@ -37,6 +37,10 @@ class AuthController extends Controller
             ]);
         }
 
+        if ($request->user()->isFinance()) {
+            return redirect()->route('poin.index');
+        }
+
         return redirect()->intended(route('dashboard'));
     }
 

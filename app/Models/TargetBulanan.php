@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
     'mitra_id', 'bulan', 'tahun', 'segmen', 'komit', 'target',
-    'stretch', 'tier_dipakai', 'target_mou', 'import_batch_id',
+    'stretch', 'tier_dipakai', 'target_mou', 'kategori', 'keterangan', 'import_batch_id',
 ])]
 class TargetBulanan extends Model
 {

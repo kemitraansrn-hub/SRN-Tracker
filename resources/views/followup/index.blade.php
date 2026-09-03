@@ -31,7 +31,7 @@
                 <thead>
                     <tr>
                         <th>Tanggal</th><th>Minggu</th><th>Mitra</th><th>KAE</th>
-                        <th>Status FU</th><th>Status Belanja</th><th>Nominal</th><th>Durasi</th>
+                        <th>Status FU</th><th>Status Belanja</th><th>Nominal</th><th>Durasi</th><th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -61,9 +61,19 @@
                             </td>
                             <td class="tnum">{{ $log->nominal_belanja ? $rp($log->nominal_belanja) : '—' }}</td>
                             <td class="tnum">{{ $log->total_menit ? $log->total_menit.' mnt' : '—' }}</td>
+                            <td>
+                                <div style="display:flex; gap:6px;">
+                                    <a href="{{ route('followup.edit', $log) }}" class="link-action" style="color:var(--accent-ink); font-size:12px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 9px;">Edit</a>
+                                    <form method="POST" action="{{ route('followup.destroy', $log) }}" onsubmit="return confirm('Hapus catatan follow-up untuk {{ addslashes($log->mitra->nama ?? 'mitra ini') }} tanggal {{ $log->tanggal_fu->format('d/m/Y') }}?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="link-action" style="color:var(--critical); font-size:12px; font-weight:600; background:none; border:1px solid var(--line); border-radius:7px; padding:5px 9px; cursor:pointer;">Hapus</button>
+                                    </form>
+                                </div>
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" style="color:var(--ink-muted);">Belum ada catatan follow-up.</td></tr>
+                        <tr><td colspan="9" style="color:var(--ink-muted);">Belum ada catatan follow-up.</td></tr>
                     @endforelse
                 </tbody>
             </table>

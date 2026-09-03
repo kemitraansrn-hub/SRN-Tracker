@@ -1,0 +1,18 @@
+{
+  "name": "srn-link-center-mcp",
+  "version": "1.0.0",
+  "description": "MCP server read-only untuk data SRN Link Center (omset, target, mitra) — dipakai lewat Claude Code / Claude Desktop.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "dotenv": "^17.4.2",
+    "mysql2": "^3.24.3"
+  }
+}

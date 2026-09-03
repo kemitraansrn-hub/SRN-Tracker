@@ -12,59 +12,45 @@
                 Ringkasan performa {{ auth()->user()->isAdmin() ? 'semua mitra' : 'mitra kamu' }} &mdash; {{ $periodeLabel }}
             </div>
         </div>
+        @include('partials.bulan-tahun-filter', ['action' => route('dashboard'), 'bulan' => $bulanIni, 'tahun' => $tahunIni, 'isBulanIni' => $isBulanIni])
     </div>
 
-    @unless ($adaTargetBulanIni)
-        <div class="alert-error" style="background:var(--warn-soft); color:var(--warn);">
-            Target bulanan untuk {{ $periodeLabel }} belum di-import, jadi Achievement % dan status mitra belum bisa ditampilkan. KPI di bawah murni dari data order yang sudah masuk.
-        </div>
-    @endunless
-
-    @if ($jumlahOrderBulanIni === 0)
-        <div class="card" style="text-align:center; padding:40px 20px; color:var(--ink-muted);">
-            Belum ada data order untuk {{ $periodeLabel }}.
-            @if (auth()->user()->isAdmin())
-                <br>Mulai dengan <a href="{{ route('import.index') }}" style="color:var(--accent-ink); font-weight:600;">import data harian</a>.
-            @endif
-        </div>
-    @else
-        @php $kpiCount = 3 + ($adaTargetBulanIni ? 1 : 0) + ($trendCard ? 1 : 0); @endphp
-        <section style="display:grid; grid-template-columns:repeat({{ $kpiCount }}, 1fr); gap:16px; margin-bottom:20px;">
-            <div class="card">
-                <div class="info-label" style="margin-bottom:10px;">Omset Bulan Ini</div>
-                <div style="font-size:25px; font-weight:700;" class="tnum">{{ $rp($totalOmsetBulanIni) }}</div>
-                @if ($achievementPct !== null)
-                    @php $achColor = $achievementPct >= 100 ? 'good' : ($achievementPct >= 70 ? 'warn' : 'critical'); @endphp
-                    <div style="margin-top:10px;">
-                        <span class="chip chip-{{ $achColor }}">{{ $achievementPct }}% dari target</span>
-                    </div>
-                    <div style="height:6px; border-radius:4px; background:var(--line); overflow:hidden; margin-top:10px;">
-                        <div style="height:100%; border-radius:4px; background:var(--accent); width:{{ min($achievementPct, 100) }}%;"></div>
-                    </div>
-                @endif
-            </div>
-            <div class="card">
-                <div class="info-label" style="margin-bottom:10px;">Jumlah Order</div>
-                <div style="font-size:25px; font-weight:700;" class="tnum">{{ $jumlahOrderBulanIni }}</div>
-            </div>
-            <div class="card">
-                <div class="info-label" style="margin-bottom:10px;">Mitra Aktif</div>
-                <div style="font-size:25px; font-weight:700;" class="tnum">{{ $mitraAktifBulanIni }} <small style="font-size:13px; color:var(--ink-muted); font-weight:500;">/ {{ $totalMitra }}</small></div>
-            </div>
-            @if ($adaTargetBulanIni)
+    @php $kpiTileCount = ($companyTarget ? 1 : 0) + 1 + ($trendCard ? 1 : 0); @endphp
+    <section style="display:grid; grid-template-columns:repeat(12, 1fr); gap:16px; margin-bottom:20px; align-items:stretch;">
+        <div style="grid-column:span {{ $pencapaianTigaTier ? 6 : 12 }}; display:grid; grid-template-columns:repeat({{ $kpiTileCount }}, 1fr); gap:16px;">
+            @if ($companyTarget)
                 <div class="card">
-                    <div class="info-label" style="margin-bottom:10px;">Mitra Perlu Perhatian</div>
-                    <div style="font-size:25px; font-weight:700;" class="tnum">{{ $mitraPerluPerhatian->count() }}</div>
-                    @php
-                        $kritis = $mitraPerluPerhatian->where('pct', '<', 60)->count();
-                        $warning = $mitraPerluPerhatian->count() - $kritis;
-                    @endphp
+                    <div class="info-label" style="margin-bottom:10px;">Target Perusahaan vs Pencapaian</div>
+                    <div style="font-size:25px; font-weight:700;" class="tnum">{{ $rp($totalOmsetBulanIni) }}</div>
+                    <div style="font-size:11.5px; color:var(--ink-muted); margin-top:2px;">dari target {{ $rp($companyTarget) }} / bulan</div>
+                    <div style="height:6px; border-radius:4px; background:var(--line); overflow:hidden; margin-top:10px;">
+                        <div style="height:100%; border-radius:4px; background:var(--accent); width:{{ min($companyAchPct, 100) }}%;"></div>
+                    </div>
                     <div style="margin-top:10px;">
-                        <span class="chip chip-critical">{{ $kritis }} kritis</span>
-                        <span class="chip chip-warn" style="margin-left:6px;">{{ $warning }} warning</span>
+                        @php $companyColor = $companyAchPct >= 100 ? 'good' : ($companyAchPct >= 70 ? 'warn' : 'critical'); @endphp
+                        <span class="chip chip-{{ $companyColor }}">{{ $companyAchPct }}%</span>
                     </div>
                 </div>
             @endif
+            <div class="card">
+                <div class="info-label" style="margin-bottom:10px;">MTD vs Bulan Lalu</div>
+                <div style="font-size:25px; font-weight:700;" class="tnum">{{ $rp($mtdIni) }}</div>
+                <div style="font-size:11.5px; color:var(--ink-muted); margin-top:2px;">vs {{ $rp($mtdLalu) }} ({{ $dayCap }} hari pertama bulan lalu)</div>
+                <div style="margin-top:10px; display:flex; align-items:center; gap:5px;">
+                    @if ($mtdGrowthPct === null)
+                        <span style="font-size:12px; color:var(--ink-faint);">Tidak ada data pembanding</span>
+                    @else
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="{{ $mtdGrowthPct >= 0 ? 'var(--good)' : 'var(--critical)' }}" stroke-width="2.5">
+                            @if ($mtdGrowthPct >= 0)
+                                <path d="M6 15l6-6 6 6" stroke-linecap="round" stroke-linejoin="round"/>
+                            @else
+                                <path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/>
+                            @endif
+                        </svg>
+                        <span class="tnum" style="font-weight:700; font-size:14px; color:{{ $mtdGrowthPct >= 0 ? 'var(--good)' : 'var(--critical)' }};">{{ $mtdGrowthPct >= 0 ? '+' : '' }}{{ $mtdGrowthPct }}%</span>
+                    @endif
+                </div>
+            </div>
             @if ($trendCard)
                 <div class="card">
                     <div class="info-label" style="margin-bottom:10px;">{{ $trendCard['label'] }}</div>
@@ -86,81 +72,196 @@
                     </div>
                 </div>
             @endif
-        </section>
+        </div>
 
-        <section style="display:grid; grid-template-columns:1.4fr 1fr; gap:16px; margin-bottom:20px; align-items:start;">
-            <div class="card">
+        @if ($pencapaianTigaTier)
+            <div class="card" style="grid-column:span 6;">
                 <div class="card-head">
-                    <div class="card-title">Tren Omset Mingguan</div>
-                    <div class="card-hint">{{ $periodeLabel }}</div>
+                    <div class="card-title">Pencapaian vs 3 Tier Target</div>
+                    <div class="card-hint">Omset {{ $periodeLabel }}: {{ $rp($totalOmsetBulanIni) }}</div>
                 </div>
-                @php $maxMinggu = $trenMingguan->max('total') ?: 1; @endphp
-                <div style="display:flex; flex-direction:column; gap:12px;">
-                    @foreach (['W1','W2','W3','W4','W5'] as $w)
-                        @php $val = $trenMingguan[$w]->total ?? 0; @endphp
-                        @if ($val > 0 || in_array($w, ['W1','W2','W3','W4']))
-                            <div style="display:grid; grid-template-columns:36px 1fr 110px; align-items:center; gap:10px;">
-                                <div style="font-size:12px; font-weight:700; color:var(--ink-muted);">{{ $w }}</div>
-                                <div style="height:8px; border-radius:4px; background:var(--line); overflow:hidden;">
-                                    <div style="height:100%; border-radius:4px; background:var(--accent); width:{{ $maxMinggu ? round($val / $maxMinggu * 100) : 0 }}%;"></div>
-                                </div>
-                                <div class="tnum" style="font-size:12px; color:var(--ink-muted); text-align:right;">{{ $rp($val) }}</div>
+                <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;">
+                    @foreach (['komit' => 'Komit', 'target' => 'Target', 'stretch' => 'Stretch'] as $key => $label)
+                        @php $t = $pencapaianTigaTier[$key]; @endphp
+                        <div>
+                            <div class="info-label" style="margin-bottom:6px;">{{ $label }}</div>
+                            <div style="font-size:13px; color:var(--ink-muted); margin-bottom:8px;" class="tnum">{{ $rp($t['target']) }}</div>
+                            <div style="height:6px; border-radius:4px; background:var(--line); overflow:hidden;">
+                                <div style="height:100%; border-radius:4px; background:var(--accent); width:{{ $t['pct'] !== null ? min($t['pct'], 100) : 0 }}%;"></div>
                             </div>
-                        @endif
+                            <div style="margin-top:8px;">
+                                @if ($t['pct'] === null)
+                                    <span style="font-size:11.5px; color:var(--ink-faint);">Belum ada target</span>
+                                @else
+                                    @php $tColor = $t['pct'] >= 100 ? 'good' : ($t['pct'] >= 70 ? 'warn' : 'critical'); @endphp
+                                    <span class="chip chip-{{ $tColor }}">{{ $t['pct'] }}%</span>
+                                @endif
+                            </div>
+                        </div>
                     @endforeach
                 </div>
             </div>
+        @endif
+    </section>
 
-            <div class="card">
-                <div class="card-head">
-                    <div class="card-title">Omset per Brand</div>
-                    <div class="card-hint">{{ $rp($totalItemOmset) }}</div>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:13px;">
-                    @forelse ($omsetPerBrand as $b)
-                        @php $pct = $totalItemOmset > 0 ? round($b->total / $totalItemOmset * 100) : 0; @endphp
-                        <div style="display:grid; grid-template-columns:84px 1fr 44px; align-items:center; gap:10px;">
-                            <div style="font-size:12.5px; font-weight:600;">{{ $b->brand }}</div>
-                            <div style="height:8px; border-radius:4px; background:var(--line); overflow:hidden;">
-                                <div style="height:100%; border-radius:4px; background:var(--accent); width:{{ $pct }}%;"></div>
-                            </div>
-                            <div class="tnum" style="font-size:12px; color:var(--ink-muted); text-align:right;">{{ $pct }}%</div>
-                        </div>
-                    @empty
-                        <div style="color:var(--ink-muted); font-size:12.5px;">Belum ada data.</div>
-                    @endforelse
-                </div>
-            </div>
-        </section>
+    @unless ($adaTargetBulanIni)
+        <div class="alert-error" style="background:var(--warn-soft); color:var(--warn);">
+            Target bulanan untuk {{ $periodeLabel }} belum di-import, jadi Achievement % dan status mitra belum bisa ditampilkan. KPI di bawah murni dari data order yang sudah masuk.
+        </div>
+    @endunless
 
-        @if ($adaTargetBulanIni && $mitraPerluPerhatian->isNotEmpty())
+    @if ($jumlahOrderBulanIni === 0)
+        <div class="card" style="text-align:center; padding:40px 20px; color:var(--ink-muted);">
+            Belum ada data order untuk {{ $periodeLabel }}.
+            @if (auth()->user()->isAdmin())
+                <br>Mulai dengan <a href="{{ route('import.index') }}" style="color:var(--accent-ink); font-weight:600;">import data harian</a>.
+            @endif
+        </div>
+    @else
+        @if ($runRateWeekly)
             <section class="card table-card" style="padding:0; margin-bottom:20px;">
-                <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px;">
-                    <div class="card-title">Mitra Perlu Perhatian</div>
-                    <div class="card-hint">Diurutkan dari pencapaian terendah</div>
+                <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px; text-align:center; display:block;">
+                    <div class="card-title" style="text-transform:uppercase;">{{ auth()->user()->isAdmin() ? 'Kemitraan' : auth()->user()->name }}</div>
+                    <div class="card-title" style="text-transform:uppercase;">Run Rate Weekly</div>
                 </div>
                 <div class="table-scroll">
                     <table>
-                        <thead><tr><th>Mitra</th><th>Segmen</th><th>Omset</th><th>Target</th><th>% vs Target</th><th>Status</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Week</th>
+                                @foreach ($runRateWeekly as $w => $data)
+                                    @php $isCurrentWeek = 'W'.$w === $currentWeekLabel; @endphp
+                                    <th style="{{ $isCurrentWeek ? 'background:var(--good-soft);' : '' }}">
+                                        W{{ $w }}
+                                        <div style="font-weight:400; font-size:10.5px; color:var(--ink-faint); text-transform:none;">s/d {{ $runRateWeekEndDate[$w]->format('d/m') }}</div>
+                                    </th>
+                                @endforeach
+                            </tr>
+                        </thead>
                         <tbody>
-                            @foreach ($mitraPerluPerhatian as $m)
-                                <tr>
-                                    <td>
-                                        <div style="font-weight:600;">{{ $m->nama }}</div>
-                                        <div style="font-size:11.5px; color:var(--ink-muted);">{{ $m->kode_mitra }}</div>
+                            <tr style="font-weight:700;">
+                                <td>Target</td>
+                                @foreach ($runRateWeekly as $w => $data)
+                                    @php $isCurrentWeek = 'W'.$w === $currentWeekLabel; @endphp
+                                    <td class="tnum" style="{{ $isCurrentWeek ? 'background:var(--good-soft);' : '' }}">{{ $rp($data['target']) }}</td>
+                                @endforeach
+                            </tr>
+                            <tr>
+                                <td>Run Rate Weekly</td>
+                                @foreach ($runRateWeekly as $w => $data)
+                                    @php $isCurrentWeek = 'W'.$w === $currentWeekLabel; @endphp
+                                    <td class="tnum" style="color:var(--ink-muted); {{ $isCurrentWeek ? 'background:var(--good-soft);' : '' }}">{{ $rp($data['run_rate']) }}</td>
+                                @endforeach
+                            </tr>
+                            <tr>
+                                <td>Growth</td>
+                                @foreach ($runRateWeekly as $w => $data)
+                                    @php $g = $data['growth']; $isCurrentWeek = 'W'.$w === $currentWeekLabel; @endphp
+                                    <td class="tnum" style="{{ $isCurrentWeek ? 'background:var(--good-soft);' : '' }} {{ $g !== null && $g < 0 ? 'color:var(--critical);' : ($g !== null ? 'color:var(--good);' : '') }}">
+                                        {{ $g !== null ? $g.'%' : '—' }}
                                     </td>
-                                    <td>{{ $m->segmen }}</td>
-                                    <td class="tnum">{{ $rp($m->omset) }}</td>
-                                    <td class="tnum">{{ $rp($m->target) }}</td>
-                                    <td class="tnum">{{ $m->pct }}%</td>
+                                @endforeach
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        @endif
+
+        @if ($adaTargetBulanIni && $specialDealPerformance->isNotEmpty())
+            <section class="card table-card" style="padding:0; margin-bottom:20px;">
+                <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px;">
+                    <div class="card-title">Special Deal Performance</div>
+                    <div class="card-hint">{{ $periodeLabel }}</div>
+                </div>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Segmen Mitra</th><th>Jumlah Mitra</th><th>Mitra Active</th><th>Mitra Belanja Full</th>
+                                <th>Target</th><th>Ach</th><th>Ach %</th><th>Succes Rate</th><th>GAP</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($specialDealPerformance as $r)
+                                @php $isTotal = $r->segmen === 'All Chanel'; $belumBelanja = $r->mitra_belum_belanja ?? collect(); $belanjaFullList = $r->mitra_belanja_full_list ?? collect(); @endphp
+                                <tr style="{{ $isTotal ? 'font-weight:700; background:var(--surface-alt);' : '' }}">
                                     <td>
-                                        @if ($m->pct < 60)
-                                            <span class="chip chip-critical">Kritis</span>
-                                        @else
-                                            <span class="chip chip-warn">Warning</span>
+                                        <div>{{ $r->segmen }}</div>
+                                        @if ($belumBelanja->isNotEmpty())
+                                            <span class="reveal-toggle" style="margin-top:3px;" onclick="
+                                                const d = document.getElementById('sdp-belum-{{ $loop->index }}');
+                                                const open = d.style.display === 'none';
+                                                d.style.display = open ? '' : 'none';
+                                                this.classList.toggle('is-open', open);
+                                            ">
+                                                {{ $belumBelanja->count() }} belum belanja
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                            </span>
                                         @endif
                                     </td>
+                                    <td class="tnum">{{ $r->jumlah_mitra }}</td>
+                                    <td class="tnum">{{ $r->mitra_active }}</td>
+                                    <td class="tnum">
+                                        <div>{{ $r->mitra_belanja_full }}</div>
+                                        @if ($belanjaFullList->isNotEmpty())
+                                            <span class="reveal-toggle" style="margin-top:3px;" onclick="
+                                                const d = document.getElementById('sdp-full-{{ $loop->index }}');
+                                                const open = d.style.display === 'none';
+                                                d.style.display = open ? '' : 'none';
+                                                this.classList.toggle('is-open', open);
+                                            ">
+                                                lihat mitra
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td class="tnum">{{ $r->target !== null ? $rp($r->target) : '—' }}</td>
+                                    <td class="tnum">{{ $rp($r->ach) }}</td>
+                                    <td class="tnum">
+                                        @if ($r->ach_pct === null)
+                                            —
+                                        @else
+                                            @php $achColor = $r->ach_pct >= 100 ? 'good' : ($r->ach_pct >= 70 ? 'warn' : 'critical'); @endphp
+                                            <span class="chip chip-{{ $achColor }}">{{ $r->ach_pct }}%</span>
+                                        @endif
+                                    </td>
+                                    <td class="tnum">
+                                        @if ($r->succes_rate === null)
+                                            —
+                                        @else
+                                            @php $srColor = $r->succes_rate >= 70 ? 'good' : ($r->succes_rate >= 40 ? 'warn' : 'critical'); @endphp
+                                            <span class="chip chip-{{ $srColor }}">{{ $r->succes_rate }}%</span>
+                                        @endif
+                                    </td>
+                                    <td class="tnum" style="{{ $r->gap !== null && $r->gap < 0 ? 'color:var(--critical);' : ($r->gap !== null ? 'color:var(--good);' : '') }}">
+                                        {{ $r->gap !== null ? $rp($r->gap) : '—' }}
+                                    </td>
                                 </tr>
+                                @if ($belumBelanja->isNotEmpty())
+                                    <tr id="sdp-belum-{{ $loop->index }}" style="display:none;">
+                                        <td colspan="9" style="background:var(--surface-alt); padding:14px 20px;">
+                                            <div class="info-label" style="margin-bottom:8px;">Mitra {{ $r->segmen }} yang belum belanja bulan ini ({{ $belumBelanja->count() }})</div>
+                                            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:6px 16px;">
+                                                @foreach ($belumBelanja as $bb)
+                                                    <div style="font-size:12px; color:var(--ink-muted);">{{ $bb['nama'] }} <span style="color:var(--ink-faint);">({{ $bb['kode_mitra'] }})</span></div>
+                                                @endforeach
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endif
+                                @if ($belanjaFullList->isNotEmpty())
+                                    <tr id="sdp-full-{{ $loop->index }}" style="display:none;">
+                                        <td colspan="9" style="background:var(--surface-alt); padding:14px 20px;">
+                                            <div class="info-label" style="margin-bottom:8px;">Mitra {{ $r->segmen }} yang sudah belanja full bulan ini ({{ $belanjaFullList->count() }})</div>
+                                            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:6px 16px;">
+                                                @foreach ($belanjaFullList as $bf)
+                                                    <div style="font-size:12px; color:var(--ink-muted);">{{ $bf['nama'] }} <span style="color:var(--ink-faint);">({{ $bf['kode_mitra'] }}, {{ $bf['pct'] }}%)</span></div>
+                                                @endforeach
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endif
                             @endforeach
                         </tbody>
                     </table>
@@ -168,11 +269,134 @@
             </section>
         @endif
 
-        <section style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-            <div class="card table-card" style="padding:0;">
+        @if ($runRate)
+            <section class="card table-card" style="padding:0; margin-bottom:20px;">
                 <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px;">
-                    <div class="card-title">Top Mitra Bulan Ini</div>
+                    <div class="card-title">Run Rate Mitra Active</div>
+                    <div class="card-hint">YTD Januari&ndash;{{ $runRate['monthLabels'][$runRate['currentMonth']] }} {{ $tahunIni }} &middot; mitra dihitung unik per bulan, min. 1x belanja</div>
                 </div>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Agen</th>
+                                @foreach ($runRate['months'] as $m)
+                                    <th style="{{ $m === $runRate['currentMonth'] ? 'background:var(--good-soft);' : '' }}">{{ $runRate['monthLabels'][$m] }}</th>
+                                @endforeach
+                                <th>vs Target</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($runRate['rows'] as $r)
+                                <tr>
+                                    <td style="font-weight:600;">{{ $r['nama'] }}</td>
+                                    @foreach ($runRate['months'] as $m)
+                                        <td class="tnum" style="{{ $m === $runRate['currentMonth'] ? 'background:var(--good-soft);' : '' }}">{{ $r['counts'][$m] }}</td>
+                                    @endforeach
+                                    <td class="tnum">{{ $r['vs_target'] !== null ? $r['vs_target'].'%' : '—' }}</td>
+                                </tr>
+                            @endforeach
+                            <tr style="font-weight:700; background:var(--surface-alt);">
+                                <td>Total</td>
+                                @foreach ($runRate['months'] as $m)
+                                    <td class="tnum" style="{{ $m === $runRate['currentMonth'] ? 'background:var(--good-soft);' : '' }}">{{ $runRate['total']['counts'][$m] }}</td>
+                                @endforeach
+                                <td class="tnum">{{ $runRate['total']['vs_target'] !== null ? $runRate['total']['vs_target'].'%' : '—' }}</td>
+                            </tr>
+                            <tr style="font-weight:700;">
+                                <td>Avg Daily</td>
+                                @foreach ($runRate['months'] as $m)
+                                    <td class="tnum" style="{{ $m === $runRate['currentMonth'] ? 'background:var(--good-soft);' : '' }}">{{ $runRate['avg_daily'][$m] }}</td>
+                                @endforeach
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>% Growth</td>
+                                @foreach ($runRate['months'] as $m)
+                                    @php $g = $runRate['growth'][$m]; @endphp
+                                    <td class="tnum" style="{{ $m === $runRate['currentMonth'] ? 'background:var(--good-soft);' : '' }} {{ $g !== null && $g < 0 ? 'color:var(--critical);' : ($g !== null ? 'color:var(--good);' : '') }}">
+                                        {{ $g !== null ? $g.'%' : '—' }}
+                                    </td>
+                                @endforeach
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        @endif
+
+        @if (auth()->user()->isAdmin() && $reactivationCandidates->isNotEmpty())
+            <section class="card table-card" style="padding:0; margin-bottom:20px;">
+                <div class="card-head" style="padding:18px 20px; margin-bottom:0; cursor:pointer; align-items:center;" onclick="
+                    const body = document.getElementById('reactivation-body');
+                    const chevron = document.getElementById('reactivation-chevron');
+                    const open = body.style.display === 'none';
+                    body.style.display = open ? '' : 'none';
+                    chevron.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+                ">
+                    <div>
+                        <div class="card-title">
+                            Reactivation &amp; New Mitra
+                            <span class="chip chip-accent" style="margin-left:6px;">New Mitra {{ $reactivationCandidates->where('is_new_mitra', true)->count() }}</span>
+                            <span class="chip chip-neutral" style="margin-left:4px;">Reactivation {{ $reactivationCandidates->where('is_new_mitra', false)->count() }}</span>
+                        </div>
+                        <div class="card-hint">Mitra belanja bulan ini tapi tidak ada target &mdash; tandai yang mitra baru</div>
+                    </div>
+                    <svg id="reactivation-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px; height:18px; color:var(--ink-muted); transition:transform 0.15s ease; flex:none;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div id="reactivation-body" style="display:none;">
+                <div class="table-scroll">
+                    <table>
+                        <thead><tr><th>Mitra</th><th>KAE</th><th>Omset Bulan Ini</th><th>Status</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach ($reactivationCandidates as $rc)
+                                <tr>
+                                    <td>
+                                        <div style="font-weight:600;">{{ $rc->nama }}</div>
+                                        <div style="font-size:11.5px; color:var(--ink-muted);">{{ $rc->kode_mitra }}</div>
+                                    </td>
+                                    <td>{{ $rc->kae_code ? (\App\Models\User::kaeNameMap()[$rc->kae_code] ?? $rc->kae_code) : '—' }}</td>
+                                    <td class="tnum">{{ $rp($rc->omset) }}</td>
+                                    <td>
+                                        @if ($rc->is_new_mitra)
+                                            <span class="chip chip-accent">New Mitra</span>
+                                        @else
+                                            <span class="chip chip-neutral">Reactivation</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <form method="POST" action="{{ route('dashboard.toggle-new-mitra', $rc->mitra_id) }}">
+                                            @csrf
+                                            <input type="hidden" name="bulan" value="{{ $bulanIni }}">
+                                            <input type="hidden" name="tahun" value="{{ $tahunIni }}">
+                                            <button type="submit" class="btn" style="width:auto; font-size:11.5px; padding:6px 10px;">
+                                                {{ $rc->is_new_mitra ? 'Batal New Mitra' : 'Tandai New Mitra' }}
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                </div>
+            </section>
+        @endif
+
+        <section style="display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start;">
+            <div class="card table-card" style="padding:0;">
+                <div class="card-head" style="padding:18px 20px; margin-bottom:0; cursor:pointer; align-items:center;" onclick="
+                    const body = document.getElementById('top-mitra-body');
+                    const chevron = document.getElementById('top-mitra-chevron');
+                    const open = body.style.display === 'none';
+                    body.style.display = open ? '' : 'none';
+                    chevron.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+                ">
+                    <div class="card-title">Top Mitra Bulan Ini <span class="chip chip-neutral" style="margin-left:6px;">{{ $topMitra->count() }}</span></div>
+                    <svg id="top-mitra-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px; height:18px; color:var(--ink-muted); transition:transform 0.15s ease; flex:none;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <div id="top-mitra-body" style="display:none;">
                 <div class="table-scroll">
                     <table>
                         <thead><tr><th>Mitra</th><th>Omset</th></tr></thead>
@@ -191,12 +415,21 @@
                         </tbody>
                     </table>
                 </div>
+                </div>
             </div>
 
             <div class="card table-card" style="padding:0;">
-                <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px;">
-                    <div class="card-title">Order Terbaru</div>
+                <div class="card-head" style="padding:18px 20px; margin-bottom:0; cursor:pointer; align-items:center;" onclick="
+                    const body = document.getElementById('order-terbaru-body');
+                    const chevron = document.getElementById('order-terbaru-chevron');
+                    const open = body.style.display === 'none';
+                    body.style.display = open ? '' : 'none';
+                    chevron.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+                ">
+                    <div class="card-title">Order Terbaru <span class="chip chip-neutral" style="margin-left:6px;">{{ $orderTerbaru->count() }}</span></div>
+                    <svg id="order-terbaru-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px; height:18px; color:var(--ink-muted); transition:transform 0.15s ease; flex:none;"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </div>
+                <div id="order-terbaru-body" style="display:none;">
                 <div class="table-scroll">
                     <table>
                         <thead><tr><th>Tanggal</th><th>Mitra</th><th>Total</th></tr></thead>
@@ -212,6 +445,7 @@
                             @endforelse
                         </tbody>
                     </table>
+                </div>
                 </div>
             </div>
         </section>

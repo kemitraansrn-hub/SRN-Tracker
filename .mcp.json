@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "srn-link-center": {
+      "command": "node",
+      "args": ["C:\\laragon\\www\\srn\\mcp-server\\index.js"]
+    }
+  }
+}

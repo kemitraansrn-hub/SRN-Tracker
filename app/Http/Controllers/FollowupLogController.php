@@ -17,11 +17,25 @@ class FollowupLogController extends Controller
 {
     public const ALASAN_KENDALA = [
         'Cashflow / modal belum siap',
-        'Stok produk kosong',
-        'Menunggu respon mitra',
-        'Mitra sedang tidak aktif berjualan',
-        'Kendala pengiriman',
-        'Lainnya',
+        'Penjualan lambat / belum closing customer',
+        'Beli via A2A / agen lain',
+        'Menunggu respon mitra / tidak dibalas',
+        'Iklan belum jalan / kendala iklan',
+        'Ragu coba produk baru (Reglow/Amura)',
+        'Menunda — janji belanja minggu depan',
+        'Tidak bisa dihubungi',
+        'Fokus ke channel/brand lain',
+        'Komplain produk / kualitas',
+        'Harga / kalah saing kompetitor',
+        'Kendala operasional / libur',
+        'Sedang negosiasi target/MOU (bukan kendala)',
+        'Atur jadwal order — libur operasional pusat',
+        'Fokus pelunasan piutang / DP',
+        'Konfirmasi barang diterima (bukan kendala)',
+        'Diarahkan ikut program development',
+        'Mitra off / berhenti kemitraan',
+        'Stok mitra masih ada / belum habis',
+        'Lainnya (tulis di Catatan)',
     ];
 
     public function index(Request $request): View
@@ -57,8 +71,79 @@ class FollowupLogController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $user = $request->user();
+        $data = $this->validated($request);
 
-        $data = $request->validate([
+        $mitra = Mitra::findOrFail($data['mitra_id']);
+
+        if (! $user->isAdmin() && $mitra->kae_code !== $user->kae_code) {
+            abort(403, 'Anda tidak punya akses ke mitra ini.');
+        }
+
+        $tanggal = Carbon::parse($data['tanggal_fu']);
+        $totalMenit = $this->hitungTotalMenit($data);
+
+        FollowupLog::create([
+            ...$data,
+            'kae_user_id' => $user->id,
+            'minggu' => \App\Models\WeekPeriod::resolveWeek($tanggal),
+            'total_menit' => $totalMenit,
+        ]);
+
+        return redirect()->route('followup.create')->with('status', 'Follow-up berhasil dicatat.');
+    }
+
+    public function edit(Request $request, FollowupLog $followupLog): View
+    {
+        $this->authorizeFollowup($request, $followupLog);
+
+        $user = $request->user();
+        $mitraOptions = Mitra::where('status', 'aktif')
+            ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_code', $user->kae_code))
+            ->orderBy('nama')
+            ->get();
+
+        return view('followup.form', [
+            'log' => $followupLog,
+            'mitraOptions' => $mitraOptions,
+            'selectedMitraId' => $followupLog->mitra_id,
+            'alasanOptions' => self::ALASAN_KENDALA,
+        ]);
+    }
+
+    public function update(Request $request, FollowupLog $followupLog): RedirectResponse
+    {
+        $this->authorizeFollowup($request, $followupLog);
+
+        $data = $this->validated($request);
+        $mitra = Mitra::findOrFail($data['mitra_id']);
+
+        if (! $request->user()->isAdmin() && $mitra->kae_code !== $request->user()->kae_code) {
+            abort(403, 'Anda tidak punya akses ke mitra ini.');
+        }
+
+        $tanggal = Carbon::parse($data['tanggal_fu']);
+
+        $followupLog->update([
+            ...$data,
+            'minggu' => \App\Models\WeekPeriod::resolveWeek($tanggal),
+            'total_menit' => $this->hitungTotalMenit($data),
+        ]);
+
+        return redirect()->route('followup.index')->with('status', 'Follow-up berhasil diperbarui.');
+    }
+
+    public function destroy(Request $request, FollowupLog $followupLog): RedirectResponse
+    {
+        $this->authorizeFollowup($request, $followupLog);
+
+        $followupLog->delete();
+
+        return redirect()->route('followup.index')->with('status', 'Follow-up berhasil dihapus.');
+    }
+
+    private function validated(Request $request): array
+    {
+        return $request->validate([
             'mitra_id' => ['required', 'exists:mitra,id'],
             'tanggal_fu' => ['required', 'date'],
             'status_followup' => ['required', 'in:Terhubung,Tidak ada respon'],
@@ -69,29 +154,25 @@ class FollowupLogController extends Controller
             'jam_mulai' => ['nullable', 'date_format:H:i'],
             'jam_selesai' => ['nullable', 'date_format:H:i', 'after:jam_mulai'],
         ]);
+    }
 
-        $mitra = Mitra::findOrFail($data['mitra_id']);
-
-        if (! $user->isAdmin() && $mitra->kae_code !== $user->kae_code) {
-            abort(403, 'Anda tidak punya akses ke mitra ini.');
+    private function hitungTotalMenit(array $data): ?int
+    {
+        if (empty($data['jam_mulai']) || empty($data['jam_selesai'])) {
+            return null;
         }
 
-        $tanggal = Carbon::parse($data['tanggal_fu']);
-        $totalMenit = null;
+        return Carbon::createFromFormat('H:i', $data['jam_mulai'])
+            ->diffInMinutes(Carbon::createFromFormat('H:i', $data['jam_selesai']));
+    }
 
-        if (! empty($data['jam_mulai']) && ! empty($data['jam_selesai'])) {
-            $totalMenit = Carbon::createFromFormat('H:i', $data['jam_mulai'])
-                ->diffInMinutes(Carbon::createFromFormat('H:i', $data['jam_selesai']));
+    private function authorizeFollowup(Request $request, FollowupLog $followupLog): void
+    {
+        $user = $request->user();
+
+        if (! $user->isAdmin() && $followupLog->kae_user_id !== $user->id) {
+            abort(403, 'Anda tidak punya akses ke catatan follow-up ini.');
         }
-
-        FollowupLog::create([
-            ...$data,
-            'kae_user_id' => $user->id,
-            'minggu' => \App\Models\WeekPeriod::resolveWeek($tanggal),
-            'total_menit' => $totalMenit,
-        ]);
-
-        return redirect()->route('mitra.show', $mitra)->with('status', 'Follow-up berhasil dicatat.');
     }
 
     public function export(Request $request): StreamedResponse

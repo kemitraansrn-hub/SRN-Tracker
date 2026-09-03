@@ -17,15 +17,15 @@
     <form method="GET" action="{{ route('order.index') }}" class="field-row" style="align-items:flex-end;">
         <div class="field" style="margin-bottom:0; flex:1; min-width:200px;">
             <label>Cari</label>
-            <input type="text" name="q" value="{{ request('q') }}" placeholder="No order, nama/kode mitra..." style="font-family:inherit; font-size:13px; padding:8px 12px; border:1px solid var(--line); border-radius:8px; background:var(--surface);">
+            <input type="text" name="q" value="{{ request('q') }}" placeholder="No order, nama/kode mitra...">
         </div>
         <div class="field" style="margin-bottom:0;">
             <label>Dari Tanggal</label>
-            <input type="date" name="dari" value="{{ request('dari') }}" style="font-family:inherit; font-size:13px; padding:7px 10px; border:1px solid var(--line); border-radius:8px; background:var(--surface);">
+            <input type="date" name="dari" value="{{ request('dari') }}">
         </div>
         <div class="field" style="margin-bottom:0;">
             <label>Sampai Tanggal</label>
-            <input type="date" name="sampai" value="{{ request('sampai') }}" style="font-family:inherit; font-size:13px; padding:7px 10px; border:1px solid var(--line); border-radius:8px; background:var(--surface);">
+            <input type="date" name="sampai" value="{{ request('sampai') }}">
         </div>
         <div class="field" style="margin-bottom:0;">
             <label>Pembayaran</label>
@@ -63,7 +63,7 @@
                             </td>
                             <td>
                                 @if ($o->kae_code)
-                                    <span style="display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:6px; background:var(--accent-soft); color:var(--accent-ink); font-size:10.5px; font-weight:700;">{{ $o->kae_code }}</span>
+                                    <span style="display:inline-block; padding:2px 8px; border-radius:6px; background:var(--accent-soft); color:var(--accent-ink); font-size:11px; font-weight:600;">{{ \App\Models\User::kaeNameMap()[$o->kae_code] ?? $o->kae_code }}</span>
                                 @else
                                     —
                                 @endif

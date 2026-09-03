@@ -20,6 +20,23 @@ class TargetImportService
 {
     use ParsesSpreadsheetHeaders;
 
+    // Nilai Segmen dipakai buat exact-match string di beberapa tempat lain
+    // (ForecastController, dsb), jadi harus konsisten persis hurufnya.
+    // File upload beda bulan sering ditulis format beda-beda (title case,
+    // RTP disingkat tanpa keterangan) — dinormalisasi di sini sekali,
+    // bukan di tiap controller yang makai.
+    private const SEGMEN_ALIASES = [
+        'RTP' => 'RTP (ROAD TO PARETO)',
+        'ROAD TO PARETO' => 'RTP (ROAD TO PARETO)',
+    ];
+
+    private function normalizeSegmen(?string $raw): string
+    {
+        $upper = mb_strtoupper(trim((string) $raw));
+
+        return self::SEGMEN_ALIASES[$upper] ?? ($upper !== '' ? $upper : 'REGULER');
+    }
+
     private const HEADER_ALIASES = [
         'kode_mitra' => ['KODE MITRA', 'RESELLER', 'KODE RESELLER', 'ID'],
         'nama' => ['NAMA MITRA', 'NAMA', 'NAME'],
@@ -30,6 +47,8 @@ class TargetImportService
         'target' => ['TARGET (RP)', 'TARGET'],
         'stretch' => ['STRETCH (RP)', 'STRETCH'],
         'target_mou' => ['TARGET MOU (RP)', 'TARGET MOU'],
+        'kategori' => ['KATEGORI'],
+        'keterangan' => ['KETERANGAN', 'CATATAN'],
     ];
 
     /**
@@ -66,15 +85,24 @@ class TargetImportService
         $highestRow = $sheet->getHighestDataRow();
 
         for ($r = 2; $r <= $highestRow; $r++) {
-            $row = [];
+            $row = ['_baris' => $r];
             $isEmpty = true;
 
             foreach ($columnMap as $key => $colIndex) {
                 $coordinate = Coordinate::stringFromColumnIndex($colIndex).$r;
-                $raw = $sheet->getCell($coordinate)->getValue();
+                $cell = $sheet->getCell($coordinate);
+
+                try {
+                    $raw = $cell->isFormula() ? $cell->getCalculatedValue() : $cell->getValue();
+                } catch (\Throwable) {
+                    $raw = $cell->getValue();
+                }
 
                 if (in_array($key, ['komit', 'target', 'stretch', 'target_mou'], true)) {
                     $value = is_numeric($raw) ? (float) $raw : null;
+                    if ($key === 'target') {
+                        $row['_raw_target'] = $raw;
+                    }
                 } else {
                     $value = $raw === null ? null : trim((string) $raw);
                 }
@@ -96,8 +124,9 @@ class TargetImportService
         }
 
         $kaeCodeByName = User::where('role', 'kae')->get()->keyBy(fn ($u) => mb_strtolower($u->name));
+        $skipped = [];
 
-        $batch = DB::transaction(function () use ($rows, $bulan, $tahun, $user, $namaFile, $kaeCodeByName) {
+        $batch = DB::transaction(function () use ($rows, $bulan, $tahun, $user, $namaFile, $kaeCodeByName, &$skipped) {
             $batch = ImportBatch::create([
                 'jenis' => 'target_bulanan',
                 'bulan' => $bulan,
@@ -109,7 +138,17 @@ class TargetImportService
             ]);
 
             foreach ($rows as $row) {
-                if (! $row['kode_mitra'] || $row['target'] === null) {
+                if (! $row['kode_mitra']) {
+                    $skipped[] = 'Baris '.$row['_baris'].': Kode Mitra kosong.';
+
+                    continue;
+                }
+
+                if ($row['target'] === null) {
+                    $rawTarget = $row['_raw_target'];
+                    $tampil = $rawTarget === null || $rawTarget === '' ? '(kosong)' : (is_string($rawTarget) ? $rawTarget : json_encode($rawTarget));
+                    $skipped[] = 'Baris '.$row['_baris'].' ('.$row['kode_mitra'].'): kolom Target bukan angka, nilainya: '.$tampil;
+
                     continue;
                 }
 
@@ -136,11 +175,13 @@ class TargetImportService
                 }
 
                 $attributes = [
-                    'segmen' => $row['segmen'] ?? 'REGULER',
+                    'segmen' => $this->normalizeSegmen($row['segmen'] ?? null),
                     'komit' => $row['komit'] ?? null,
                     'target' => $row['target'],
                     'stretch' => $row['stretch'] ?? null,
                     'target_mou' => $row['target_mou'] ?? null,
+                    'kategori' => $row['kategori'] ?? null,
+                    'keterangan' => $row['keterangan'] ?? null,
                     'import_batch_id' => $batch->id,
                 ];
 
@@ -162,6 +203,13 @@ class TargetImportService
             return $batch;
         });
 
-        return ['ok' => true, 'errors' => [], 'jumlah_baris' => count($rows), 'batch' => $batch];
+        return [
+            'ok' => true,
+            'errors' => [],
+            'jumlah_baris' => count($rows),
+            'jumlah_tersimpan' => count($rows) - count($skipped),
+            'skipped' => $skipped,
+            'batch' => $batch,
+        ];
     }
 }

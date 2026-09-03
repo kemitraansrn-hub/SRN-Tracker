@@ -20,12 +20,21 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Nama</th><th>Email</th><th>Role</th><th>Kode KAE</th><th>Status</th><th></th>
+                        <th></th><th>Nama</th><th>Email</th><th>Role</th><th>Kode KAE</th><th>Status</th><th></th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($users as $u)
                         <tr>
+                            <td style="width:1%;">
+                                @if ($u->photoUrl())
+                                    <img src="{{ $u->photoUrl() }}" alt="{{ $u->name }}" style="width:28px; height:28px; border-radius:50%; object-fit:cover;">
+                                @else
+                                    <div style="width:28px; height:28px; border-radius:50%; background:var(--accent-soft); color:var(--accent-ink); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:11px;">
+                                        {{ mb_strtoupper(mb_substr($u->name, 0, 1)) }}
+                                    </div>
+                                @endif
+                            </td>
                             <td style="font-weight:600;">
                                 {{ $u->name }}
                                 @if ($u->id === auth()->id())
@@ -36,6 +45,10 @@
                             <td>
                                 @if ($u->role === 'admin')
                                     <span class="chip" style="background:var(--accent-soft); color:var(--accent-ink);">Admin</span>
+                                @elseif ($u->role === 'head')
+                                    <span class="chip chip-highlight">Head of SRN</span>
+                                @elseif ($u->role === 'finance')
+                                    <span class="chip chip-good">Finance</span>
                                 @else
                                     <span class="chip" style="background:var(--surface-alt); color:var(--ink-muted);">KAE</span>
                                 @endif
@@ -57,7 +70,7 @@
                             <td><a href="{{ route('users.edit', $u) }}" class="link-action" style="color:var(--accent-ink); font-size:12.5px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 10px;">Edit</a></td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" style="color:var(--ink-muted);">Belum ada user.</td></tr>
+                        <tr><td colspan="7" style="color:var(--ink-muted);">Belum ada user.</td></tr>
                     @endforelse
                 </tbody>
             </table>

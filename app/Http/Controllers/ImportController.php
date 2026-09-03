@@ -55,9 +55,11 @@ class ImportController extends Controller
 
         $jenis = $request->input('jenis', 'order_harian');
 
-        return $jenis === 'target_bulanan'
-            ? $this->storeTargetBulanan($request)
-            : $this->storeOrderHarian($request);
+        return match ($jenis) {
+            'target_bulanan' => $this->storeTargetBulanan($request),
+            'order_historis' => $this->storeOrderHistoris($request),
+            default => $this->storeOrderHarian($request),
+        };
     }
 
     private function storeOrderHarian(Request $request): View|RedirectResponse
@@ -78,6 +80,7 @@ class ImportController extends Controller
         if ($existing) {
             $token = (string) \Illuminate\Support\Str::uuid();
             Cache::put('import_pending_'.$token, [
+                'jenis' => 'order_harian',
                 'parsed' => $parsed,
                 'filename' => $file->getClientOriginalName(),
             ], now()->addMinutes(15));
@@ -91,6 +94,7 @@ class ImportController extends Controller
             return view('import.index', [
                 'history' => ImportBatch::with('uploader')->latest()->limit(15)->get(),
                 'pending' => [
+                    'jenis' => 'order_harian',
                     'token' => $token,
                     'tanggal_data' => $parsed['tanggal_data'],
                     'jumlah_baris_baru' => $parsed['jumlah_baris'],
@@ -103,6 +107,50 @@ class ImportController extends Controller
 
         return redirect()->route('import.index')
             ->with('status', 'Import berhasil: '.$batch->jumlah_baris.' baris untuk tanggal '.$batch->tanggal_data->format('d/m/Y').'.');
+    }
+
+    private function storeOrderHistoris(Request $request): View|RedirectResponse
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:51200'],
+        ], [], ['file' => 'File']);
+
+        set_time_limit(0);
+
+        $file = $request->file('file');
+        $parsed = $this->orderImporter->parseHistoris($file);
+
+        if (! $parsed['ok']) {
+            return back()->withErrors(['file' => implode(' ', $parsed['errors'])]);
+        }
+
+        $existingCount = Order::whereBetween('tanggal_order', [$parsed['tanggal_mulai'], $parsed['tanggal_selesai']])->count();
+
+        if ($existingCount > 0) {
+            $token = (string) \Illuminate\Support\Str::uuid();
+            Cache::put('import_pending_'.$token, [
+                'jenis' => 'order_historis',
+                'parsed' => $parsed,
+                'filename' => $file->getClientOriginalName(),
+            ], now()->addMinutes(30));
+
+            return view('import.index', [
+                'history' => ImportBatch::with('uploader')->latest()->limit(15)->get(),
+                'pending' => [
+                    'jenis' => 'order_historis',
+                    'token' => $token,
+                    'tanggal_mulai' => $parsed['tanggal_mulai'],
+                    'tanggal_selesai' => $parsed['tanggal_selesai'],
+                    'existing_count' => $existingCount,
+                    'jumlah_baris_baru' => $parsed['jumlah_baris'],
+                ],
+            ]);
+        }
+
+        $batch = $this->orderImporter->commitHistoris($parsed, $request->user(), $file->getClientOriginalName(), replace: false);
+
+        return redirect()->route('import.index')
+            ->with('status', 'Import historis berhasil: '.$batch->jumlah_baris.' baris, periode '.\Carbon\Carbon::parse($parsed['tanggal_mulai'])->format('d/m/Y').' s/d '.\Carbon\Carbon::parse($parsed['tanggal_selesai'])->format('d/m/Y').'.');
     }
 
     private function storeTargetBulanan(Request $request): RedirectResponse
@@ -127,9 +175,16 @@ class ImportController extends Controller
         }
 
         $periode = \Carbon\Carbon::create((int) $request->input('tahun'), (int) $request->input('bulan'))->translatedFormat('F Y');
+        $jumlahSkip = count($result['skipped']);
 
-        return redirect()->route('import.index')
-            ->with('status', 'Import target bulanan berhasil: '.$result['jumlah_baris'].' mitra untuk periode '.$periode.'.');
+        $redirect = redirect()->route('import.index')
+            ->with('status', 'Import target bulanan: '.$result['jumlah_tersimpan'].' dari '.$result['jumlah_baris'].' baris tersimpan untuk periode '.$periode.($jumlahSkip > 0 ? '. '.$jumlahSkip.' baris dilewati.' : '.'));
+
+        if ($jumlahSkip > 0) {
+            $redirect->with('import_skipped', $result['skipped']);
+        }
+
+        return $redirect;
     }
 
     private function handleConfirmedReplace(Request $request): RedirectResponse
@@ -142,6 +197,15 @@ class ImportController extends Controller
         if (! $cached) {
             return redirect()->route('import.index')
                 ->withErrors(['file' => 'Sesi konfirmasi import sudah kedaluwarsa. Silakan upload ulang file-nya.']);
+        }
+
+        if (($cached['jenis'] ?? 'order_harian') === 'order_historis') {
+            set_time_limit(0);
+            $batch = $this->orderImporter->commitHistoris($cached['parsed'], $request->user(), $cached['filename'], replace: true);
+            Cache::forget($cacheKey);
+
+            return redirect()->route('import.index')
+                ->with('status', 'Periode '.\Carbon\Carbon::parse($cached['parsed']['tanggal_mulai'])->format('d/m/Y').' s/d '.\Carbon\Carbon::parse($cached['parsed']['tanggal_selesai'])->format('d/m/Y').' berhasil ditimpa dengan file baru ('.$batch->jumlah_baris.' baris).');
         }
 
         $batch = $this->orderImporter->commit($cached['parsed'], $request->user(), $cached['filename'], replace: true);

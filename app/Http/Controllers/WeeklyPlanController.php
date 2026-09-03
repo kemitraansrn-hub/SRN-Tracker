@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Mitra;
 use App\Models\TargetBulanan;
 use App\Models\WeekPeriod;
+use App\Services\AchievementStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -24,7 +25,8 @@ class WeeklyPlanController extends Controller
             ->get();
 
         // Sum omset per mitra per minggu-label across the last 6 months
-        // (each month resolved against its own configured week periods).
+        // (each month resolved against its own configured week periods) —
+        // dipakai buat nyebar target bulanan proporsional per minggu.
         $historyTotals = [];
         for ($i = 1; $i <= 6; $i++) {
             $ref = $now->copy()->subMonthsNoOverflow($i);
@@ -44,6 +46,28 @@ class WeeklyPlanController extends Controller
                 }
                 $historyTotals[$r->mitra_id][$r->minggu] = ($historyTotals[$r->mitra_id][$r->minggu] ?? 0) + $r->total;
             }
+        }
+
+        // Minggu Andalan: SEMUA minggu (bisa lebih dari satu) di mana mitra
+        // beneran belanja bulan LALU saja (bukan gabungan 6 bulan seperti
+        // historyTotals di atas). Contoh: Agustus belanja di W1 & W3 ->
+        // Minggu Andalan-nya "W1, W3".
+        $prevMonthRef = $now->copy()->subMonthNoOverflow();
+        $casePrevMonth = WeekPeriod::sqlCase($prevMonthRef->month, $prevMonthRef->year, 'tanggal_order');
+        $prevMonthRows = DB::table('orders')
+            ->whereYear('tanggal_order', $prevMonthRef->year)
+            ->whereMonth('tanggal_order', $prevMonthRef->month)
+            ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_code', $user->kae_code))
+            ->selectRaw("mitra_id, $casePrevMonth as minggu, SUM(total_transaksi) as total")
+            ->groupBy('mitra_id', 'minggu')
+            ->get();
+
+        $prevMonthTotals = [];
+        foreach ($prevMonthRows as $r) {
+            if (! $r->minggu) {
+                continue;
+            }
+            $prevMonthTotals[$r->mitra_id][$r->minggu] = (float) $r->total;
         }
 
         $caseThisMonth = WeekPeriod::sqlCase($now->month, $now->year, 'tanggal_order');
@@ -71,14 +95,11 @@ class WeeklyPlanController extends Controller
             ->get()
             ->keyBy('mitra_id');
 
-        $plan = $mitraList->map(function ($m) use ($historyTotals, $actualByMitra, $currentWeekLabel, $weekIndex, $targetByMitra) {
+        $plan = $mitraList->map(function ($m) use ($historyTotals, $prevMonthTotals, $actualByMitra, $currentWeekLabel, $weekIndex, $targetByMitra) {
             $hist = $historyTotals[$m->id] ?? [];
-            $mingguAndalan = null;
 
-            if (! empty($hist)) {
-                arsort($hist);
-                $mingguAndalan = array_key_first($hist);
-            }
+            $histPrevMonth = $prevMonthTotals[$m->id] ?? [];
+            $mingguAndalan = array_values(array_filter(self::WEEKS, fn ($w) => ($histPrevMonth[$w] ?? 0) > 0));
 
             $actual = $actualByMitra[$m->id] ?? [];
             $actualPerWeek = [];
@@ -88,7 +109,7 @@ class WeeklyPlanController extends Controller
 
             // Target bulanan disebar proporsional sesuai porsi omset tiap
             // minggu dari histori 6 bulan; kalau belum ada histori, rata 4 minggu.
-            $targetBulan = $targetByMitra[$m->id]?->effectiveTarget() ?? 0.0;
+            $targetBulan = $targetByMitra->get($m->id)?->effectiveTarget() ?? 0.0;
             $totalHist = array_sum($hist);
             $targetPerWeek = [];
             foreach (self::WEEKS as $w) {
@@ -101,14 +122,16 @@ class WeeklyPlanController extends Controller
             $pctBulan = $targetBulan > 0 ? round($realisasiBulan / $targetBulan * 100, 1) : null;
 
             $status = 'belum-ada-data';
-            if ($mingguAndalan) {
-                $actualAtAndalan = $actual[$mingguAndalan] ?? 0;
-                if ($actualAtAndalan > 0) {
+            if (! empty($mingguAndalan)) {
+                $sudahBelanjaDiAndalan = collect($mingguAndalan)->contains(fn ($w) => ($actual[$w] ?? 0) > 0);
+                $mingguAndalanTerakhir = collect($mingguAndalan)->max($weekIndex);
+
+                if ($sudahBelanjaDiAndalan) {
                     $status = 'oke';
-                } elseif ($currentWeekLabel && $weekIndex($currentWeekLabel) > $weekIndex($mingguAndalan)) {
-                    $status = 'terlewat';
-                } elseif ($currentWeekLabel === $mingguAndalan) {
+                } elseif ($currentWeekLabel && in_array($currentWeekLabel, $mingguAndalan, true)) {
                     $status = 'berjalan';
+                } elseif ($currentWeekLabel && $weekIndex($currentWeekLabel) > $mingguAndalanTerakhir) {
+                    $status = 'terlewat';
                 } else {
                     $status = 'menunggu';
                 }
@@ -116,13 +139,16 @@ class WeeklyPlanController extends Controller
 
             return (object) [
                 'mitra' => $m,
+                'segmen' => $targetByMitra->get($m->id)?->segmen,
                 'minggu_andalan' => $mingguAndalan,
                 'actual' => $actualPerWeek,
                 'target_per_week' => $targetPerWeek,
                 'target_bulan' => $targetBulan,
+                'target_row' => $targetByMitra->get($m->id),
                 'realisasi_bulan' => $realisasiBulan,
                 'pct_bulan' => $pctBulan,
                 'status' => $status,
+                'status_pencapaian' => AchievementStatus::resolveWeeklyPlan($realisasiBulan, $targetBulan, $pctBulan),
             ];
         });
 
@@ -137,12 +163,32 @@ class WeeklyPlanController extends Controller
             ];
         }
 
+        $filteredPlan = $plan
+            ->when($request->filled('q'), fn ($c) => $c->filter(
+                fn ($p) => str_contains(mb_strtolower($p->mitra->nama), mb_strtolower(trim($request->input('q'))))
+            ))
+            ->when($request->filled('minggu_andalan'), fn ($c) => $c->filter(
+                fn ($p) => $request->input('minggu_andalan') === 'none'
+                    ? empty($p->minggu_andalan)
+                    : in_array($request->input('minggu_andalan'), $p->minggu_andalan, true)
+            ))
+            ->when($request->filled('status_pencapaian'), fn ($c) => $c->where('status_pencapaian', $request->input('status_pencapaian')))
+            ->when($request->filled('status_minggu'), fn ($c) => $c->where('status', $request->input('status_minggu')))
+            ->when($request->filled('segmen'), fn ($c) => $c->where('segmen', $request->input('segmen')))
+            ->values();
+
+        // Derived from $plan (already KAE-scoped for non-admins) rather than
+        // TargetBulanan::currentMonthSegments(), so a KAE never sees a
+        // segmen option with zero mitra in their own list.
+        $segmenOptions = $plan->pluck('segmen')->filter()->unique()->sort()->values();
+
         return view('weekly-plan.index', [
-            'plan' => $plan,
+            'plan' => $filteredPlan,
             'weeks' => self::WEEKS,
             'weekTotals' => $weekTotals,
             'currentWeekLabel' => $currentWeekLabel,
             'periodeLabel' => $now->translatedFormat('F Y'),
+            'segmenOptions' => $segmenOptions,
         ]);
     }
 }

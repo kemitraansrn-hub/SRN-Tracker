@@ -3,19 +3,32 @@
 namespace App\Http\Controllers;
 
 use App\Models\Mitra;
+use App\Models\NewMitraFlag;
 use App\Models\Order;
+use App\Models\RunRateTarget;
 use App\Models\TargetBulanan;
 use App\Models\TrendSetting;
+use App\Services\RunRateService;
+use App\Services\SpecialDealPerformanceService;
+use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         $user = Auth::user();
-        $now = now();
+
+        $bulan = max(1, min(12, (int) $request->input('bulan', now()->month)));
+        $tahun = max(2000, min(2100, (int) $request->input('tahun', now()->year)));
+        $now = Carbon::create($tahun, $bulan, 1)->startOfMonth();
+        $isBulanIni = $now->isSameMonth(today());
+
+        $kaeCode = $user->isAdmin() ? null : $user->kae_code;
 
         $ordersThisMonth = Order::query()
             ->whereYear('tanggal_order', $now->year)
@@ -24,62 +37,89 @@ class DashboardController extends Controller
 
         $totalOmsetBulanIni = (clone $ordersThisMonth)->sum('total_transaksi');
         $jumlahOrderBulanIni = (clone $ordersThisMonth)->count();
-        $mitraAktifBulanIni = (clone $ordersThisMonth)->distinct('mitra_id')->count('mitra_id');
 
-        $totalMitra = Mitra::query()
+        $companyTarget = $user->isAdmin() ? RunRateTarget::companyTarget($now->month, $now->year) : null;
+        $companyAchPct = $companyTarget ? round($totalOmsetBulanIni / $companyTarget * 100, 1) : null;
+
+        $prevMonthRef = $now->copy()->subMonthNoOverflow();
+        // Bulan berjalan: bandingkan sampai hari ini (MTD asli). Bulan lain
+        // (histori/masa depan): bandingkan sebulan penuh vs sebulan penuh.
+        $dayCap = $isBulanIni ? min(today()->day, $prevMonthRef->daysInMonth) : $prevMonthRef->daysInMonth;
+        $mtdLalu = Order::query()
+            ->whereBetween('tanggal_order', [
+                $prevMonthRef->copy()->startOfMonth(),
+                $prevMonthRef->copy()->startOfMonth()->addDays($dayCap - 1)->endOfDay(),
+            ])
             ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_code', $user->kae_code))
-            ->count();
+            ->sum('total_transaksi');
+        $mtdGrowthPct = $mtdLalu > 0 ? round((($totalOmsetBulanIni - $mtdLalu) / $mtdLalu) * 100, 1) : null;
 
         $adaTargetBulanIni = TargetBulanan::where('bulan', $now->month)->where('tahun', $now->year)->exists();
 
-        $totalTargetBulanIni = 0;
-        $mitraPerluPerhatian = collect();
+        $tigaTarget = null;
+        $specialDealPerformance = collect();
+        $reactivationCandidates = collect();
 
         if ($adaTargetBulanIni) {
-            $targetSql = \App\Models\TargetBulanan::effectiveTargetSql();
-            $targetVsOmset = DB::table('target_bulanan')
+            $tigaTarget = DB::table('target_bulanan')
                 ->join('mitra', 'mitra.id', '=', 'target_bulanan.mitra_id')
-                ->leftJoin('orders', function ($join) use ($now) {
-                    $join->on('orders.mitra_id', '=', 'mitra.id')
-                        ->whereYear('orders.tanggal_order', $now->year)
-                        ->whereMonth('orders.tanggal_order', $now->month);
-                })
                 ->where('target_bulanan.bulan', $now->month)
                 ->where('target_bulanan.tahun', $now->year)
                 ->when(! $user->isAdmin(), fn ($q) => $q->where('mitra.kae_code', $user->kae_code))
-                ->groupBy('mitra.id', 'mitra.nama', 'mitra.kode_mitra', 'target_bulanan.segmen', 'target_bulanan.komit', 'target_bulanan.target', 'target_bulanan.stretch', 'target_bulanan.tier_dipakai')
-                ->selectRaw("mitra.id, mitra.nama, mitra.kode_mitra, target_bulanan.segmen, $targetSql as target, COALESCE(SUM(orders.total_transaksi), 0) as omset")
-                ->get()
-                ->map(function ($r) {
-                    $r->pct = $r->target > 0 ? round($r->omset / $r->target * 100, 1) : 0;
+                ->selectRaw('SUM(target_bulanan.komit) as komit, SUM(target_bulanan.target) as target, SUM(target_bulanan.stretch) as stretch')
+                ->first();
 
-                    return $r;
-                });
-
-            $totalTargetBulanIni = $targetVsOmset->sum('target');
-            $mitraPerluPerhatian = $targetVsOmset->filter(fn ($r) => $r->pct < 80)->sortBy('pct')->take(10)->values();
+            $specialDealPerformance = SpecialDealPerformanceService::summary($now->month, $now->year, $kaeCode);
+            $reactivationCandidates = SpecialDealPerformanceService::reactivationCandidates($now->month, $now->year, $kaeCode);
         }
 
-        $achievementPct = $totalTargetBulanIni > 0 ? round($totalOmsetBulanIni / $totalTargetBulanIni * 100, 1) : null;
+        $pencapaianTigaTier = null;
+        if ($tigaTarget) {
+            $pctFor = fn ($v) => $v > 0 ? round($totalOmsetBulanIni / $v * 100, 1) : null;
+            $pencapaianTigaTier = [
+                'komit' => ['target' => (float) $tigaTarget->komit, 'pct' => $pctFor((float) $tigaTarget->komit)],
+                'target' => ['target' => (float) $tigaTarget->target, 'pct' => $pctFor((float) $tigaTarget->target)],
+                'stretch' => ['target' => (float) $tigaTarget->stretch, 'pct' => $pctFor((float) $tigaTarget->stretch)],
+            ];
+        }
 
-        $omsetPerBrand = DB::table('order_items')
-            ->join('orders', 'orders.id', '=', 'order_items.order_id')
-            ->whereYear('orders.tanggal_order', $now->year)
-            ->whereMonth('orders.tanggal_order', $now->month)
-            ->when(! $user->isAdmin(), fn ($q) => $q->where('orders.kae_code', $user->kae_code))
-            ->selectRaw('COALESCE(order_items.brand, \'Lainnya\') as brand, SUM(order_items.subtotal) as total')
-            ->groupBy('brand')
-            ->orderByDesc('total')
-            ->get();
+        $runRateTargetBulanan = $user->isAdmin()
+            ? $companyTarget
+            : RunRateTarget::kaeTarget($now->month, $now->year, $user->kae_code);
 
-        $totalItemOmset = $omsetPerBrand->sum('total');
+        // "Minggu berjalan" cuma relevan buat bulan yang sedang berlangsung —
+        // bulan histori/masa depan gak punya highlight minggu aktif.
+        $currentWeekLabel = $isBulanIni ? \App\Models\WeekPeriod::resolveWeek(today()) : null;
 
-        $weekCase = \App\Models\WeekPeriod::sqlCase($now->month, $now->year, 'tanggal_order');
-        $trenMingguan = (clone $ordersThisMonth)
-            ->selectRaw("$weekCase as minggu_label, SUM(total_transaksi) as total")
-            ->groupBy('minggu_label')
-            ->get()
-            ->keyBy('minggu_label');
+        // End date of each W1-W4, from the admin-configured Periode
+        // Mingguan for this month; falls back to a plain 7-day chunk
+        // (day 7/14/21/end-of-month) for any week not configured yet.
+        $configuredWeeks = \App\Models\WeekPeriod::forMonth($now->month, $now->year)->keyBy('minggu');
+        $daysInMonth = $now->daysInMonth;
+        $weekEndDate = [];
+        foreach ([1, 2, 3, 4] as $w) {
+            $configured = $configuredWeeks->get('W'.$w);
+            $weekEndDate[$w] = $configured
+                ? $configured->tanggal_selesai->copy()
+                : $now->copy()->startOfMonth()->addDays(min($w * 7, $daysInMonth) - 1);
+        }
+
+        $runRateWeekly = null;
+        if ($runRateTargetBulanan) {
+            $weekTarget = $runRateTargetBulanan / 4;
+            $runRateWeekly = [];
+            foreach ([1, 2, 3, 4] as $w) {
+                $cumTarget = round($weekTarget * $w);
+                $cumActual = (clone $ordersThisMonth)
+                    ->whereDate('tanggal_order', '<=', $weekEndDate[$w]->toDateString())
+                    ->sum('total_transaksi');
+                $runRateWeekly[$w] = [
+                    'target' => $cumTarget,
+                    'run_rate' => $cumActual,
+                    'growth' => $cumTarget > 0 ? round((($cumActual - $cumTarget) / $cumTarget) * 100, 2) : null,
+                ];
+            }
+        }
 
         $topMitra = (clone $ordersThisMonth)
             ->join('mitra', 'mitra.id', '=', 'orders.mitra_id')
@@ -90,6 +130,8 @@ class DashboardController extends Controller
             ->get();
 
         $orderTerbaru = (clone $ordersThisMonth)->with('mitra')->latest('tanggal_order')->limit(8)->get();
+
+        $runRate = $user->isAdmin() ? RunRateService::mitraActiveTable($now->year, $now->month) : null;
 
         $trendCard = null;
         $activeTrend = TrendSetting::active();
@@ -114,20 +156,49 @@ class DashboardController extends Controller
 
         return view('dashboard', [
             'trendCard' => $trendCard,
+            'companyTarget' => $companyTarget,
+            'companyAchPct' => $companyAchPct,
+            'mtdIni' => $totalOmsetBulanIni,
+            'mtdLalu' => $mtdLalu,
+            'mtdGrowthPct' => $mtdGrowthPct,
+            'dayCap' => $dayCap,
             'totalOmsetBulanIni' => $totalOmsetBulanIni,
             'jumlahOrderBulanIni' => $jumlahOrderBulanIni,
-            'mitraAktifBulanIni' => $mitraAktifBulanIni,
-            'totalMitra' => $totalMitra,
             'adaTargetBulanIni' => $adaTargetBulanIni,
-            'totalTargetBulanIni' => $totalTargetBulanIni,
-            'achievementPct' => $achievementPct,
-            'mitraPerluPerhatian' => $mitraPerluPerhatian,
-            'omsetPerBrand' => $omsetPerBrand,
-            'totalItemOmset' => $totalItemOmset,
-            'trenMingguan' => $trenMingguan,
+            'pencapaianTigaTier' => $pencapaianTigaTier,
+            'specialDealPerformance' => $specialDealPerformance,
+            'reactivationCandidates' => $reactivationCandidates,
+            'bulanIni' => $now->month,
+            'tahunIni' => $now->year,
+            'isBulanIni' => $isBulanIni,
+            'runRateWeekly' => $runRateWeekly,
+            'runRateWeekEndDate' => $weekEndDate,
+            'currentWeekLabel' => $currentWeekLabel,
             'topMitra' => $topMitra,
             'orderTerbaru' => $orderTerbaru,
+            'runRate' => $runRate,
             'periodeLabel' => $now->translatedFormat('F Y'),
         ]);
+    }
+
+    public function toggleNewMitra(Request $request, Mitra $mitra): RedirectResponse
+    {
+        $bulan = (int) $request->input('bulan');
+        $tahun = (int) $request->input('tahun');
+
+        $flag = NewMitraFlag::where('mitra_id', $mitra->id)->where('bulan', $bulan)->where('tahun', $tahun)->first();
+
+        if ($flag) {
+            $flag->delete();
+        } else {
+            NewMitraFlag::create([
+                'mitra_id' => $mitra->id,
+                'bulan' => $bulan,
+                'tahun' => $tahun,
+                'flagged_by' => $request->user()->id,
+            ]);
+        }
+
+        return redirect()->route('dashboard');
     }
 }

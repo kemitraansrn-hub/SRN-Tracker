@@ -55,27 +55,6 @@
         </div>
     </section>
 
-    <section class="card" style="margin-bottom:20px;">
-        <div class="info-grid">
-            <div>
-                <div class="info-label">Diskon</div>
-                <div class="info-value tnum">{{ $rp($order->diskon) }}</div>
-            </div>
-            <div>
-                <div class="info-label">Ongkir</div>
-                <div class="info-value tnum">{{ $rp($order->ongkir) }}</div>
-            </div>
-            <div>
-                <div class="info-label">KAE</div>
-                <div class="info-value">{{ $order->kae_code ?: '—' }}</div>
-            </div>
-            <div>
-                <div class="info-label">Sumber Import</div>
-                <div class="info-value">{{ $order->importBatch->nama_file ?? '—' }}</div>
-            </div>
-        </div>
-    </section>
-
     <section class="card table-card" style="padding:0;">
         <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px;">
             <div class="card-title">Detail Produk</div>

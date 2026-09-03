@@ -16,6 +16,9 @@ class MitraController extends Controller
     {
         $user = $request->user();
         $now = now();
+        $prevMonthRef = $now->copy()->subMonthNoOverflow();
+
+        $stabilitasByMitra = StabilitasService::bulkForPreviousQuarter();
 
         $query = Mitra::query()
             ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_code', $user->kae_code))
@@ -25,20 +28,33 @@ class MitraController extends Controller
             }))
             ->when($user->isAdmin() && $request->filled('kae_code'), fn ($q) => $q->where('kae_code', $request->input('kae_code')))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
-            ->withCount(['orders as order_bulan_ini_count' => function ($q) use ($now) {
-                $q->whereYear('tanggal_order', $now->year)->whereMonth('tanggal_order', $now->month);
-            }])
+            // "Pasif" mitra have 0 order rows in the previous quarter, so
+            // they never get a row from bulkForPreviousQuarter()'s groupBy
+            // at all — absence from the collection IS the Pasif signal.
+            ->when($request->input('stabilitas') === 'Pasif', fn ($q) => $q->whereNotIn('id', $stabilitasByMitra->keys()))
+            ->when(in_array($request->input('stabilitas'), ['Stabil', 'Naik-turun'], true), fn ($q) => $q->whereIn(
+                'id',
+                $stabilitasByMitra->filter(fn ($s) => $s['stabilitas'] === $request->input('stabilitas'))->keys()
+            ))
             ->withSum(['orders as omset_bulan_ini' => function ($q) use ($now) {
                 $q->whereYear('tanggal_order', $now->year)->whereMonth('tanggal_order', $now->month);
             }], 'total_transaksi')
+            ->withSum(['orders as omset_bulan_lalu' => function ($q) use ($prevMonthRef) {
+                $q->whereYear('tanggal_order', $prevMonthRef->year)->whereMonth('tanggal_order', $prevMonthRef->month);
+            }], 'total_transaksi')
+            ->when($request->boolean('omset_nol'), fn ($q) => $q->havingRaw('(omset_bulan_ini IS NULL OR omset_bulan_ini = 0)'))
             ->orderBy('nama');
 
-        $mitraList = $query->paginate(20)->withQueryString();
+        $mitraList = $query->paginate(50)->withQueryString();
+
+        $quarterRange = StabilitasService::previousQuarterRange();
 
         return view('mitra.index', [
             'mitraList' => $mitraList,
             'kaeOptions' => $user->isAdmin() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
-            'stabilitasByMitra' => StabilitasService::bulkForPreviousQuarter(),
+            'stabilitasByMitra' => $stabilitasByMitra,
+            'blnAktifLabel' => 'Bln Aktif Q'.$quarterRange['kuartal'],
+            'lmLabel' => 'LM ('.$prevMonthRef->translatedFormat('M').')',
         ]);
     }
 
