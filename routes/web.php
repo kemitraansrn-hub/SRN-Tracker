@@ -41,6 +41,12 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
     Route::post('/dashboard/new-mitra/{mitra}/toggle', [DashboardController::class, 'toggleNewMitra'])
         ->middleware('role:admin')->name('dashboard.toggle-new-mitra');
     Route::get('/trend', [TrendController::class, 'index'])->name('trend.index');
+    Route::prefix('action-plan')->name('action-plan.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ActionPlanController::class, 'index'])->name('index');
+        Route::get('/file', [\App\Http\Controllers\ActionPlanController::class, 'show'])->name('show');
+        Route::post('/', [\App\Http\Controllers\ActionPlanController::class, 'store'])->middleware('role:admin')->name('store');
+        Route::delete('/{actionPlan}', [\App\Http\Controllers\ActionPlanController::class, 'destroy'])->middleware('role:admin')->name('destroy');
+    });
     Route::get('/omset-bulanan', [\App\Http\Controllers\OmsetBulananController::class, 'index'])->name('omset-bulanan.index');
     Route::get('/sales-overview', [\App\Http\Controllers\SalesOverviewController::class, 'index'])->name('sales-overview.index');
     Route::post('/trend/dashboard-card', [TrendController::class, 'saveDashboardCard'])

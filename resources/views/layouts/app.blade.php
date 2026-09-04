@@ -213,6 +213,10 @@
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     <span class="nav-label">Forecast</span>
                 </a>
+                <a href="{{ route('action-plan.index') }}" class="nav-item {{ request()->routeIs('action-plan.*') ? 'active' : '' }}" title="Action Plan">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="16" x2="12" y2="16"/></svg>
+                    <span class="nav-label">Action Plan</span>
+                </a>
 
                 <div class="nav-group-label">Operasional</div>
                 <a href="{{ route('mitra.index') }}" class="nav-item {{ request()->routeIs('mitra.*') ? 'active' : '' }}" title="Data Mitra">
