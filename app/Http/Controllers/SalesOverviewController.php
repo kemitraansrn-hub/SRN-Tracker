@@ -68,6 +68,8 @@ class SalesOverviewController extends Controller
             ->when($kaeCode, fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $kaeCode)))
             ->count();
 
+        $kaeAchievements = $this->buildKaeAchievements($ordersBulanIni, $now, $user, $isKae);
+
         return view('sales-overview.index', [
             'periodeLabel' => $now->translatedFormat('F Y'),
             'bulanIni' => $now->month,
@@ -84,13 +86,17 @@ class SalesOverviewController extends Controller
             'rataRataOrderGrowth' => $growthPct($rataRataOrder, $rataRataOrderLalu),
             'buybackPending' => $buybackPending,
             'funnel' => $this->buildFunnel($now, $isKae, $user->id),
-            'kaeAchievements' => $this->buildKaeAchievements($ordersBulanIni, $now, $user, $isKae),
+            'kaeAchievements' => $kaeAchievements,
             'brandSegments' => $this->buildBrandSegments($now, $kaeCode),
             'segmenSegments' => $this->buildSegmenSegments($now, $kaeCode),
             'bracketOmset' => $this->buildBracketOmset($ordersBulanIni),
             'top10Mitra' => $this->buildTop10Mitra($ordersBulanIni),
             'kaeContribSegments' => $isKae ? null : $this->buildKaeContribSegments($ordersBulanIni),
             'segmenContribSegments' => $isKae ? null : $this->buildSegmenContribSegments($now),
+            'mitraOmsetScatter' => $isKae ? null : $kaeAchievements
+                ->filter(fn ($k) => $k['mitra_aktif'] > 0 || $k['omset'] > 0)
+                ->map(fn ($k) => ['label' => $k['name'], 'x' => $k['mitra_aktif'], 'y' => $k['omset']])
+                ->values()->all(),
         ]);
     }
 
