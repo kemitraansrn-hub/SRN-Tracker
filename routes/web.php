@@ -103,6 +103,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
 
     Route::prefix('penukaran-poin')->name('poin-redemption.')->group(function () {
         Route::get('/', [PoinRedemptionController::class, 'index'])->name('index');
+        Route::get('/export', [PoinRedemptionController::class, 'export'])->name('export');
         Route::get('/create', [PoinRedemptionController::class, 'create'])->name('create');
         Route::post('/', [PoinRedemptionController::class, 'store'])->name('store');
         Route::get('/{poinRedemption}/edit', [PoinRedemptionController::class, 'edit'])->name('edit');

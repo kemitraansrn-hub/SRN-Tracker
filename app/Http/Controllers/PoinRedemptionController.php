@@ -5,11 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\Mitra;
 use App\Models\PoinRedemption;
 use App\Models\RewardCatalog;
+use App\Models\User;
 use App\Services\MitraPoinService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
@@ -33,6 +38,56 @@ class PoinRedemptionController extends Controller
             ->get();
 
         return view('poin-redemption.index', ['redemptions' => $redemptions]);
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $user = $request->user();
+        $kaeNameMap = User::kaeNameMap();
+
+        $redemptions = PoinRedemption::with(['mitra:id,nama,kode_mitra,kae_code', 'approver:id,name'])
+            ->when($user->role === 'kae', fn ($q) => $q->whereHas('mitra', fn ($qq) => $qq->where('kae_code', $user->kae_code)))
+            ->latest()
+            ->get();
+
+        $headers = ['KAE', 'Tanggal', 'Kode Mitra', 'Nama Mitra', 'Reward', 'Qty', 'Keterangan', 'Poin', 'Note', 'Status', 'Approved By'];
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Penukaran Poin');
+        $sheet->fromArray($headers, null, 'A1', true);
+        $sheet->getStyle('A1:K1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:K1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('EBE5EF');
+
+        $r = 2;
+        foreach ($redemptions as $red) {
+            $sheet->fromArray([
+                $kaeNameMap[$red->mitra->kae_code ?? ''] ?? ($red->mitra->kae_code ?? '—'),
+                $red->created_at->format('d/m/Y'),
+                $red->mitra->kode_mitra ?? '—',
+                $red->mitra->nama ?? '—',
+                $red->nama_reward,
+                $red->qty,
+                $red->keterangan === 'di-uangkan' ? 'Di Uangkan' : 'Sesuai dengan Reward',
+                $red->poin_terpakai,
+                $red->note,
+                $red->isApproved() ? 'Approved' : 'On Check',
+                $red->approver->name ?? '—',
+            ], null, 'A'.$r, true);
+            $r++;
+        }
+
+        foreach (range('A', 'K') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $filename = 'penukaran_poin_'.now()->format('Y-m-d').'.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
     public function create(Request $request): View

@@ -10,7 +10,10 @@
             <h1 class="display" style="font-size:24px;">Penukaran Poin</h1>
             <div style="color:var(--ink-muted); font-size:13px; margin-top:4px;">{{ $redemptions->count() }} pengajuan</div>
         </div>
-        <a href="{{ route('poin-redemption.create') }}" class="btn btn-primary" style="width:auto;">+ Penukaran Baru</a>
+        <div style="display:flex; gap:8px;">
+            <a href="{{ route('poin-redemption.export') }}" class="btn" style="width:auto; text-decoration:none;">Download Excel</a>
+            <a href="{{ route('poin-redemption.create') }}" class="btn btn-primary" style="width:auto;">+ Penukaran Baru</a>
+        </div>
     </div>
 
     @if (session('status'))
