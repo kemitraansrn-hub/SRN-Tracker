@@ -84,11 +84,13 @@
                   stroke="{{ $chartColor }}" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.55"/>
         @endif
 
-        {{-- Titik data --}}
+        {{-- Titik data — label gak ditampilin permanen (numpuk kalau titiknya
+             berdekatan), tapi tetap ada lewat tooltip native pas di-hover. --}}
         @foreach ($points as $p)
             @php $px = $toPx($p['x']); $py = $toPy($p['y']); @endphp
-            <circle cx="{{ round($px, 1) }}" cy="{{ round($py, 1) }}" r="6" fill="{{ $chartColor }}" opacity="0.85" stroke="var(--surface)" stroke-width="2"/>
-            <text x="{{ round($px, 1) }}" y="{{ round($py, 1) - 11 }}" text-anchor="middle" font-size="10.5" font-weight="600" fill="var(--ink)">{{ $p['label'] }}</text>
+            <circle cx="{{ round($px, 1) }}" cy="{{ round($py, 1) }}" r="6" fill="{{ $chartColor }}" opacity="0.85" stroke="var(--surface)" stroke-width="2">
+                <title>{{ $p['label'] }}: {{ $formatX($p['x']) }} / {{ $formatY($p['y']) }}</title>
+            </circle>
         @endforeach
 
         {{-- Judul sumbu --}}
