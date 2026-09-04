@@ -195,24 +195,18 @@
         @endif
     </section>
 
-    @if ($mitraOmsetScatter !== null)
-        <section style="margin-top:14px;">
-            <div class="card" style="padding:14px 16px;">
-                <div class="card-title" style="font-size:13px; margin-bottom:2px;">Korelasi Mitra Aktif vs Omset per KAE</div>
-                <div class="card-hint" style="margin-bottom:10px;">
-                    Tiap titik = 1 KAE, {{ $periodeLabel }}. Garis putus-putus = tren umum (regresi linear).
-                </div>
-                @if (count($mitraOmsetScatter) >= 2)
-                    @include('partials.scatter-chart', [
-                        'points' => $mitraOmsetScatter,
-                        'xLabel' => 'Jumlah Mitra Aktif Berbelanja',
-                        'yLabel' => 'Omset (Rp)',
-                        'formatY' => fn ($v) => $v >= 1_000_000 ? number_format($v / 1_000_000, 1, ',', '.').'jt' : number_format($v, 0, ',', '.'),
-                    ])
-                @else
-                    <span style="color:var(--ink-faint); font-size:12.5px;">Butuh minimal 2 KAE dengan data bulan ini buat tampilin korelasinya.</span>
-                @endif
+    <section style="margin-top:14px;">
+        <div class="card" style="padding:14px 16px;">
+            <div class="card-title" style="font-size:13px; margin-bottom:2px;">Korelasi Mitra Aktif Berbelanja vs Omset</div>
+            <div class="card-hint" style="margin-bottom:10px;">
+                Tiap titik = 1 bulan, 6 bulan terakhir sampai {{ $periodeLabel }}{{ $isKae ? ' (mitra kamu)' : '' }}. Garis putus-putus = tren umum (regresi linear).
             </div>
-        </section>
-    @endif
+            @include('partials.scatter-chart', [
+                'points' => $mitraOmsetScatter,
+                'xLabel' => 'Jumlah Mitra Aktif Berbelanja',
+                'yLabel' => 'Omset (Rp)',
+                'formatY' => fn ($v) => $v >= 1_000_000 ? number_format($v / 1_000_000, 1, ',', '.').'jt' : number_format($v, 0, ',', '.'),
+            ])
+        </div>
+    </section>
 @endsection

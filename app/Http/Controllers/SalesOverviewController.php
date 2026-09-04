@@ -93,10 +93,7 @@ class SalesOverviewController extends Controller
             'top10Mitra' => $this->buildTop10Mitra($ordersBulanIni),
             'kaeContribSegments' => $isKae ? null : $this->buildKaeContribSegments($ordersBulanIni),
             'segmenContribSegments' => $isKae ? null : $this->buildSegmenContribSegments($now),
-            'mitraOmsetScatter' => $isKae ? null : $kaeAchievements
-                ->filter(fn ($k) => $k['mitra_aktif'] > 0 || $k['omset'] > 0)
-                ->map(fn ($k) => ['label' => $k['name'], 'x' => $k['mitra_aktif'], 'y' => $k['omset']])
-                ->values()->all(),
+            'mitraOmsetScatter' => $this->buildMitraOmsetHistory($now, $kaeCode),
         ]);
     }
 
@@ -295,6 +292,37 @@ class SalesOverviewController extends Controller
             'label' => $r->segmen,
             'pct' => $total > 0 ? round($r->ach / $total * 100) : 0,
         ])->values()->all();
+    }
+
+    /**
+     * Total jumlah mitra aktif berbelanja vs total omset, per bulan, 6 bulan
+     * terakhir sampai periode yang lagi dipilih — buat lihat apakah makin
+     * banyak mitra yang belanja itu korelasinya sama naiknya omset (bukan
+     * dipecah per KAE, murni angka gabungan/sesuai scope user).
+     */
+    private function buildMitraOmsetHistory(\Carbon\Carbon $now, ?string $kaeCode): array
+    {
+        $result = [];
+
+        for ($i = 5; $i >= 0; $i--) {
+            $ref = $now->copy()->subMonthsNoOverflow($i);
+
+            $orders = Order::query()
+                ->whereYear('tanggal_order', $ref->year)
+                ->whereMonth('tanggal_order', $ref->month)
+                ->when($kaeCode, fn ($q) => $q->where('kae_code', $kaeCode));
+
+            $omset = (float) (clone $orders)->sum('total_transaksi');
+            $mitraAktif = (clone $orders)->distinct('mitra_id')->count('mitra_id');
+
+            $result[] = [
+                'label' => $ref->translatedFormat('M Y'),
+                'x' => $mitraAktif,
+                'y' => $omset,
+            ];
+        }
+
+        return $result;
     }
 
     /** Kontribusi omset tiap KAE terhadap total omset bulan ini — cuma buat Admin/Head. */
