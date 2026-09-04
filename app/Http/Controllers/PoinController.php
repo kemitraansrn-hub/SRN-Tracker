@@ -27,6 +27,7 @@ class PoinController extends Controller
             'mitra' => $m,
             'monthly' => $poinByMitra->get($m->id)['monthly'] ?? array_fill(1, 12, 0),
             'total' => $poinByMitra->get($m->id)['total'] ?? 0,
+            'saldo' => MitraPoinService::saldo($m->id, $tahun),
         ])->sortByDesc('total')->values();
 
         $grandTotal = $rows->sum('total');
@@ -36,6 +37,7 @@ class PoinController extends Controller
             'rows' => $rows,
             'monthTotals' => collect(range(1, 12))->mapWithKeys(fn ($m) => [$m => $rows->sum(fn ($r) => $r->monthly[$m])]),
             'grandTotal' => $grandTotal,
+            'grandSaldo' => $rows->sum('saldo'),
             'rupiahPerPoin' => self::RUPIAH_PER_POIN,
             'budgetTotal' => $grandTotal * self::RUPIAH_PER_POIN,
         ]);

@@ -50,6 +50,7 @@
                             <th class="tnum">{{ $b }}</th>
                         @endforeach
                         <th class="tnum">Total</th>
+                        <th class="tnum">Sisa Saldo</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -63,9 +64,10 @@
                                 <td class="tnum" style="{{ $r->monthly[$m] > 0 ? '' : 'color:var(--ink-faint);' }}">{{ $r->monthly[$m] }}</td>
                             @endfor
                             <td class="tnum" style="font-weight:700;">{{ $r->total }}</td>
+                            <td class="tnum" style="font-weight:700; {{ $r->saldo < $r->total ? 'color:var(--accent-ink);' : '' }}">{{ $r->saldo }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="14" style="color:var(--ink-muted);">Belum ada data poin untuk {{ $tahun }}.</td></tr>
+                        <tr><td colspan="15" style="color:var(--ink-muted);">Belum ada data poin untuk {{ $tahun }}.</td></tr>
                     @endforelse
                 </tbody>
                 @if ($rows->isNotEmpty())
@@ -76,6 +78,7 @@
                                 <td class="tnum" style="font-weight:700;">{{ $monthTotals[$m] }}</td>
                             @endfor
                             <td class="tnum" style="font-weight:700;">{{ $grandTotal }}</td>
+                            <td class="tnum" style="font-weight:700;">{{ $grandSaldo }}</td>
                         </tr>
                     </tfoot>
                 @endif
