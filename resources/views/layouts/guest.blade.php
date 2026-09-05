@@ -37,9 +37,9 @@
             backdrop-filter: blur(14px);
             -webkit-backdrop-filter: blur(14px);
         }
-        .guest-brand { display: flex; align-items: center; gap: 11px; margin-bottom: 34px; flex-wrap: nowrap; }
-        .guest-brand img { height: 24px; width: auto; max-width: 58px; object-fit: contain; flex-shrink: 1; min-width: 0; }
-        .guest-brand-divider { width: 1px; height: 20px; background: var(--line); flex-shrink: 0; }
+        .guest-brand { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 34px; flex-wrap: nowrap; }
+        .guest-brand img { height: 30px; width: auto; max-width: 76px; object-fit: contain; flex-shrink: 1; min-width: 0; }
+        .guest-brand-divider { width: 1px; height: 24px; background: var(--line); flex-shrink: 0; }
         .guest-title { font-size: 24px; margin-bottom: 6px; }
         .guest-sub { font-size: 13px; color: var(--ink-muted); margin-bottom: 28px; }
         .guest-field { margin-bottom: 16px; }
