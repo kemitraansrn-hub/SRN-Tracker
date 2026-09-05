@@ -23,20 +23,6 @@
             position: absolute; inset: 0; width: 100%; height: 100%;
             z-index: 0; pointer-events: none;
         }
-        .mitra-wall {
-            position: absolute; inset: 0; z-index: 0;
-            overflow: hidden; pointer-events: none;
-        }
-        .mitra-photo {
-            position: absolute;
-            border-radius: 10px;
-            background-size: cover; background-position: center;
-            background-color: rgba(255, 255, 255, 0.06);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-            opacity: 0;
-            transition: transform 0.6s cubic-bezier(.22, .61, .36, 1), opacity 0.6s ease;
-            pointer-events: none;
-        }
         .guest-card {
             position: relative; z-index: 1;
             width: 100%; max-width: 900px; min-height: 560px;
@@ -163,7 +149,6 @@
 <body>
     <div class="guest-frame">
         <canvas id="bg-canvas"></canvas>
-        <div class="mitra-wall" id="mitraWall"></div>
         <div class="guest-card">
             <div class="guest-form-side">
                 <div class="guest-brand">
@@ -227,71 +212,6 @@
                 cur.style.opacity = '0';
                 showingA = ! showingA;
             }, 4500);
-        })();
-    </script>
-
-    {{-- "Mitra wall": puluhan foto kecil yang muncul-hilang acak (geser +
-         fade dari kiri/kanan), beberapa slot jalan bersamaan biar kesannya
-         flicker kayak montage film hacker — bukan cuma 1 foto gonta-ganti.
-         PLACEHOLDER dulu (kotak warna + siluet orang) sampai foto mitra
-         asli disediakan; tinggal ganti isi array PHOTOS di bawah. --}}
-    <script>
-        (function () {
-            const wall = document.getElementById('mitraWall');
-            const frame = document.querySelector('.guest-frame');
-            if (! wall || ! frame) return;
-
-            // Foto diambil otomatis dari semua file di public/images/mitra-wall
-            // (lihat @php di bawah) — tinggal taruh/ganti file di folder itu,
-            // gak perlu edit kode ini lagi. Placeholder cuma jaga-jaga kalau
-            // foldernya kosong.
-            const REAL_PHOTOS = {!! $mitraWallPhotos->toJson() !!};
-
-            const PLACEHOLDER_COLORS = ['6EC6CA', 'E8A87C', '8E9DD1', 'C97B84', '7BA88E', 'D4B483', '9B8EC4', '5C8FA8', 'C4A5D1', '6FA8C9'];
-            function placeholderPhoto(seed) {
-                const color = PLACEHOLDER_COLORS[seed % PLACEHOLDER_COLORS.length];
-                const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">'
-                    + '<rect width="100" height="100" fill="#' + color + '"/>'
-                    + '<circle cx="50" cy="38" r="18" fill="#ffffff" opacity="0.85"/>'
-                    + '<ellipse cx="50" cy="92" rx="32" ry="26" fill="#ffffff" opacity="0.85"/>'
-                    + '</svg>';
-                return 'data:image/svg+xml;base64,' + btoa(svg);
-            }
-            const PHOTOS = REAL_PHOTOS.length > 0 ? REAL_PHOTOS : Array.from({ length: 24 }, (_, i) => placeholderPhoto(i));
-
-            const SLOT_COUNT = 10;
-            const rand = (a, b) => a + Math.random() * (b - a);
-
-            function cycleSlot(el) {
-                const w = frame.clientWidth;
-                const h = frame.clientHeight;
-                const size = rand(40, 64);
-                const fromLeft = Math.random() < 0.5;
-
-                el.style.width = size + 'px';
-                el.style.height = size + 'px';
-                el.style.left = rand(0, Math.max(0, w - size)) + 'px';
-                el.style.top = rand(0, Math.max(0, h - size)) + 'px';
-                el.style.backgroundImage = 'url(' + PHOTOS[Math.floor(Math.random() * PHOTOS.length)] + ')';
-                el.style.transform = 'translateX(' + (fromLeft ? -30 : 30) + 'px)';
-                el.style.opacity = '0';
-                void el.offsetWidth; // paksa reflow biar state "dari" ke-commit dulu, baru transisi ke state "ke" beneran jalan (rAF ganda gak reliable kalau tab background)
-                el.style.transform = 'translateX(0)';
-                el.style.opacity = String(rand(0.5, 0.88));
-
-                setTimeout(() => {
-                    el.style.transform = 'translateX(' + (fromLeft ? 30 : -30) + 'px)';
-                    el.style.opacity = '0';
-                    setTimeout(() => cycleSlot(el), rand(300, 1500));
-                }, rand(900, 2200));
-            }
-
-            for (let i = 0; i < SLOT_COUNT; i++) {
-                const el = document.createElement('div');
-                el.className = 'mitra-photo';
-                wall.appendChild(el);
-                setTimeout(() => cycleSlot(el), rand(0, 2000) + i * 150);
-            }
         })();
     </script>
 
