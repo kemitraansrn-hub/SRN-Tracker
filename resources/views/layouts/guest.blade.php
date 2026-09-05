@@ -37,8 +37,9 @@
             backdrop-filter: blur(14px);
             -webkit-backdrop-filter: blur(14px);
         }
-        .guest-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 34px; }
-        .guest-brand img { height: 34px; width: auto; }
+        .guest-brand { display: flex; align-items: center; gap: 11px; margin-bottom: 34px; flex-wrap: nowrap; }
+        .guest-brand img { height: 24px; width: auto; max-width: 58px; object-fit: contain; flex-shrink: 1; min-width: 0; }
+        .guest-brand-divider { width: 1px; height: 20px; background: var(--line); flex-shrink: 0; }
         .guest-title { font-size: 24px; margin-bottom: 6px; }
         .guest-sub { font-size: 13px; color: var(--ink-muted); margin-bottom: 28px; }
         .guest-field { margin-bottom: 16px; }
@@ -81,11 +82,10 @@
         .guest-footnote { text-align: center; font-size: 12px; color: var(--ink-faint); margin-top: 18px; }
 
         .guest-illust-side {
-            position: relative; overflow: hidden; padding: 56px 40px 44px;
+            position: relative; overflow: hidden;
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(14px);
             -webkit-backdrop-filter: blur(14px);
-            color: #EDE9E1; display: flex; flex-direction: column; justify-content: flex-start;
         }
         .illust-photo-fade {
             position: absolute; inset: 0; z-index: 0;
@@ -115,21 +115,6 @@
         }
         .illust-photo-fade-img.is-entering {
             opacity: 0; transform: rotateY(26deg) translateX(18%) scale(0.88);
-        }
-        .guest-illust-quote { position: relative; z-index: 1; }
-        .guest-brand-logos {
-            display: flex; align-items: center; gap: 22px; margin-bottom: 26px; flex-wrap: wrap;
-        }
-        .brand-chip {
-            height: 32px; display: flex; align-items: center; justify-content: flex-start;
-        }
-        .brand-chip img {
-            max-width: 100%; max-height: 100%; object-fit: contain;
-            filter: brightness(0) invert(1); opacity: 0.92;
-        }
-        .guest-illust-quote p {
-            font-size: 18px; line-height: 1.5; font-weight: 700; letter-spacing: 0.01em;
-            color: #F5F2EC; margin: 0;
         }
         .hud-analytics-float {
             position: absolute; right: 32px; top: 50%; transform: translateY(-50%);
@@ -168,20 +153,16 @@
             <div class="guest-form-side">
                 <div class="guest-brand">
                     <img src="{{ asset('images/srn-logo.png') }}" alt="SRN Partner Network">
+                    <span class="guest-brand-divider"></span>
+                    <img src="{{ asset('images/brands/reglow.png') }}" alt="Reglow">
+                    <img src="{{ asset('images/brands/amura.png') }}" alt="Amura">
+                    <img src="{{ asset('images/brands/but.png') }}" alt="B.U.T">
+                    <img src="{{ asset('images/brands/purela.png') }}" alt="Purela">
                 </div>
                 @yield('content')
             </div>
             <div class="guest-illust-side">
                 <div class="illust-photo-fade" id="illustPhotoFade"></div>
-                <div class="guest-illust-quote">
-                    <div class="guest-brand-logos">
-                        <div class="brand-chip"><img src="{{ asset('images/brands/reglow.png') }}" alt="Reglow"></div>
-                        <div class="brand-chip"><img src="{{ asset('images/brands/amura.png') }}" alt="Amura"></div>
-                        <div class="brand-chip"><img src="{{ asset('images/brands/but.png') }}" alt="B.U.T"></div>
-                        <div class="brand-chip"><img src="{{ asset('images/brands/purela.png') }}" alt="Purela"></div>
-                    </div>
-                    <p>BERKEMBANG DENGAN KEBAIKAN,<br>BERINOVASI UNTUK MASA DEPAN</p>
-                </div>
             </div>
         </div>
         <div class="hud-analytics-float">
@@ -310,111 +291,6 @@
                 }
             }
 
-            // River chart: DIAM di tempat, lebar penuh 1 layar, dan sekarang
-            // 3 garis sekaligus (bukan cuma 1). Bentuk tiap garis TETAP
-            // (data fix, bukan noise acak per-frame — itu yang bikin
-            // kesannya "ular meliuk" sebelumnya). Yang gerak cuma progres
-            // gambarnya: garis mulai dari titik paling kiri (start point),
-            // "digambar" maju smooth sampai titik paling kanan (end point)
-            // dalam satu periode, abis itu reset & mulai gambar ulang dari
-            // awal (loop) — bukan tiap titik goyang sendiri-sendiri.
-            // Tiap dataset sengaja dibuat trending naik dari nilai rendah
-            // di titik pertama ke nilai tinggi di titik terakhir (kiri-bawah
-            // ke kanan-atas), dengan sedikit zigzag di atas trend dasarnya
-            // biar gak kaku kayak garis lurus.
-            function makeTrendValues(start, end, noise) {
-                const raw = [0.1, 0.35, 0.15, 0.5, 0.3, 0.6, 0.4, 0.7, 0.5, 0.8, 0.65, 1];
-                return raw.map((n, i) => {
-                    const t = i / (raw.length - 1);
-                    const base = start + (end - start) * t;
-                    return clamp(base + (n - 0.5) * noise, 0.04, 0.96);
-                });
-            }
-            // Tiap garis punya ritme reveal SENDIRI-SENDIRI (durasi per
-            // segmen, jeda, dan fase mulai beda-beda) — biar gak gerak
-            // bareng kompak kayak 1 animasi, tapi kerasa masing-masing
-            // punya data sendiri.
-            const RIVER_DATASETS = [
-                { color: 'rgba(130,230,240,0.95)', values: makeTrendValues(0.3, 0.92, 0.22), framesPerSeg: 55, holdPerSeg: 18, phase: 0 },
-                { color: 'rgba(225,232,255,0.9)', values: makeTrendValues(0.15, 0.68, 0.18), framesPerSeg: 72, holdPerSeg: 26, phase: 260 },
-                { color: 'rgba(195,155,235,0.9)', values: makeTrendValues(0.04, 0.48, 0.14), framesPerSeg: 46, holdPerSeg: 30, phase: 480 },
-            ];
-            const RIVER_HOLD_AT_END = 100;
-
-            function revealSegsFor(ds, totalSegs) {
-                const segCycle = ds.framesPerSeg + ds.holdPerSeg;
-                const growTotalFrames = totalSegs * segCycle;
-                const period = growTotalFrames + RIVER_HOLD_AT_END;
-                const localT = (frameCount + ds.phase) % period;
-                if (localT >= growTotalFrames) return totalSegs;
-                const segIndex = Math.floor(localT / segCycle);
-                const withinSeg = localT % segCycle;
-                const segProgress = clamp(withinSeg / ds.framesPerSeg, 0, 1);
-                return segIndex + segProgress;
-            }
-
-            // Chart utama ini sengaja TINGGI hampir 1 layar penuh — titik
-            // awal (nilai rendah) nempel di kiri-bawah, dan trend naiknya
-            // beneran nyampe ke atas-kanan layar. Widget lain boleh
-            // numpuk/lewat di atasnya (dia "background"), tapi widget lain
-            // sesama mereka gak boleh saling tabrakan (diatur lewat posisi
-            // Y masing-masing di bagian bawah).
-            function drawRiverChart() {
-                const x0 = 24;
-                const y0 = height * 0.06;
-                const w = Math.max(0, width - 48);
-                const h = height * 0.86;
-                if (w < 40) return;
-
-                ctx.setLineDash([3, 5]);
-                ctx.strokeStyle = 'rgba(160,225,235,0.55)';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.moveTo(x0, y0); ctx.lineTo(x0, y0 + h);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(x0, y0 + h); ctx.lineTo(x0 + w, y0 + h);
-                ctx.stroke();
-                ctx.setLineDash([]);
-
-                const totalSegs = RIVER_DATASETS[0].values.length - 1;
-                const spacing = w / totalSegs;
-
-                RIVER_DATASETS.forEach((ds) => {
-                    const revealSegs = revealSegsFor(ds, totalSegs);
-                    const fullIndex = Math.min(totalSegs, Math.floor(revealSegs));
-                    const frac = revealSegs - fullIndex;
-
-                    const pts = [];
-                    for (let i = 0; i <= fullIndex; i++) {
-                        pts.push([x0 + i * spacing, y0 + h - ds.values[i] * h]);
-                    }
-                    if (fullIndex < totalSegs && frac > 0) {
-                        const vNext = ds.values[fullIndex] + (ds.values[fullIndex + 1] - ds.values[fullIndex]) * frac;
-                        pts.push([x0 + (fullIndex + frac) * spacing, y0 + h - vNext * h]);
-                    }
-                    if (pts.length < 2) return;
-
-                    // Garis BERSIKU (segmen lurus antar titik), bukan
-                    // kurva halus — biar kayak grafik saham/data asli.
-                    ctx.beginPath();
-                    ctx.moveTo(pts[0][0], pts[0][1]);
-                    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
-                    ctx.strokeStyle = ds.color;
-                    ctx.lineWidth = 2.2;
-                    ctx.shadowColor = ds.color;
-                    ctx.shadowBlur = 9;
-                    ctx.stroke();
-                    ctx.shadowBlur = 0;
-
-                    const tip = pts[pts.length - 1];
-                    ctx.beginPath();
-                    ctx.arc(tip[0], tip[1], 3, 0, Math.PI * 2);
-                    ctx.fillStyle = ds.color;
-                    ctx.fill();
-                });
-            }
-
             // Gauge diem presisi di tengah panel kanan (bukan jalan
             // nyeberang lagi kayak widget lain). Dikasih efek "materialize":
             // muncul pelan-pelan dari blur+kecil ke tajam+ukuran penuh,
@@ -534,11 +410,7 @@
                 ctx.fillStyle = topGrad;
                 ctx.fillRect(0, 0, width, 3);
 
-                // River chart: satu-satunya yang diem di tempat, lebar
-                // penuh 1 layar.
-                drawRiverChart();
-
-                // Sisanya beneran jalan nyeberang dari kiri layar sampai
+                // Semua widget yang tersisa beneran jalan nyeberang dari kiri layar sampai
                 // keluar di kanan layar lalu balik lagi (loop) — durasi &
                 // fase beda-beda per widget biar staggered, gak bareng.
                 drawGauge();
