@@ -90,16 +90,31 @@
         .illust-photo-fade {
             position: absolute; inset: 0; z-index: 0;
             overflow: hidden; pointer-events: none;
+            perspective: 1400px;
         }
         .illust-photo-fade::after {
-            content: ''; position: absolute; inset: 0;
+            content: ''; position: absolute; inset: 0; z-index: 1;
             background: linear-gradient(165deg, rgba(14, 26, 46, 0.68), rgba(14, 26, 46, 0.82));
         }
         .illust-photo-fade-img {
             position: absolute; inset: 0;
             background-size: cover; background-position: center;
-            opacity: 0;
-            transition: opacity 1.6s ease;
+            transform-origin: center center;
+            backface-visibility: hidden;
+            transition: opacity 1.1s ease, transform 1.1s cubic-bezier(.33, .08, .19, 1);
+        }
+        {{-- 3 kondisi: nempel (keliatan normal), keluar (berputar 3D +
+             geser ke kiri, kesan "didorong" menjauh), masuk (mulai dari
+             kondisi cermin di kanan, lalu dianimasikan ke kondisi nempel) —
+             arah swipe konsisten dari kanan ke kiri. --}}
+        .illust-photo-fade-img.is-active {
+            opacity: 1; transform: rotateY(0deg) translateX(0%) scale(1);
+        }
+        .illust-photo-fade-img.is-exiting {
+            opacity: 0; transform: rotateY(-26deg) translateX(-18%) scale(0.88);
+        }
+        .illust-photo-fade-img.is-entering {
+            opacity: 0; transform: rotateY(26deg) translateX(18%) scale(0.88);
         }
         .guest-illust-quote { position: relative; z-index: 1; }
         .guest-brand-logos {
@@ -201,15 +216,27 @@
             let idx = 0;
             let showingA = true;
             imgA.style.backgroundImage = 'url(' + PHOTOS[0] + ')';
-            imgA.style.opacity = '1';
+            imgA.classList.add('is-active');
 
             setInterval(() => {
                 idx = (idx + 1) % PHOTOS.length;
                 const next = showingA ? imgB : imgA;
                 const cur = showingA ? imgA : imgB;
+
+                // Siapin foto berikutnya di posisi "cermin" (kanan, gak
+                // keliatan) dulu, paksa reflow biar itu ke-commit, baru
+                // animasikan dua-duanya bersamaan: next masuk dari kanan,
+                // cur keluar ke kiri.
                 next.style.backgroundImage = 'url(' + PHOTOS[idx] + ')';
-                next.style.opacity = '1';
-                cur.style.opacity = '0';
+                next.classList.remove('is-active', 'is-exiting');
+                next.classList.add('is-entering');
+                void next.offsetWidth;
+
+                next.classList.remove('is-entering');
+                next.classList.add('is-active');
+                cur.classList.remove('is-active');
+                cur.classList.add('is-exiting');
+
                 showingA = ! showingA;
             }, 4500);
         })();
