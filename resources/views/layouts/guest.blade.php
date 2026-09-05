@@ -17,25 +17,43 @@
             position: relative; overflow: hidden;
             min-height: 100vh; display: flex; align-items: center; justify-content: center;
             padding: 28px;
-            background: #0E1A2E;
+            background: #0A1226;
         }
         #bg-canvas {
             position: absolute; inset: 0; width: 100%; height: 100%;
             z-index: 0; pointer-events: none;
         }
+        .guest-brand-hero {
+            position: absolute; left: 40px; top: 50%; transform: translateY(-50%);
+            z-index: 1; max-width: 200px; pointer-events: none;
+        }
+        .guest-brand-hero .hero-title {
+            font-size: 24px; font-weight: 700; color: #fff; line-height: 1.25;
+        }
+        .guest-brand-hero .hero-title span { display: block; color: #8FB4F5; }
+        .guest-brand-hero .hero-rule {
+            width: 34px; height: 3px; border-radius: 2px; background: var(--accent);
+            margin: 14px 0;
+        }
+        .guest-brand-hero .hero-sub {
+            font-size: 13px; color: rgba(210, 222, 245, 0.7); line-height: 1.5;
+        }
+        {{-- Butuh gutter kiri yang beneran cukup lebar (card 900px + padding
+             frame + margin sendiri) baru ditampilin — bukan breakpoint asal,
+             dihitung dari lebar riil yang dibutuhkan biar gak numpuk ke card. --}}
+        @media (max-width: 1580px) {
+            .guest-brand-hero { display: none; }
+        }
         .guest-card {
             position: relative; z-index: 1;
             width: 100%; max-width: 900px; min-height: 560px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 22px; overflow: hidden;
             box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
             display: grid; grid-template-columns: 1fr 1fr;
         }
         .guest-form-side {
             padding: 44px 46px; display: flex; flex-direction: column; justify-content: center;
-            background: rgba(255, 255, 255, 0.78);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
+            background: #FFFFFF;
         }
         .guest-brand { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 34px; flex-wrap: nowrap; }
         .guest-brand img { height: 30px; width: auto; max-width: 76px; object-fit: contain; flex-shrink: 1; min-width: 0; }
@@ -83,9 +101,6 @@
 
         .guest-illust-side {
             position: relative; overflow: hidden;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
         }
         .illust-photo-fade {
             position: absolute; inset: 0; z-index: 0;
@@ -116,28 +131,37 @@
         .illust-photo-fade-img.is-entering {
             opacity: 0; transform: rotateY(26deg) translateX(18%) scale(0.88);
         }
-        .hud-analytics-float {
-            position: absolute; right: 32px; top: 50%; transform: translateY(-50%);
-            z-index: 1; pointer-events: none;
+        .illust-content {
+            position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+            padding: 28px 36px 32px; color: #fff;
+            {{-- Gradient gelap tambahan KHUSUS di area ini — foto mitra
+                 kadang terang/rame di bagian bawah, jadi teks/ikon butuh
+                 kontras lebih kuat di sini daripada tint keseluruhan foto. --}}
+            background: linear-gradient(180deg, rgba(10, 18, 38, 0) 0%, rgba(10, 18, 38, 0.55) 40%, rgba(10, 18, 38, 0.88) 100%);
         }
-        @media (max-width: 1180px) {
-            .hud-analytics-float { display: none; }
+        .illust-content .illust-icon {
+            width: 52px; height: 52px; border-radius: 50%;
+            border: 1.5px solid rgba(255, 255, 255, 0.45);
+            background: rgba(255, 255, 255, 0.1);
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 16px;
         }
-        .hud-analytics { max-width: 240px; }
-        .hud-analytics .hud-pct {
-            font-family: monospace; font-size: 26px; font-weight: 700; color: #C8F5FA;
-            text-shadow: 0 0 10px rgba(130, 230, 240, 0.55);
+        .illust-content .illust-icon svg { width: 24px; height: 24px; }
+        .illust-content h2 {
+            font-size: 22px; line-height: 1.3; font-weight: 700; margin: 0 0 18px;
         }
-        .hud-analytics .hud-label {
-            font-family: monospace; font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
-            color: rgba(160, 235, 245, 0.75); margin: 2px 0 12px;
+        .illust-features {
+            display: flex; gap: 18px; padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
         }
-        .hud-analytics .hud-bar {
-            height: 6px; border-radius: 3px; background: rgba(120, 220, 235, 0.18);
-            overflow: hidden; margin-bottom: 8px;
+        .illust-features .feature {
+            flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px;
         }
-        .hud-analytics .hud-bar > div {
-            height: 100%; border-radius: 3px; background: var(--accent);
+        .illust-features .feature svg {
+            width: 18px; height: 18px; color: #C7D9FA; flex-shrink: 0;
+        }
+        .illust-features .feature span {
+            font-size: 11.5px; line-height: 1.35; color: rgba(230, 236, 250, 0.85);
         }
         @media (max-width: 760px) {
             .guest-card { grid-template-columns: 1fr; max-width: 420px; }
@@ -149,6 +173,11 @@
 <body>
     <div class="guest-frame">
         <canvas id="bg-canvas"></canvas>
+        <div class="guest-brand-hero">
+            <div class="hero-title">SRN<span>Partner Network</span></div>
+            <div class="hero-rule"></div>
+            <div class="hero-sub">Connecting partners, growing together.</div>
+        </div>
         <div class="guest-card">
             <div class="guest-form-side">
                 <div class="guest-brand">
@@ -163,15 +192,26 @@
             </div>
             <div class="guest-illust-side">
                 <div class="illust-photo-fade" id="illustPhotoFade"></div>
-            </div>
-        </div>
-        <div class="hud-analytics-float">
-            <div class="hud-analytics">
-                <div class="hud-pct" id="hud-pct">10%</div>
-                <div class="hud-label">REAL-TIME ANALYTICS</div>
-                <div class="hud-bar"><div style="width:70%;"></div></div>
-                <div class="hud-bar"><div style="width:45%;"></div></div>
-                <div class="hud-bar"><div style="width:85%;"></div></div>
+                <div class="illust-content">
+                    <div class="illust-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M17 11a4 4 0 1 0 0-8"/><path d="M1 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M17 21v-2a4 4 0 0 0-3-3.87"/></svg>
+                    </div>
+                    <h2>Bersama Mitra,<br>Tumbuh Tanpa Batas</h2>
+                    <div class="illust-features">
+                        <div class="feature">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                            <span>Kolaborasi yang kuat</span>
+                        </div>
+                        <div class="feature">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                            <span>Pertumbuhan berkelanjutan</span>
+                        </div>
+                        <div class="feature">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9 16.5 13.5 18.5 21 12 17 5.5 21 7.5 13.5 2 9 9 9"/></svg>
+                            <span>Masa depan yang lebih baik</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -223,30 +263,18 @@
         })();
     </script>
 
-    {{-- Background HUD: canvas 2D biasa. Widget-widgetnya sengaja cuma
-         digambar di margin kiri/kanan card login (dihitung dari posisi
-         card asli tiap frame resize), jadi gak pernah ketutupan. --}}
+    {{-- Background "network/plexus": titik-titik nyala pelan bergerak,
+         garis penghubung muncul kalau 2 titik cukup deket — efek jaringan
+         partner yang saling terhubung, sesuai konsep mockup. --}}
     <script>
         (function () {
             const canvas = document.getElementById('bg-canvas');
             const frame = document.querySelector('.guest-frame');
-            const card = document.querySelector('.guest-card');
-            if (! canvas || ! canvas.getContext || ! frame || ! card) return;
+            if (! canvas || ! canvas.getContext || ! frame) return;
 
             const ctx = canvas.getContext('2d');
             let width = 0;
             let height = 0;
-
-            // Posisi card (dalam koordinat canvas) — dihitung presisi dari
-            // getBoundingClientRect() tiap resize, dipakai buat naruh widget
-            // yang diem di tengah gutter kosong sebelah kiri card (antara
-            // tepi layar/laptop dengan tepi kiri card).
-            let cardRect = { x: 0, y: 0, w: 0, h: 0 };
-            function updateCardRect() {
-                const cr = card.getBoundingClientRect();
-                const fr = frame.getBoundingClientRect();
-                cardRect = { x: cr.left - fr.left, y: cr.top - fr.top, w: cr.width, h: cr.height };
-            }
 
             function resize() {
                 const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -255,187 +283,88 @@
                 canvas.width = width * dpr;
                 canvas.height = height * dpr;
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-                updateCardRect();
             }
             resize();
             window.addEventListener('resize', resize);
 
-            const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+            const rand = (a, b) => a + Math.random() * (b - a);
+            const NODE_COUNT = 55;
+            const LINK_DIST = 150;
 
-            // Widget beneran jalan nyeberang dari kiri layar sampai keluar
-            // di kanan layar (boleh lewat di belakang kartu login, wajar
-            // karena kartunya transparan/blur), lalu balik lagi dari kiri —
-            // fase & durasi beda-beda per widget biar gak bareng semua.
-            function travelX(phase, periodFrames, widgetWidth) {
-                const span = width + widgetWidth * 2;
-                const t = (((frameCount + phase) % periodFrames) + periodFrames) % periodFrames / periodFrames;
-                return t * span - widgetWidth;
-            }
-
-            const dotTracks = [0.3, 0.55, 0.42, 0.7, 0.25];
-
-            let gaugeAngle = -Math.PI / 2;
-            let gaugePct = 68;
-            let frameCount = 0;
-
-            function drawGrid() {
-                const gridSize = 15;
-                ctx.strokeStyle = 'rgba(110,205,225,0.09)';
-                ctx.lineWidth = 1;
-                const offset = (frameCount * 0.35) % gridSize;
-                for (let x = -gridSize + offset; x <= width; x += gridSize) {
-                    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
-                }
-                for (let y = 0; y <= height; y += gridSize) {
-                    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
-                }
-            }
-
-            // Gauge diem presisi di tengah panel kanan (bukan jalan
-            // nyeberang lagi kayak widget lain). Dikasih efek "materialize":
-            // muncul pelan-pelan dari blur+kecil ke tajam+ukuran penuh,
-            // nahan sebentar, memudar lagi jadi blur+kecil, diem, lalu
-            // ulang dari awal (loop) — pakai easing biar smooth, bukan
-            // linear.
-            const GAUGE_R = 50;
-            const GAUGE_T_IN = 75;
-            const GAUGE_T_HOLD = 260;
-            const GAUGE_T_OUT = 75;
-            const GAUGE_T_GAP = 110;
-            const GAUGE_PERIOD = GAUGE_T_IN + GAUGE_T_HOLD + GAUGE_T_OUT + GAUGE_T_GAP;
-
-            function drawGauge() {
-                gaugeAngle += 0.012;
-                gaugePct = clamp(gaugePct + Math.sin(frameCount * 0.02) * 0.3, 40, 92);
-
-                const lt = frameCount % GAUGE_PERIOD;
-                let t;
-                if (lt < GAUGE_T_IN) {
-                    t = lt / GAUGE_T_IN;
-                } else if (lt < GAUGE_T_IN + GAUGE_T_HOLD) {
-                    t = 1;
-                } else if (lt < GAUGE_T_IN + GAUGE_T_HOLD + GAUGE_T_OUT) {
-                    t = 1 - (lt - GAUGE_T_IN - GAUGE_T_HOLD) / GAUGE_T_OUT;
-                } else {
-                    t = 0;
-                }
-                if (t <= 0) return;
-
-                // Tengah gutter kosong: antara tepi kiri layar (x=0) sampai
-                // tepi kiri card (cardRect.x) — bukan di dalam panel.
-                const gutterW = cardRect.x;
-                if (gutterW < GAUGE_R * 2 + 24) return;
-
-                const ease = t * t * (3 - 2 * t);
-                const scale = 0.55 + ease * 0.45;
-                const blurPx = (1 - ease) * 12;
-
-                const gx = gutterW / 2;
-                const gy = cardRect.y + cardRect.h / 2;
-
-                ctx.save();
-                ctx.globalAlpha = ease;
-                ctx.filter = blurPx > 0.05 ? `blur(${blurPx.toFixed(1)}px)` : 'none';
-                ctx.translate(gx, gy);
-                ctx.scale(scale, scale);
-                ctx.translate(-gx, -gy);
-
-                for (let ring = 0; ring < 3; ring++) {
-                    ctx.beginPath();
-                    ctx.arc(gx, gy, Math.max(1, GAUGE_R - ring * 13), 0, Math.PI * 2);
-                    ctx.strokeStyle = `rgba(120,220,235,${0.28 - ring * 0.07})`;
-                    ctx.lineWidth = 2.5;
-                    ctx.stroke();
-                }
-                ctx.beginPath();
-                ctx.arc(gx, gy, GAUGE_R, -Math.PI / 2, gaugeAngle);
-                ctx.strokeStyle = 'rgba(170,245,255,0.95)';
-                ctx.lineWidth = 3;
-                ctx.stroke();
-
-                ctx.fillStyle = 'rgba(170,245,255,0.9)';
-                ctx.font = '600 19px monospace';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(Math.round(gaugePct) + '%', gx, gy);
-                ctx.restore();
-            }
-
-            const DOT_TRACK_W = 210;
-            function drawDotTracks(x0base) {
-                const x0 = x0base + 6;
-                const w = DOT_TRACK_W - 40;
-                const y0 = height * 0.68;
-
-                ctx.fillStyle = 'rgba(160,235,245,0.7)';
-                ctx.font = '600 8px monospace';
-                ctx.textAlign = 'left';
-                ctx.fillText('SUSTAINABILITY', x0, y0 - 8);
-
-                dotTracks.forEach((base, i) => {
-                    const prog = clamp(base + Math.sin(frameCount * 0.015 + i * 1.7) * 0.22, 0.05, 0.95);
-                    const y = y0 + i * 11;
-                    ctx.strokeStyle = 'rgba(120,220,235,0.2)';
-                    ctx.lineWidth = 1;
-                    ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x0 + w, y); ctx.stroke();
-                    const dx = x0 + w * prog;
-                    ctx.beginPath();
-                    ctx.arc(dx, y, 2.5, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(200,250,255,0.95)';
-                    ctx.fill();
-                });
-            }
+            const nodes = Array.from({ length: NODE_COUNT }, () => ({
+                x: Math.random(),
+                y: Math.random(),
+                vx: rand(-0.06, 0.06),
+                vy: rand(-0.06, 0.06),
+                r: rand(1.4, 3.2),
+                glow: Math.random() < 0.16,
+            }));
 
             function draw() {
               try {
-                frameCount++;
                 ctx.clearRect(0, 0, width, height);
 
-                ctx.fillStyle = '#0E1A2E';
+                // Dasar navy gelap + glow radial lembut di kanan-atas,
+                // biar gak flat satu warna doang.
+                ctx.fillStyle = '#0A1226';
+                ctx.fillRect(0, 0, width, height);
+                const glow = ctx.createRadialGradient(width * 0.82, height * 0.08, 0, width * 0.82, height * 0.08, Math.max(width, height) * 0.7);
+                glow.addColorStop(0, 'rgba(40,80,160,0.35)');
+                glow.addColorStop(1, 'rgba(40,80,160,0)');
+                ctx.fillStyle = glow;
                 ctx.fillRect(0, 0, width, height);
 
-                const wash = ctx.createLinearGradient(0, 0, width, height * 0.3);
-                wash.addColorStop(0, 'rgba(20,60,100,0)');
-                wash.addColorStop(0.55, 'rgba(20,60,100,0.05)');
-                wash.addColorStop(0.82, 'rgba(150,60,50,0.22)');
-                wash.addColorStop(1, 'rgba(190,100,40,0.3)');
-                ctx.fillStyle = wash;
-                ctx.fillRect(0, 0, width, height);
+                nodes.forEach((n) => {
+                    n.x += n.vx / width;
+                    n.y += n.vy / height;
+                    if (n.x < 0 || n.x > 1) n.vx *= -1;
+                    if (n.y < 0 || n.y > 1) n.vy *= -1;
+                    n.x = clamp01(n.x);
+                    n.y = clamp01(n.y);
+                });
 
-                drawGrid();
+                for (let i = 0; i < nodes.length; i++) {
+                    const a = nodes[i];
+                    const ax = a.x * width;
+                    const ay = a.y * height;
+                    for (let j = i + 1; j < nodes.length; j++) {
+                        const b = nodes[j];
+                        const bx = b.x * width;
+                        const by = b.y * height;
+                        const d = Math.hypot(ax - bx, ay - by);
+                        if (d < LINK_DIST) {
+                            ctx.strokeStyle = `rgba(120,170,235,${0.16 * (1 - d / LINK_DIST)})`;
+                            ctx.lineWidth = 1;
+                            ctx.beginPath();
+                            ctx.moveTo(ax, ay);
+                            ctx.lineTo(bx, by);
+                            ctx.stroke();
+                        }
+                    }
+                }
 
-                const topGrad = ctx.createLinearGradient(0, 0, width, 0);
-                topGrad.addColorStop(0, 'rgba(110,230,210,0.85)');
-                topGrad.addColorStop(1, 'rgba(210,100,90,0.55)');
-                ctx.fillStyle = topGrad;
-                ctx.fillRect(0, 0, width, 3);
-
-                // Semua widget yang tersisa beneran jalan nyeberang dari kiri layar sampai
-                // keluar di kanan layar lalu balik lagi (loop) — durasi &
-                // fase beda-beda per widget biar staggered, gak bareng.
-                drawGauge();
-                drawDotTracks(travelX(400, 3000, DOT_TRACK_W));
+                nodes.forEach((n) => {
+                    const x = n.x * width;
+                    const y = n.y * height;
+                    if (n.glow) {
+                        ctx.beginPath();
+                        ctx.arc(x, y, n.r * 4, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(140,190,250,0.12)';
+                        ctx.fill();
+                    }
+                    ctx.beginPath();
+                    ctx.arc(x, y, n.r, 0, Math.PI * 2);
+                    ctx.fillStyle = n.glow ? 'rgba(210,230,255,0.95)' : 'rgba(150,190,240,0.75)';
+                    ctx.fill();
+                });
               } catch (e) {}
 
                 requestAnimationFrame(draw);
             }
-            draw();
-        })();
-    </script>
 
-    {{-- Angka % di panel "REAL-TIME ANALYTICS" (HTML statis di panel kanan)
-         tetap ngitung naik 10% -> 100% lalu loop, posisinya aja yang gak
-         ikut geser kiri-kanan lagi kayak dulu. --}}
-    <script>
-        (function () {
-            const el = document.getElementById('hud-pct');
-            if (! el) return;
-            let pct = 10;
-            setInterval(function () {
-                pct += 1;
-                if (pct > 100) pct = 10;
-                el.textContent = pct + '%';
-            }, 90);
+            function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+
+            draw();
         })();
     </script>
 </body>
