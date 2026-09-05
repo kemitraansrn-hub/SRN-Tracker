@@ -95,11 +95,25 @@
         .guest-footnote { text-align: center; font-size: 12px; color: var(--ink-faint); margin-top: 18px; }
 
         .guest-illust-side {
-            position: relative; overflow: hidden; padding: 44px 40px;
+            position: relative; overflow: hidden; padding: 56px 40px 44px;
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(14px);
             -webkit-backdrop-filter: blur(14px);
-            color: #EDE9E1; display: flex; flex-direction: column; justify-content: center;
+            color: #EDE9E1; display: flex; flex-direction: column; justify-content: flex-start;
+        }
+        .illust-photo-fade {
+            position: absolute; inset: 0; z-index: 0;
+            overflow: hidden; pointer-events: none;
+        }
+        .illust-photo-fade::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(165deg, rgba(14, 26, 46, 0.68), rgba(14, 26, 46, 0.82));
+        }
+        .illust-photo-fade-img {
+            position: absolute; inset: 0;
+            background-size: cover; background-position: center;
+            opacity: 0;
+            transition: opacity 1.6s ease;
         }
         .guest-illust-quote { position: relative; z-index: 1; }
         .guest-brand-logos {
@@ -116,7 +130,14 @@
             font-size: 18px; line-height: 1.5; font-weight: 700; letter-spacing: 0.01em;
             color: #F5F2EC; margin: 0;
         }
-        .hud-analytics { margin-top: 26px; max-width: 260px; }
+        .hud-analytics-float {
+            position: absolute; right: 32px; top: 50%; transform: translateY(-50%);
+            z-index: 1; pointer-events: none;
+        }
+        @media (max-width: 1180px) {
+            .hud-analytics-float { display: none; }
+        }
+        .hud-analytics { max-width: 240px; }
         .hud-analytics .hud-pct {
             font-family: monospace; font-size: 26px; font-weight: 700; color: #C8F5FA;
             text-shadow: 0 0 10px rgba(130, 230, 240, 0.55);
@@ -151,6 +172,7 @@
                 @yield('content')
             </div>
             <div class="guest-illust-side">
+                <div class="illust-photo-fade" id="illustPhotoFade"></div>
                 <div class="guest-illust-quote">
                     <div class="guest-brand-logos">
                         <div class="brand-chip"><img src="{{ asset('images/brands/reglow.png') }}" alt="Reglow"></div>
@@ -159,17 +181,54 @@
                         <div class="brand-chip"><img src="{{ asset('images/brands/purela.png') }}" alt="Purela"></div>
                     </div>
                     <p>BERKEMBANG DENGAN KEBAIKAN,<br>BERINOVASI UNTUK MASA DEPAN</p>
-                    <div class="hud-analytics">
-                        <div class="hud-pct" id="hud-pct">10%</div>
-                        <div class="hud-label">REAL-TIME ANALYTICS</div>
-                        <div class="hud-bar"><div style="width:70%;"></div></div>
-                        <div class="hud-bar"><div style="width:45%;"></div></div>
-                        <div class="hud-bar"><div style="width:85%;"></div></div>
-                    </div>
                 </div>
             </div>
         </div>
+        <div class="hud-analytics-float">
+            <div class="hud-analytics">
+                <div class="hud-pct" id="hud-pct">10%</div>
+                <div class="hud-label">REAL-TIME ANALYTICS</div>
+                <div class="hud-bar"><div style="width:70%;"></div></div>
+                <div class="hud-bar"><div style="width:45%;"></div></div>
+                <div class="hud-bar"><div style="width:85%;"></div></div>
+            </div>
+        </div>
     </div>
+
+    {{-- Foto di panel kanan (guest-illust-side): crossfade pelan gonta-ganti
+         1 foto ke foto lain (beda dari mitra-wall yang geser+banyak sekaligus
+         — ini cuma fade polos, 1 foto keliatan penuh di background panel). --}}
+    <script>
+        (function () {
+            const el = document.getElementById('illustPhotoFade');
+            if (! el) return;
+
+            const PHOTOS = {!! $mitraWallPhotos->toJson() !!};
+            if (! PHOTOS.length) return;
+
+            const imgA = document.createElement('div');
+            const imgB = document.createElement('div');
+            imgA.className = 'illust-photo-fade-img';
+            imgB.className = 'illust-photo-fade-img';
+            el.appendChild(imgA);
+            el.appendChild(imgB);
+
+            let idx = 0;
+            let showingA = true;
+            imgA.style.backgroundImage = 'url(' + PHOTOS[0] + ')';
+            imgA.style.opacity = '1';
+
+            setInterval(() => {
+                idx = (idx + 1) % PHOTOS.length;
+                const next = showingA ? imgB : imgA;
+                const cur = showingA ? imgA : imgB;
+                next.style.backgroundImage = 'url(' + PHOTOS[idx] + ')';
+                next.style.opacity = '1';
+                cur.style.opacity = '0';
+                showingA = ! showingA;
+            }, 4500);
+        })();
+    </script>
 
     {{-- "Mitra wall": puluhan foto kecil yang muncul-hilang acak (geser +
          fade dari kiri/kanan), beberapa slot jalan bersamaan biar kesannya
