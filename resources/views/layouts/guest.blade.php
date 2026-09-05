@@ -1,3 +1,10 @@
+@php
+    // Semua file gambar di public/images/mitra-wall otomatis kepakai di
+    // wall foto login — tinggal taruh/hapus file, gak perlu ubah kode.
+    $mitraWallPhotos = collect(glob(public_path('images/mitra-wall/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}'), GLOB_BRACE))
+        ->map(fn ($p) => asset('images/mitra-wall/'.rawurlencode(basename($p))))
+        ->values();
+@endphp
 <!doctype html>
 <html lang="id">
 <head>
@@ -175,8 +182,12 @@
             const frame = document.querySelector('.guest-frame');
             if (! wall || ! frame) return;
 
-            // TODO: ganti array ini isinya path foto mitra asli, contoh:
-            // const PHOTOS = ['{{ asset("images/mitra-wall/1.jpg") }}', ...];
+            // Foto diambil otomatis dari semua file di public/images/mitra-wall
+            // (lihat @php di bawah) — tinggal taruh/ganti file di folder itu,
+            // gak perlu edit kode ini lagi. Placeholder cuma jaga-jaga kalau
+            // foldernya kosong.
+            const REAL_PHOTOS = {!! $mitraWallPhotos->toJson() !!};
+
             const PLACEHOLDER_COLORS = ['6EC6CA', 'E8A87C', '8E9DD1', 'C97B84', '7BA88E', 'D4B483', '9B8EC4', '5C8FA8', 'C4A5D1', '6FA8C9'];
             function placeholderPhoto(seed) {
                 const color = PLACEHOLDER_COLORS[seed % PLACEHOLDER_COLORS.length];
@@ -187,7 +198,7 @@
                     + '</svg>';
                 return 'data:image/svg+xml;base64,' + btoa(svg);
             }
-            const PHOTOS = Array.from({ length: 24 }, (_, i) => placeholderPhoto(i));
+            const PHOTOS = REAL_PHOTOS.length > 0 ? REAL_PHOTOS : Array.from({ length: 24 }, (_, i) => placeholderPhoto(i));
 
             const SLOT_COUNT = 10;
             const rand = (a, b) => a + Math.random() * (b - a);
