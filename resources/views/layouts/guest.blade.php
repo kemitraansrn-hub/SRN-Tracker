@@ -24,11 +24,11 @@
             z-index: 0; pointer-events: none;
         }
         .guest-brand-hero {
-            position: absolute; left: 40px; top: 50%; transform: translateY(-50%);
-            z-index: 1; max-width: 200px; pointer-events: none;
+            position: absolute; left: 24px; top: 50%; transform: translateY(-50%);
+            z-index: 1; max-width: 180px; pointer-events: none;
         }
         .guest-brand-hero .hero-title {
-            font-size: 24px; font-weight: 700; color: #fff; line-height: 1.25;
+            font-size: 21px; font-weight: 700; color: #fff; line-height: 1.25;
         }
         .guest-brand-hero .hero-title span { display: block; color: #8FB4F5; }
         .guest-brand-hero .hero-rule {
@@ -36,12 +36,14 @@
             margin: 14px 0;
         }
         .guest-brand-hero .hero-sub {
-            font-size: 13px; color: rgba(210, 222, 245, 0.7); line-height: 1.5;
+            font-size: 12px; color: rgba(210, 222, 245, 0.7); line-height: 1.5;
         }
         {{-- Butuh gutter kiri yang beneran cukup lebar (card 900px + padding
              frame + margin sendiri) baru ditampilin — bukan breakpoint asal,
-             dihitung dari lebar riil yang dibutuhkan biar gak numpuk ke card. --}}
-        @media (max-width: 1580px) {
+             dihitung dari lebar riil yang dibutuhkan biar gak numpuk ke card.
+             Ukuran hero sengaja dikecilin biar tetep muncul di lebar laptop
+             umum (1366/1440px), bukan cuma di monitor lebar. --}}
+        @media (max-width: 1360px) {
             .guest-brand-hero { display: none; }
         }
         .guest-card {
