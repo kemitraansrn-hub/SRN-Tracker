@@ -57,7 +57,7 @@
         </div>
     </section>
 
-    <section style="display:grid; grid-template-columns:repeat(12, 1fr); gap:14px; margin-bottom:14px; align-items:stretch;">
+    <section class="reveal-on-scroll" style="display:grid; grid-template-columns:repeat(12, 1fr); gap:14px; margin-bottom:14px; align-items:stretch;">
         <div class="card" style="grid-column:span 4; padding:14px 16px; display:flex; flex-direction:column;">
             <div class="card-title" style="font-size:13px; margin-bottom:2px;">Sales Funnel</div>
             <div class="card-hint" style="margin-bottom:12px;">Follow-up &rarr; Belanja, {{ $periodeLabel }}</div>
@@ -130,7 +130,7 @@
         </div>
     </section>
 
-    <section style="display:grid; grid-template-columns:repeat(12, 1fr); gap:14px; margin-bottom:14px; align-items:stretch;">
+    <section class="reveal-on-scroll" style="display:grid; grid-template-columns:repeat(12, 1fr); gap:14px; margin-bottom:14px; align-items:stretch;">
         <div class="card" style="grid-column:span 4; padding:14px 16px;">
             <div class="card-title" style="font-size:13px; margin-bottom:10px;">Omset per Brand</div>
             @include('partials.doughnut-chart', ['segments' => $brandSegments, 'size' => 120, 'strokeWidth' => 16])
@@ -154,7 +154,7 @@
         </div>
     </section>
 
-    <section style="display:grid; grid-template-columns:repeat(12, 1fr); gap:14px; align-items:stretch;">
+    <section class="reveal-on-scroll" style="display:grid; grid-template-columns:repeat(12, 1fr); gap:14px; align-items:stretch;">
         <div class="card" style="grid-column:span {{ $kaeContribSegments ? 6 : 12 }}; padding:14px 16px;">
             <div class="card-title" style="font-size:13px; margin-bottom:2px;">Top 10 Mitra</div>
             <div class="card-hint" style="margin-bottom:12px;">By omset {{ $periodeLabel }}</div>
@@ -195,7 +195,7 @@
         @endif
     </section>
 
-    <section style="margin-top:14px;">
+    <section class="reveal-on-scroll" style="margin-top:14px;">
         <div class="card" style="padding:14px 16px;">
             <div class="card-title" style="font-size:13px; margin-bottom:2px;">Korelasi Mitra Aktif Berbelanja vs Omset</div>
             <div class="card-hint" style="margin-bottom:10px;">
@@ -209,4 +209,6 @@
             ])
         </div>
     </section>
+
+    @include('partials.reveal-on-scroll')
 @endsection

@@ -99,7 +99,7 @@
         </div>
     </form>
 
-    <section class="card table-card" style="padding:0;">
+    <section class="card table-card reveal-on-scroll" style="padding:0;">
         <div class="table-scroll">
             <table>
                 <thead>
@@ -214,10 +214,12 @@
         </div>
     </section>
 
-    <div class="card" style="margin-top:16px; font-size:12px; color:var(--ink-muted);">
+    <div class="card reveal-on-scroll" style="margin-top:16px; font-size:12px; color:var(--ink-muted);">
         <b style="color:var(--ink);">OKE</b> = sudah belanja di minggu andalannya &middot;
         <b style="color:var(--ink);">Berjalan</b> = minggu andalannya sedang berjalan &middot;
         <b style="color:var(--ink);">Terlewat</b> = minggu andalannya sudah lewat tapi belum belanja &middot;
         <b style="color:var(--ink);">Menunggu</b> = minggu andalannya belum tiba.
     </div>
+
+    @include('partials.reveal-on-scroll')
 @endsection

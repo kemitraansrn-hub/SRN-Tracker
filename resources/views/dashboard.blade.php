@@ -119,7 +119,7 @@
         </div>
     @else
         @if ($runRateWeekly)
-            <section class="card table-card" style="padding:0; margin-bottom:20px;">
+            <section class="card table-card reveal-on-scroll" style="padding:0; margin-bottom:20px;">
                 <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px; text-align:center; display:block;">
                     <div class="card-title" style="text-transform:uppercase;">{{ auth()->user()->isAdmin() ? 'Kemitraan' : auth()->user()->name }}</div>
                     <div class="card-title" style="text-transform:uppercase;">Run Rate Weekly</div>
@@ -169,7 +169,7 @@
         @endif
 
         @if ($adaTargetBulanIni && $specialDealPerformance->isNotEmpty())
-            <section class="card table-card" style="padding:0; margin-bottom:20px;">
+            <section class="card table-card reveal-on-scroll" style="padding:0; margin-bottom:20px;">
                 <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px;">
                     <div class="card-title">Special Deal Performance</div>
                     <div class="card-hint">{{ $periodeLabel }}</div>
@@ -270,7 +270,7 @@
         @endif
 
         @if ($runRate)
-            <section class="card table-card" style="padding:0; margin-bottom:20px;">
+            <section class="card table-card reveal-on-scroll" style="padding:0; margin-bottom:20px;">
                 <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px;">
                     <div class="card-title">Run Rate Mitra Active</div>
                     <div class="card-hint">YTD Januari&ndash;{{ $runRate['monthLabels'][$runRate['currentMonth']] }} {{ $tahunIni }} &middot; mitra dihitung unik per bulan, min. 1x belanja</div>
@@ -327,7 +327,7 @@
         @endif
 
         @if (auth()->user()->isAdmin() && $reactivationCandidates->isNotEmpty())
-            <section class="card table-card" style="padding:0; margin-bottom:20px;">
+            <section class="card table-card reveal-on-scroll" style="padding:0; margin-bottom:20px;">
                 <div class="card-head" style="padding:18px 20px; margin-bottom:0; cursor:pointer; align-items:center;" onclick="
                     const body = document.getElementById('reactivation-body');
                     const chevron = document.getElementById('reactivation-chevron');
@@ -385,7 +385,7 @@
         @endif
 
         <section style="display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start;">
-            <div class="card table-card" style="padding:0;">
+            <div class="card table-card reveal-on-scroll" style="padding:0;">
                 <div class="card-head" style="padding:18px 20px; margin-bottom:0; cursor:pointer; align-items:center;" onclick="
                     const body = document.getElementById('top-mitra-body');
                     const chevron = document.getElementById('top-mitra-chevron');
@@ -418,7 +418,7 @@
                 </div>
             </div>
 
-            <div class="card table-card" style="padding:0;">
+            <div class="card table-card reveal-on-scroll" style="padding:0; transition-delay:0.1s;">
                 <div class="card-head" style="padding:18px 20px; margin-bottom:0; cursor:pointer; align-items:center;" onclick="
                     const body = document.getElementById('order-terbaru-body');
                     const chevron = document.getElementById('order-terbaru-chevron');
@@ -450,4 +450,6 @@
             </div>
         </section>
     @endif
+
+    @include('partials.reveal-on-scroll')
 @endsection

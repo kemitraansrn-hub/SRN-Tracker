@@ -52,7 +52,7 @@
         </div>
     @endif
 
-    <section class="card table-card" style="padding:0; margin-bottom:20px;">
+    <section class="card table-card reveal-on-scroll" style="padding:0; margin-bottom:20px;">
         <div class="table-scroll">
             <table>
                 <thead>
@@ -156,7 +156,7 @@
             toggleMitraField();
         </script>
 
-    <section class="card table-card" style="padding:0;">
+    <section class="card table-card reveal-on-scroll" style="padding:0;">
         <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px;">
             <div class="card-title">Daftar Plan RO</div>
         </div>
@@ -202,4 +202,6 @@
             </table>
         </div>
     </section>
+
+    @include('partials.reveal-on-scroll')
 @endsection

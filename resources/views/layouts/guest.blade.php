@@ -296,8 +296,8 @@
             const nodes = Array.from({ length: NODE_COUNT }, () => ({
                 x: Math.random(),
                 y: Math.random(),
-                vx: rand(-0.06, 0.06),
-                vy: rand(-0.06, 0.06),
+                vx: rand(-0.2, 0.2),
+                vy: rand(-0.2, 0.2),
                 r: rand(1.4, 3.2),
                 glow: Math.random() < 0.16,
             }));
