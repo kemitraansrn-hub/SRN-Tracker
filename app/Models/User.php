@@ -45,6 +45,12 @@ class User extends Authenticatable
         return $this->role === 'finance';
     }
 
+    /** Role dengan visibilitas company-wide (bukan cuma data KAE sendiri): admin, head, finance. */
+    public function canViewAll(): bool
+    {
+        return $this->isAdmin() || $this->isHead() || $this->isFinance();
+    }
+
     public function photoUrl(): ?string
     {
         return $this->photo ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->photo) : null;

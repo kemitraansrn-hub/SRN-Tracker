@@ -9,7 +9,7 @@
         <div>
             <h1 class="display" style="font-size:24px;">Dashboard</h1>
             <div style="color:var(--ink-muted); font-size:13px; margin-top:4px;">
-                Ringkasan performa {{ auth()->user()->isAdmin() ? 'semua mitra' : 'mitra kamu' }} &mdash; {{ $periodeLabel }}
+                Ringkasan performa {{ auth()->user()->canViewAll() ? 'semua mitra' : 'mitra kamu' }} &mdash; {{ $periodeLabel }}
             </div>
         </div>
         @include('partials.bulan-tahun-filter', ['action' => route('dashboard'), 'bulan' => $bulanIni, 'tahun' => $tahunIni, 'isBulanIni' => $isBulanIni])
@@ -121,7 +121,7 @@
         @if ($runRateWeekly)
             <section class="card table-card reveal-on-scroll" style="padding:0; margin-bottom:20px;">
                 <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px; text-align:center; display:block;">
-                    <div class="card-title" style="text-transform:uppercase;">{{ auth()->user()->isAdmin() ? 'Kemitraan' : auth()->user()->name }}</div>
+                    <div class="card-title" style="text-transform:uppercase;">{{ auth()->user()->canViewAll() ? 'Kemitraan' : auth()->user()->name }}</div>
                     <div class="card-title" style="text-transform:uppercase;">Run Rate Weekly</div>
                 </div>
                 <div class="table-scroll">
@@ -326,7 +326,7 @@
             </section>
         @endif
 
-        @if (auth()->user()->isAdmin() && $reactivationCandidates->isNotEmpty())
+        @if (auth()->user()->canViewAll() && $reactivationCandidates->isNotEmpty())
             <section class="card table-card reveal-on-scroll" style="padding:0; margin-bottom:20px;">
                 <div class="card-head" style="padding:18px 20px; margin-bottom:0; cursor:pointer; align-items:center;" onclick="
                     const body = document.getElementById('reactivation-body');

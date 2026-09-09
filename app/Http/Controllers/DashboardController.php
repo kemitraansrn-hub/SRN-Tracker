@@ -28,17 +28,18 @@ class DashboardController extends Controller
         $now = Carbon::create($tahun, $bulan, 1)->startOfMonth();
         $isBulanIni = $now->isSameMonth(today());
 
-        $kaeCode = $user->isAdmin() ? null : $user->kae_code;
+        $canViewAll = $user->canViewAll();
+        $kaeCode = $canViewAll ? null : $user->kae_code;
 
         $ordersThisMonth = Order::query()
             ->whereYear('tanggal_order', $now->year)
             ->whereMonth('tanggal_order', $now->month)
-            ->when(! $user->isAdmin(), fn ($q) => $q->where('orders.kae_code', $user->kae_code));
+            ->when(! $canViewAll, fn ($q) => $q->where('orders.kae_code', $user->kae_code));
 
         $totalOmsetBulanIni = (clone $ordersThisMonth)->sum('total_transaksi');
         $jumlahOrderBulanIni = (clone $ordersThisMonth)->count();
 
-        $companyTarget = $user->isAdmin() ? RunRateTarget::companyTarget($now->month, $now->year) : null;
+        $companyTarget = $canViewAll ? RunRateTarget::companyTarget($now->month, $now->year) : null;
         $companyAchPct = $companyTarget ? round($totalOmsetBulanIni / $companyTarget * 100, 1) : null;
 
         $prevMonthRef = $now->copy()->subMonthNoOverflow();
@@ -50,7 +51,7 @@ class DashboardController extends Controller
                 $prevMonthRef->copy()->startOfMonth(),
                 $prevMonthRef->copy()->startOfMonth()->addDays($dayCap - 1)->endOfDay(),
             ])
-            ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_code', $user->kae_code))
+            ->when(! $canViewAll, fn ($q) => $q->where('kae_code', $user->kae_code))
             ->sum('total_transaksi');
         $mtdGrowthPct = $mtdLalu > 0 ? round((($totalOmsetBulanIni - $mtdLalu) / $mtdLalu) * 100, 1) : null;
 
@@ -65,7 +66,7 @@ class DashboardController extends Controller
                 ->join('mitra', 'mitra.id', '=', 'target_bulanan.mitra_id')
                 ->where('target_bulanan.bulan', $now->month)
                 ->where('target_bulanan.tahun', $now->year)
-                ->when(! $user->isAdmin(), fn ($q) => $q->where('mitra.kae_code', $user->kae_code))
+                ->when(! $canViewAll, fn ($q) => $q->where('mitra.kae_code', $user->kae_code))
                 ->selectRaw('SUM(target_bulanan.komit) as komit, SUM(target_bulanan.target) as target, SUM(target_bulanan.stretch) as stretch')
                 ->first();
 
@@ -83,7 +84,7 @@ class DashboardController extends Controller
             ];
         }
 
-        $runRateTargetBulanan = $user->isAdmin()
+        $runRateTargetBulanan = $canViewAll
             ? $companyTarget
             : RunRateTarget::kaeTarget($now->month, $now->year, $user->kae_code);
 
@@ -131,7 +132,7 @@ class DashboardController extends Controller
 
         $orderTerbaru = (clone $ordersThisMonth)->with('mitra')->latest('tanggal_order')->limit(8)->get();
 
-        $runRate = $user->isAdmin() ? RunRateService::mitraActiveTable($now->year, $now->month) : null;
+        $runRate = $canViewAll ? RunRateService::mitraActiveTable($now->year, $now->month) : null;
 
         $trendCard = null;
         $activeTrend = TrendSetting::active();
@@ -139,12 +140,12 @@ class DashboardController extends Controller
         if ($activeTrend) {
             $omsetTrendIni = Order::query()
                 ->whereBetween('tanggal_order', [$activeTrend->ini_mulai->copy()->startOfDay(), $activeTrend->ini_selesai->copy()->endOfDay()])
-                ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_code', $user->kae_code))
+                ->when(! $canViewAll, fn ($q) => $q->where('kae_code', $user->kae_code))
                 ->sum('total_transaksi');
 
             $omsetTrendLalu = Order::query()
                 ->whereBetween('tanggal_order', [$activeTrend->lalu_mulai->copy()->startOfDay(), $activeTrend->lalu_selesai->copy()->endOfDay()])
-                ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_code', $user->kae_code))
+                ->when(! $canViewAll, fn ($q) => $q->where('kae_code', $user->kae_code))
                 ->sum('total_transaksi');
 
             $trendCard = [
