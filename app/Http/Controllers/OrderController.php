@@ -15,7 +15,7 @@ class OrderController extends Controller
         $user = $request->user();
 
         $query = Order::with('mitra')
-            ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_code', $user->kae_code))
+            ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_code', $user->kae_code))
             ->when($request->filled('q'), fn ($q) => $q->where(function ($qq) use ($request) {
                 $qq->where('no_order', 'like', '%'.$request->input('q').'%')
                     ->orWhereHas('mitra', fn ($m) => $m->where('nama', 'like', '%'.$request->input('q').'%')
@@ -85,7 +85,7 @@ class OrderController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->isAdmin() && $order->kae_code !== $user->kae_code) {
+        if (! $user->canViewAll() && $order->kae_code !== $user->kae_code) {
             abort(403, 'Anda tidak punya akses ke order ini.');
         }
     }

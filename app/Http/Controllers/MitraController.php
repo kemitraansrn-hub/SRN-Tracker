@@ -21,12 +21,12 @@ class MitraController extends Controller
         $stabilitasByMitra = StabilitasService::bulkForPreviousQuarter();
 
         $query = Mitra::query()
-            ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_code', $user->kae_code))
+            ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_code', $user->kae_code))
             ->when($request->filled('q'), fn ($q) => $q->where(function ($qq) use ($request) {
                 $qq->where('nama', 'like', '%'.$request->input('q').'%')
                     ->orWhere('kode_mitra', 'like', '%'.$request->input('q').'%');
             }))
-            ->when($user->isAdmin() && $request->filled('kae_code'), fn ($q) => $q->where('kae_code', $request->input('kae_code')))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($q) => $q->where('kae_code', $request->input('kae_code')))
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
             // "Pasif" mitra have 0 order rows in the previous quarter, so
             // they never get a row from bulkForPreviousQuarter()'s groupBy
@@ -51,7 +51,7 @@ class MitraController extends Controller
 
         return view('mitra.index', [
             'mitraList' => $mitraList,
-            'kaeOptions' => $user->isAdmin() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
+            'kaeOptions' => $user->canViewAll() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
             'stabilitasByMitra' => $stabilitasByMitra,
             'blnAktifLabel' => 'Bln Aktif Q'.$quarterRange['kuartal'],
             'lmLabel' => 'LM ('.$prevMonthRef->translatedFormat('M').')',
@@ -144,7 +144,7 @@ class MitraController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->isAdmin() && $mitra->kae_code !== $user->kae_code) {
+        if (! $user->canViewAll() && $mitra->kae_code !== $user->kae_code) {
             abort(403, 'Anda tidak punya akses ke mitra ini.');
         }
     }

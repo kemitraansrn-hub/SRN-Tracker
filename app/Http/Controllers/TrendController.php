@@ -81,7 +81,7 @@ class TrendController extends Controller
                 Carbon::parse($mulai)->startOfDay(),
                 Carbon::parse($selesai)->endOfDay(),
             ])
-            ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_code', $user->kae_code))
+            ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_code', $user->kae_code))
             ->sum('total_transaksi');
     }
 }

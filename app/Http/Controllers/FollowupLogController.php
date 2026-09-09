@@ -43,7 +43,7 @@ class FollowupLogController extends Controller
         $user = $request->user();
 
         $query = FollowupLog::with(['mitra', 'kae'])
-            ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_user_id', $user->id))
+            ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_user_id', $user->id))
             ->when($request->filled('mitra_id'), fn ($q) => $q->where('mitra_id', $request->input('mitra_id')))
             ->latest('tanggal_fu');
 
@@ -57,7 +57,7 @@ class FollowupLogController extends Controller
         $user = $request->user();
 
         $mitraOptions = Mitra::where('status', 'aktif')
-            ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_code', $user->kae_code))
+            ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_code', $user->kae_code))
             ->orderBy('nama')
             ->get();
 
@@ -75,7 +75,7 @@ class FollowupLogController extends Controller
 
         $mitra = Mitra::findOrFail($data['mitra_id']);
 
-        if (! $user->isAdmin() && $mitra->kae_code !== $user->kae_code) {
+        if (! $user->canViewAll() && $mitra->kae_code !== $user->kae_code) {
             abort(403, 'Anda tidak punya akses ke mitra ini.');
         }
 
@@ -98,7 +98,7 @@ class FollowupLogController extends Controller
 
         $user = $request->user();
         $mitraOptions = Mitra::where('status', 'aktif')
-            ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_code', $user->kae_code))
+            ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_code', $user->kae_code))
             ->orderBy('nama')
             ->get();
 
@@ -117,7 +117,7 @@ class FollowupLogController extends Controller
         $data = $this->validated($request);
         $mitra = Mitra::findOrFail($data['mitra_id']);
 
-        if (! $request->user()->isAdmin() && $mitra->kae_code !== $request->user()->kae_code) {
+        if (! $request->user()->canViewAll() && $mitra->kae_code !== $request->user()->kae_code) {
             abort(403, 'Anda tidak punya akses ke mitra ini.');
         }
 
@@ -170,7 +170,7 @@ class FollowupLogController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->isAdmin() && $followupLog->kae_user_id !== $user->id) {
+        if (! $user->canViewAll() && $followupLog->kae_user_id !== $user->id) {
             abort(403, 'Anda tidak punya akses ke catatan follow-up ini.');
         }
     }
@@ -180,7 +180,7 @@ class FollowupLogController extends Controller
         $user = $request->user();
 
         $logs = FollowupLog::with(['mitra', 'kae'])
-            ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_user_id', $user->id))
+            ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_user_id', $user->id))
             ->when($request->filled('mitra_id'), fn ($q) => $q->where('mitra_id', $request->input('mitra_id')))
             ->orderBy('tanggal_fu')
             ->get();

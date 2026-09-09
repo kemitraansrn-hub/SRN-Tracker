@@ -166,7 +166,7 @@ class ForecastController extends Controller
         $user = $request->user();
         $mitraOptionsBySegmen = collect(self::MITRA_LEVEL_SEGMEN)->mapWithKeys(fn ($seg) => [
             $seg => $mitraRows->where('segmen', $seg)
-                ->when(! $user->isAdmin(), fn ($rows) => $rows->where('kae_code', $user->kae_code))
+                ->when(! $user->canViewAll(), fn ($rows) => $rows->where('kae_code', $user->kae_code))
                 ->sortBy('nama')
                 ->map(fn ($r) => ['id' => $r->mitra_id, 'nama' => $r->nama])
                 ->values(),
@@ -203,7 +203,7 @@ class ForecastController extends Controller
             'mitra_id' => [
                 'nullable', 'required_if:segmen,'.implode(',', self::MITRA_LEVEL_SEGMEN), 'exists:mitra,id',
                 function ($attribute, $value, $fail) use ($user) {
-                    if ($value && ! $user->isAdmin() && Mitra::where('id', $value)->where('kae_code', $user->kae_code)->doesntExist()) {
+                    if ($value && ! $user->canViewAll() && Mitra::where('id', $value)->where('kae_code', $user->kae_code)->doesntExist()) {
                         $fail('Mitra ini bukan mitra kamu.');
                     }
                 },
@@ -228,7 +228,7 @@ class ForecastController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->isAdmin() && $forecastRo->created_by !== $user->id) {
+        if (! $user->canViewAll() && $forecastRo->created_by !== $user->id) {
             throw new HttpException(403, 'Kamu tidak bisa menghapus Plan RO yang dibuat orang lain.');
         }
 

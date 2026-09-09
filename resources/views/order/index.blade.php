@@ -9,7 +9,7 @@
         <div>
             <h1 class="display" style="font-size:24px;">Order / Transaksi</h1>
             <div style="color:var(--ink-muted); font-size:13px; margin-top:4px;">
-                {{ $orders->total() }} order {{ auth()->user()->isAdmin() ? '' : 'kamu' }}
+                {{ $orders->total() }} order {{ auth()->user()->canViewAll() ? '' : 'kamu' }}
             </div>
         </div>
     </div>

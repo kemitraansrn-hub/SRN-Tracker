@@ -23,7 +23,7 @@ class SalesDraftController extends Controller
         $user = $request->user();
 
         $drafts = SalesDraft::with('mitra:id,nama,kode_mitra', 'items')
-            ->when(! $user->isAdmin(), fn ($q) => $q->where('created_by', $user->id))
+            ->when(! $user->canViewAll(), fn ($q) => $q->where('created_by', $user->id))
             ->latest()
             ->get();
 
@@ -112,7 +112,7 @@ class SalesDraftController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->isAdmin() && $salesDraft->created_by !== $user->id) {
+        if (! $user->canViewAll() && $salesDraft->created_by !== $user->id) {
             throw new HttpException(403, 'Kamu tidak punya akses ke input penjualan ini.');
         }
     }
@@ -120,7 +120,7 @@ class SalesDraftController extends Controller
     private function formOptions($user): array
     {
         $mitraList = Mitra::query()
-            ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_code', $user->kae_code))
+            ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_code', $user->kae_code))
             ->orderBy('nama')
             ->get(['id', 'nama', 'kode_mitra', 'alamat']);
 

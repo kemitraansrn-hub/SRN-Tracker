@@ -40,7 +40,7 @@ class SegmentasiController extends Controller
             ->where('target_bulanan.bulan', $periode->month)
             ->where('target_bulanan.tahun', $periode->year)
             ->where('target_bulanan.segmen', $segmen)
-            ->when(! $user->isAdmin(), fn ($q) => $q->where('mitra.kae_code', $user->kae_code))
+            ->when(! $user->canViewAll(), fn ($q) => $q->where('mitra.kae_code', $user->kae_code))
             ->groupBy('mitra.id', 'mitra.nama', 'mitra.kode_mitra', 'mitra.kae_code', 'target_bulanan.komit', 'target_bulanan.target', 'target_bulanan.stretch', 'target_bulanan.tier_dipakai')
             ->selectRaw("mitra.id, mitra.nama, mitra.kode_mitra, mitra.kae_code, $targetSql as target, COALESCE(SUM(orders.total_transaksi), 0) as omset")
             ->orderByDesc('omset')

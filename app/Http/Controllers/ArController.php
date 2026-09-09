@@ -31,7 +31,7 @@ class ArController extends Controller
         $user = $request->user();
 
         $orderResults = collect();
-        if ($user->isAdmin() && ($request->filled('cari_no_order') || $request->filled('cari_dari') || $request->filled('cari_sampai'))) {
+        if ($user->canViewAll() && ($request->filled('cari_no_order') || $request->filled('cari_dari') || $request->filled('cari_sampai'))) {
             $orderResults = Order::query()
                 ->with('mitra:id,nama,kode_mitra')
                 ->whereDoesntHave('arReceivable')
@@ -101,7 +101,7 @@ class ArController extends Controller
     private function buildArList($user): \Illuminate\Support\Collection
     {
         return ArReceivable::with(['order.mitra:id,nama,kode_mitra,kae_code', 'payments.creator:id,name'])
-            ->when(! $user->isAdmin(), fn ($q) => $q->whereHas('order.mitra', fn ($qq) => $qq->where('kae_code', $user->kae_code)))
+            ->when(! $user->canViewAll(), fn ($q) => $q->whereHas('order.mitra', fn ($qq) => $qq->where('kae_code', $user->kae_code)))
             ->get()
             ->map(function ($ar) {
                 $ar->sisa_ar = $ar->sisa();
@@ -254,7 +254,7 @@ class ArController extends Controller
         $user = $request->user();
         $arReceivable->loadMissing('order.mitra', 'payments');
 
-        if (! $user->isAdmin() && $arReceivable->order->mitra->kae_code !== $user->kae_code) {
+        if (! $user->canViewAll() && $arReceivable->order->mitra->kae_code !== $user->kae_code) {
             throw new HttpException(403, 'Kamu tidak punya akses ke AR mitra ini.');
         }
 
@@ -290,7 +290,7 @@ class ArController extends Controller
         $payment->loadMissing('arReceivable.order.mitra');
         $arReceivable = $payment->arReceivable;
 
-        if (! $user->isAdmin() && $arReceivable->order->mitra->kae_code !== $user->kae_code) {
+        if (! $user->canViewAll() && $arReceivable->order->mitra->kae_code !== $user->kae_code) {
             throw new HttpException(403, 'Kamu tidak punya akses ke AR mitra ini.');
         }
 

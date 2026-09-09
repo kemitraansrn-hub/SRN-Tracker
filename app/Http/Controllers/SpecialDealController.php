@@ -28,7 +28,7 @@ class SpecialDealController extends Controller
         $tahun = $request->integer('tahun') ?: now()->year;
 
         $deals = SpecialDeal::with(['mitra', 'kae'])
-            ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_user_id', $user->id))
+            ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_user_id', $user->id))
             ->where('kuartal', $kuartal)
             ->where('tahun', $tahun)
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
@@ -78,7 +78,7 @@ class SpecialDealController extends Controller
         $user = $request->user();
 
         $mitraOptions = Mitra::where('status', 'aktif')
-            ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_code', $user->kae_code))
+            ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_code', $user->kae_code))
             ->orderBy('nama')
             ->get();
 
@@ -111,7 +111,7 @@ class SpecialDealController extends Controller
 
         $user = $request->user();
         $mitraOptions = Mitra::where('status', 'aktif')
-            ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_code', $user->kae_code))
+            ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_code', $user->kae_code))
             ->orderBy('nama')
             ->get();
 
@@ -215,7 +215,7 @@ class SpecialDealController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->isAdmin() && $mitra->kae_code !== $user->kae_code) {
+        if (! $user->canViewAll() && $mitra->kae_code !== $user->kae_code) {
             abort(403, 'Anda tidak punya akses ke mitra ini.');
         }
     }

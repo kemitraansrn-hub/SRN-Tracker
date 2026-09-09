@@ -9,7 +9,7 @@
         <div>
             <h1 class="display" style="font-size:24px;">Follow-up Log</h1>
             <div style="color:var(--ink-muted); font-size:13px; margin-top:4px;">
-                {{ $logs->total() }} catatan follow-up {{ auth()->user()->isAdmin() ? '' : 'kamu' }}
+                {{ $logs->total() }} catatan follow-up {{ auth()->user()->canViewAll() ? '' : 'kamu' }}
             </div>
         </div>
         <div style="display:flex; gap:10px;">

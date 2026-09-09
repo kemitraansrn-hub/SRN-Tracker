@@ -9,7 +9,7 @@
         <div>
             <h1 class="display" style="font-size:24px;">Data Mitra</h1>
             <div style="color:var(--ink-muted); font-size:13px; margin-top:4px;">
-                {{ $mitraList->total() }} mitra {{ auth()->user()->isAdmin() ? '' : 'kamu' }}
+                {{ $mitraList->total() }} mitra {{ auth()->user()->canViewAll() ? '' : 'kamu' }}
             </div>
         </div>
         @if (auth()->user()->isAdmin())
@@ -26,7 +26,7 @@
             <label>Cari</label>
             <input type="text" name="q" value="{{ request('q') }}" placeholder="Nama atau kode mitra...">
         </div>
-        @if (auth()->user()->isAdmin())
+        @if (auth()->user()->canViewAll())
             <div class="field" style="margin-bottom:0;">
                 <label>KAE</label>
                 <select name="kae_code" class="select-pill" onchange="this.form.submit()">

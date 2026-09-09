@@ -20,7 +20,7 @@ class WeeklyPlanController extends Controller
         $now = now();
 
         $mitraList = Mitra::where('status', 'aktif')
-            ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_code', $user->kae_code))
+            ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_code', $user->kae_code))
             ->orderBy('nama')
             ->get();
 
@@ -35,7 +35,7 @@ class WeeklyPlanController extends Controller
             $rows = DB::table('orders')
                 ->whereYear('tanggal_order', $ref->year)
                 ->whereMonth('tanggal_order', $ref->month)
-                ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_code', $user->kae_code))
+                ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_code', $user->kae_code))
                 ->selectRaw("mitra_id, $case as minggu, SUM(total_transaksi) as total")
                 ->groupBy('mitra_id', 'minggu')
                 ->get();
@@ -57,7 +57,7 @@ class WeeklyPlanController extends Controller
         $prevMonthRows = DB::table('orders')
             ->whereYear('tanggal_order', $prevMonthRef->year)
             ->whereMonth('tanggal_order', $prevMonthRef->month)
-            ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_code', $user->kae_code))
+            ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_code', $user->kae_code))
             ->selectRaw("mitra_id, $casePrevMonth as minggu, SUM(total_transaksi) as total")
             ->groupBy('mitra_id', 'minggu')
             ->get();
@@ -74,7 +74,7 @@ class WeeklyPlanController extends Controller
         $actualRows = DB::table('orders')
             ->whereYear('tanggal_order', $now->year)
             ->whereMonth('tanggal_order', $now->month)
-            ->when(! $user->isAdmin(), fn ($q) => $q->where('kae_code', $user->kae_code))
+            ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_code', $user->kae_code))
             ->selectRaw("mitra_id, $caseThisMonth as minggu, SUM(total_transaksi) as total")
             ->groupBy('mitra_id', 'minggu')
             ->get();
@@ -91,7 +91,7 @@ class WeeklyPlanController extends Controller
         $weekIndex = fn (?string $w) => $w ? (int) substr($w, 1) : null;
 
         $targetByMitra = TargetBulanan::where('bulan', $now->month)->where('tahun', $now->year)
-            ->when(! $user->isAdmin(), fn ($q) => $q->whereHas('mitra', fn ($qq) => $qq->where('kae_code', $user->kae_code)))
+            ->when(! $user->canViewAll(), fn ($q) => $q->whereHas('mitra', fn ($qq) => $qq->where('kae_code', $user->kae_code)))
             ->get()
             ->keyBy('mitra_id');
 
