@@ -45,10 +45,14 @@ class FollowupLogController extends Controller
         $query = FollowupLog::with(['mitra', 'kae'])
             ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_user_id', $user->id))
             ->when($request->filled('mitra_id'), fn ($q) => $q->where('mitra_id', $request->input('mitra_id')))
+            ->when($request->filled('status_followup'), fn ($q) => $q->where('status_followup', $request->input('status_followup')))
+            ->when($request->filled('status_belanja'), fn ($q) => $q->where('status_belanja', $request->input('status_belanja')))
+            ->when($request->filled('alasan_kendala'), fn ($q) => $q->where('alasan_kendala', $request->input('alasan_kendala')))
             ->latest('tanggal_fu');
 
         return view('followup.index', [
             'logs' => $query->paginate(20)->withQueryString(),
+            'alasanOptions' => self::ALASAN_KENDALA,
         ]);
     }
 
@@ -182,6 +186,9 @@ class FollowupLogController extends Controller
         $logs = FollowupLog::with(['mitra', 'kae'])
             ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_user_id', $user->id))
             ->when($request->filled('mitra_id'), fn ($q) => $q->where('mitra_id', $request->input('mitra_id')))
+            ->when($request->filled('status_followup'), fn ($q) => $q->where('status_followup', $request->input('status_followup')))
+            ->when($request->filled('status_belanja'), fn ($q) => $q->where('status_belanja', $request->input('status_belanja')))
+            ->when($request->filled('alasan_kendala'), fn ($q) => $q->where('alasan_kendala', $request->input('alasan_kendala')))
             ->orderBy('tanggal_fu')
             ->get();
 

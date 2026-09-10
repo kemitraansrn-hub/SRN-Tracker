@@ -17,7 +17,11 @@ class WeeklyPlanController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
-        $now = now();
+
+        $bulan = max(1, min(12, (int) $request->input('bulan', now()->month)));
+        $tahun = max(2000, min(2100, (int) $request->input('tahun', now()->year)));
+        $now = \Carbon\Carbon::create($tahun, $bulan, 1)->startOfMonth();
+        $isBulanIni = $now->isSameMonth(today());
 
         $mitraList = Mitra::where('status', 'aktif')
             ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_code', $user->kae_code))
@@ -87,7 +91,7 @@ class WeeklyPlanController extends Controller
             $actualByMitra[$r->mitra_id][$r->minggu] = (float) $r->total;
         }
 
-        $currentWeekLabel = WeekPeriod::resolveWeek($now);
+        $currentWeekLabel = $isBulanIni ? WeekPeriod::resolveWeek(today()) : null;
         $weekIndex = fn (?string $w) => $w ? (int) substr($w, 1) : null;
 
         $targetByMitra = TargetBulanan::where('bulan', $now->month)->where('tahun', $now->year)
@@ -95,7 +99,9 @@ class WeeklyPlanController extends Controller
             ->get()
             ->keyBy('mitra_id');
 
-        $plan = $mitraList->map(function ($m) use ($historyTotals, $prevMonthTotals, $actualByMitra, $currentWeekLabel, $weekIndex, $targetByMitra) {
+        $isPastMonth = $now->lt(today()->startOfMonth());
+
+        $plan = $mitraList->map(function ($m) use ($historyTotals, $prevMonthTotals, $actualByMitra, $currentWeekLabel, $weekIndex, $targetByMitra, $isPastMonth) {
             $hist = $historyTotals[$m->id] ?? [];
 
             $histPrevMonth = $prevMonthTotals[$m->id] ?? [];
@@ -131,6 +137,11 @@ class WeeklyPlanController extends Controller
                 } elseif ($currentWeekLabel && in_array($currentWeekLabel, $mingguAndalan, true)) {
                     $status = 'berjalan';
                 } elseif ($currentWeekLabel && $weekIndex($currentWeekLabel) > $mingguAndalanTerakhir) {
+                    $status = 'terlewat';
+                } elseif (! $currentWeekLabel && $isPastMonth) {
+                    // Bulan yang dilihat bukan bulan berjalan dan sudah
+                    // lewat sepenuhnya — semua minggu andalannya otomatis
+                    // udah lewat juga.
                     $status = 'terlewat';
                 } else {
                     $status = 'menunggu';
@@ -189,6 +200,9 @@ class WeeklyPlanController extends Controller
             'currentWeekLabel' => $currentWeekLabel,
             'periodeLabel' => $now->translatedFormat('F Y'),
             'segmenOptions' => $segmenOptions,
+            'bulanIni' => $bulan,
+            'tahunIni' => $tahun,
+            'isBulanIni' => $isBulanIni,
         ]);
     }
 }

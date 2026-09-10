@@ -51,22 +51,32 @@ class SpecialDealPerformanceService
                 return $r;
             });
 
+        // Mitra kategori REAKTIVASI ditarik keluar dari baris segmen aslinya
+        // (Pareto/RTP/Special Reguler/Reguler) biar gak dobel hitung — mereka
+        // dapat baris "Reactivation" sendiri dengan target/ach asli dari
+        // target_bulanan-nya (bukan lagi ditandai null kayak sebelumnya).
+        $reaktivasiMitraIds = self::reaktivasiMitraIds($bulan, $tahun, $kaeCode);
+        $mitraRowsNonReaktivasi = $mitraRows->whereNotIn('mitra_id', $reaktivasiMitraIds);
+
         $rows = collect();
         foreach (self::SEGMEN_LABELS as $segmenValue => $label) {
-            $rows->push(self::buildRow($label, $mitraRows->where('segmen', $segmenValue)));
+            $rows->push(self::buildRow($label, $mitraRowsNonReaktivasi->where('segmen', $segmenValue)));
         }
 
-        $regulerAll = $mitraRows->where('segmen', 'REGULER');
+        $regulerAll = $mitraRowsNonReaktivasi->where('segmen', 'REGULER');
         $regulerCounted = $regulerAll->where('target', '>', 0);
         $rows->push(self::buildRow('Reguler', $regulerCounted));
 
+        $rows->push(self::buildRow('Reactivation', $mitraRows->whereIn('mitra_id', $reaktivasiMitraIds)));
+
         // Mitra already accounted for in one of the rows above (Pareto/RTP/
         // Special Reguler always count regardless of target; Reguler only
-        // counts if target > 0) — anyone else with orders this month,
-        // including a REGULER row with a zero target, falls into the
-        // Reactivation/New Mitra pool below.
-        $countedMitraIds = $mitraRows->whereIn('segmen', array_keys(self::SEGMEN_LABELS))->pluck('mitra_id')
+        // counts if target > 0; Reactivation counts via kategori REAKTIVASI)
+        // — anyone else with orders this month, including a REGULER row
+        // with a zero target, falls into the New Mitra pool below.
+        $countedMitraIds = $mitraRowsNonReaktivasi->whereIn('segmen', array_keys(self::SEGMEN_LABELS))->pluck('mitra_id')
             ->merge($regulerCounted->pluck('mitra_id'))
+            ->merge($reaktivasiMitraIds)
             ->all();
         $newMitraIds = NewMitraFlag::where('bulan', $bulan)->where('tahun', $tahun)->pluck('mitra_id')->all();
 
@@ -80,21 +90,7 @@ class SpecialDealPerformanceService
             ->selectRaw('mitra.id as mitra_id, SUM(orders.total_transaksi) as omset')
             ->get();
 
-        $reactivation = $noTargetOrders->whereNotIn('mitra_id', $newMitraIds);
         $newMitra = $noTargetOrders->whereIn('mitra_id', $newMitraIds);
-
-        $rows->push([
-            'segmen' => 'Reactivation',
-            'jumlah_mitra' => $reactivation->count(),
-            'mitra_active' => $reactivation->count(),
-            'mitra_belanja_full' => $reactivation->count(),
-            'target' => null,
-            'ach' => $reactivation->sum('omset'),
-            'ach_pct' => null,
-            'succes_rate' => $reactivation->count() > 0 ? 100.0 : null,
-            'gap' => null,
-            'mitra_belum_belanja' => collect(),
-        ]);
 
         $rows->push([
             'segmen' => 'New Mitra',
@@ -131,12 +127,43 @@ class SpecialDealPerformanceService
      * zero effective target) — the pool the admin picks "New Mitra" from;
      * everything left over is "Reactivation".
      */
+    /**
+     * List gabungan buat tabel "Reactivation & New Mitra" di Dashboard:
+     * - Mitra kategori REAKTIVASI bulan ini (dari target_bulanan, sumber
+     *   otoritatif dari Excel) — is_new_mitra selalu false, from_kategori
+     *   true (gak ada tombol toggle, kategorinya sudah pasti dari import).
+     * - Sisa mitra yang belanja bulan ini tapi gak ke-cover di segmen/
+     *   kategori apa pun — pool buat admin manual tandai "New Mitra".
+     */
     public static function reactivationCandidates(int $bulan, int $tahun, ?string $kaeCode = null): Collection
     {
         $countedMitraIds = self::countedMitraIds($bulan, $tahun, $kaeCode);
         $newMitraIds = NewMitraFlag::where('bulan', $bulan)->where('tahun', $tahun)->pluck('mitra_id');
 
-        return DB::table('orders')
+        $reaktivasiRows = DB::table('mitra')
+            ->join('target_bulanan', function ($join) use ($bulan, $tahun) {
+                $join->on('target_bulanan.mitra_id', '=', 'mitra.id')
+                    ->where('target_bulanan.bulan', $bulan)
+                    ->where('target_bulanan.tahun', $tahun)
+                    ->where('target_bulanan.kategori', 'REAKTIVASI');
+            })
+            ->leftJoin('orders', function ($join) use ($bulan, $tahun) {
+                $join->on('orders.mitra_id', '=', 'mitra.id')
+                    ->whereYear('orders.tanggal_order', $tahun)
+                    ->whereMonth('orders.tanggal_order', $bulan);
+            })
+            ->when($kaeCode, fn ($q) => $q->where('mitra.kae_code', $kaeCode))
+            ->groupBy('mitra.id', 'mitra.nama', 'mitra.kode_mitra', 'mitra.kae_code')
+            ->selectRaw('mitra.id as mitra_id, mitra.nama, mitra.kode_mitra, mitra.kae_code, COALESCE(SUM(orders.total_transaksi), 0) as omset')
+            ->get()
+            ->map(function ($r) {
+                $r->is_new_mitra = false;
+                $r->from_kategori = true;
+
+                return $r;
+            });
+
+        $manualPool = DB::table('orders')
             ->join('mitra', 'mitra.id', '=', 'orders.mitra_id')
             ->whereYear('orders.tanggal_order', $tahun)
             ->whereMonth('orders.tanggal_order', $bulan)
@@ -147,14 +174,31 @@ class SpecialDealPerformanceService
             ->get()
             ->map(function ($r) use ($newMitraIds) {
                 $r->is_new_mitra = $newMitraIds->contains($r->mitra_id);
+                $r->from_kategori = false;
 
                 return $r;
             });
+
+        return $reaktivasiRows->concat($manualPool)->values();
+    }
+
+    /** Mitra IDs dengan target_bulanan.kategori = REAKTIVASI periode ini. */
+    private static function reaktivasiMitraIds(int $bulan, int $tahun, ?string $kaeCode): array
+    {
+        return DB::table('target_bulanan')
+            ->join('mitra', 'mitra.id', '=', 'target_bulanan.mitra_id')
+            ->where('target_bulanan.bulan', $bulan)
+            ->where('target_bulanan.tahun', $tahun)
+            ->where('target_bulanan.kategori', 'REAKTIVASI')
+            ->when($kaeCode, fn ($q) => $q->where('mitra.kae_code', $kaeCode))
+            ->pluck('target_bulanan.mitra_id')
+            ->all();
     }
 
     /**
      * Mitra IDs already covered by a Pareto/RTP/Special Reguler row (any
-     * target) or a Reguler row with target > 0, for the given period.
+     * target), a Reguler row with target > 0, or kategori REAKTIVASI, for
+     * the given period.
      */
     private static function countedMitraIds(int $bulan, int $tahun, ?string $kaeCode): array
     {
@@ -168,9 +212,10 @@ class SpecialDealPerformanceService
             ->selectRaw("mitra.id as mitra_id, target_bulanan.segmen, $targetSql as target")
             ->get();
 
-        return $rows->filter(fn ($r) => in_array($r->segmen, array_keys(self::SEGMEN_LABELS), true) || $r->target > 0)
-            ->pluck('mitra_id')
-            ->all();
+        $counted = $rows->filter(fn ($r) => in_array($r->segmen, array_keys(self::SEGMEN_LABELS), true) || $r->target > 0)
+            ->pluck('mitra_id');
+
+        return $counted->merge(self::reaktivasiMitraIds($bulan, $tahun, $kaeCode))->unique()->values()->all();
     }
 
     private static function buildRow(string $label, Collection $mitraRows): array

@@ -45,6 +45,27 @@
 
     <form method="GET" action="{{ route('weekly-plan.index') }}" class="field-row" style="align-items:flex-end; margin-bottom:16px;">
         <div class="field" style="margin-bottom:0;">
+            <label>Bulan</label>
+            <select class="select-pill" name="bulan" onchange="this.form.submit()">
+                @foreach (['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'] as $i => $nama)
+                    <option value="{{ $i + 1 }}" {{ (int) $bulanIni === $i + 1 ? 'selected' : '' }}>{{ $nama }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+            <label>Tahun</label>
+            <select class="select-pill" name="tahun" onchange="this.form.submit()">
+                @for ($y = now()->year + 1; $y >= now()->year - 3; $y--)
+                    <option value="{{ $y }}" {{ (int) $tahunIni === $y ? 'selected' : '' }}>{{ $y }}</option>
+                @endfor
+            </select>
+        </div>
+        @unless ($isBulanIni)
+            <div class="field" style="margin-bottom:0;">
+                <a href="{{ route('weekly-plan.index') }}" class="btn" style="width:auto; font-size:12.5px; padding:8px 14px; text-decoration:none; display:inline-flex; align-items:center;">Bulan Ini</a>
+            </div>
+        @endunless
+        <div class="field" style="margin-bottom:0;">
             <label>Cari Mitra</label>
             <input type="text" name="q" value="{{ request('q') }}" placeholder="Nama mitra...">
         </div>

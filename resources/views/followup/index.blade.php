@@ -25,6 +25,43 @@
         <div class="alert-success">{{ session('status') }}</div>
     @endif
 
+    <form method="GET" action="{{ route('followup.index') }}" class="field-row" style="align-items:flex-end; margin-bottom:16px;">
+        @if (request('mitra_id'))
+            <input type="hidden" name="mitra_id" value="{{ request('mitra_id') }}">
+        @endif
+        <div class="field" style="margin-bottom:0;">
+            <label>Status Follow-up</label>
+            <select class="select-pill" name="status_followup" onchange="this.form.submit()">
+                <option value="">Semua</option>
+                <option value="Terhubung" {{ request('status_followup') === 'Terhubung' ? 'selected' : '' }}>Terhubung</option>
+                <option value="Tidak ada respon" {{ request('status_followup') === 'Tidak ada respon' ? 'selected' : '' }}>Tidak ada respon</option>
+            </select>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+            <label>Status Belanja</label>
+            <select class="select-pill" name="status_belanja" onchange="this.form.submit()">
+                <option value="">Semua</option>
+                <option value="Belanja Penuh" {{ request('status_belanja') === 'Belanja Penuh' ? 'selected' : '' }}>Belanja Penuh</option>
+                <option value="Belanja Sebagian" {{ request('status_belanja') === 'Belanja Sebagian' ? 'selected' : '' }}>Belanja Sebagian</option>
+                <option value="Belum Belanja" {{ request('status_belanja') === 'Belum Belanja' ? 'selected' : '' }}>Belum Belanja</option>
+            </select>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+            <label>Alasan / Kendala</label>
+            <select class="select-pill" name="alasan_kendala" onchange="this.form.submit()">
+                <option value="">Semua</option>
+                @foreach ($alasanOptions as $alasan)
+                    <option value="{{ $alasan }}" {{ request('alasan_kendala') === $alasan ? 'selected' : '' }}>{{ $alasan }}</option>
+                @endforeach
+            </select>
+        </div>
+        @if (request('status_followup') || request('status_belanja') || request('alasan_kendala'))
+            <div class="field" style="margin-bottom:0;">
+                <a href="{{ route('followup.index') }}" class="btn" style="width:auto;">Reset</a>
+            </div>
+        @endif
+    </form>
+
     <section class="card table-card" style="padding:0;">
         <div class="table-scroll">
             <table>
@@ -63,12 +100,28 @@
                             <td class="tnum">{{ $log->total_menit ? $log->total_menit.' mnt' : '—' }}</td>
                             <td>
                                 <div style="display:flex; gap:6px;">
+                                    <button type="button" class="link-action" style="color:var(--ink-muted); font-size:12px; font-weight:600; background:none; border:1px solid var(--line); border-radius:7px; padding:5px 9px; cursor:pointer;" onclick="
+                                        const d = document.getElementById('fu-detail-{{ $log->id }}');
+                                        d.style.display = d.style.display === 'none' ? '' : 'none';
+                                    ">View</button>
                                     <a href="{{ route('followup.edit', $log) }}" class="link-action" style="color:var(--accent-ink); font-size:12px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 9px;">Edit</a>
                                     <form method="POST" action="{{ route('followup.destroy', $log) }}" onsubmit="return confirm('Hapus catatan follow-up untuk {{ addslashes($log->mitra->nama ?? 'mitra ini') }} tanggal {{ $log->tanggal_fu->format('d/m/Y') }}?');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="link-action" style="color:var(--critical); font-size:12px; font-weight:600; background:none; border:1px solid var(--line); border-radius:7px; padding:5px 9px; cursor:pointer;">Hapus</button>
                                     </form>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr id="fu-detail-{{ $log->id }}" style="display:none;">
+                            <td colspan="9" style="background:var(--surface-alt); padding:14px 20px;">
+                                <div style="margin-bottom:8px;">
+                                    <div class="info-label" style="margin-bottom:4px;">Alasan / Kendala</div>
+                                    <div style="font-size:13px;">{{ $log->alasan_kendala ?: '—' }}</div>
+                                </div>
+                                <div>
+                                    <div class="info-label" style="margin-bottom:4px;">Catatan / Tindak Lanjut</div>
+                                    <div style="font-size:13px; white-space:pre-line;">{{ $log->catatan ?: '—' }}</div>
                                 </div>
                             </td>
                         </tr>

@@ -366,14 +366,18 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <form method="POST" action="{{ route('dashboard.toggle-new-mitra', $rc->mitra_id) }}">
-                                            @csrf
-                                            <input type="hidden" name="bulan" value="{{ $bulanIni }}">
-                                            <input type="hidden" name="tahun" value="{{ $tahunIni }}">
-                                            <button type="submit" class="btn" style="width:auto; font-size:11.5px; padding:6px 10px;">
-                                                {{ $rc->is_new_mitra ? 'Batal New Mitra' : 'Tandai New Mitra' }}
-                                            </button>
-                                        </form>
+                                        @if ($rc->from_kategori ?? false)
+                                            <span style="font-size:11px; color:var(--ink-faint);">Otomatis dari kategori</span>
+                                        @else
+                                            <form method="POST" action="{{ route('dashboard.toggle-new-mitra', $rc->mitra_id) }}">
+                                                @csrf
+                                                <input type="hidden" name="bulan" value="{{ $bulanIni }}">
+                                                <input type="hidden" name="tahun" value="{{ $tahunIni }}">
+                                                <button type="submit" class="btn" style="width:auto; font-size:11.5px; padding:6px 10px;">
+                                                    {{ $rc->is_new_mitra ? 'Batal New Mitra' : 'Tandai New Mitra' }}
+                                                </button>
+                                            </form>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
