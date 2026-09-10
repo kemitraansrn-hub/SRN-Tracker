@@ -72,7 +72,7 @@ class MitraController extends Controller
             ->whereYear('tanggal_order', $now->year)->whereMonth('tanggal_order', $now->month)
             ->count();
 
-        $historiOrder = $mitra->orders()->latest('tanggal_order')->limit(20)->get();
+        $historiOrder = $mitra->orders()->latest('tanggal_order')->limit(50)->get();
         $followupLogs = $mitra->followupLogs()->with('kae')->latest('tanggal_fu')->limit(10)->get();
         $specialDeals = $mitra->specialDeals()->with('kae')->latest()->limit(10)->get();
         $targetBulanIni = $mitra->targetBulanan()->where('bulan', $now->month)->where('tahun', $now->year)->first();
