@@ -65,15 +65,12 @@ class SpecialDealPerformanceService
 
         $regulerAll = $mitraRowsNonReaktivasi->where('segmen', 'REGULER');
         $regulerCounted = $regulerAll->where('target', '>', 0);
-        $rows->push(self::buildRow('Reguler', $regulerCounted));
-
-        $rows->push(self::buildRow('Reactivation', $mitraRows->whereIn('mitra_id', $reaktivasiMitraIds)));
 
         // Mitra already accounted for in one of the rows above (Pareto/RTP/
         // Special Reguler always count regardless of target; Reguler only
         // counts if target > 0; Reactivation counts via kategori REAKTIVASI)
         // — anyone else with orders this month, including a REGULER row
-        // with a zero target, falls into the New Mitra pool below.
+        // with a zero target, falls into the pool below.
         $countedMitraIds = $mitraRowsNonReaktivasi->whereIn('segmen', array_keys(self::SEGMEN_LABELS))->pluck('mitra_id')
             ->merge($regulerCounted->pluck('mitra_id'))
             ->merge($reaktivasiMitraIds)
@@ -86,11 +83,28 @@ class SpecialDealPerformanceService
             ->whereMonth('orders.tanggal_order', $bulan)
             ->whereNotIn('mitra.id', $countedMitraIds)
             ->when($kaeCode, fn ($q) => $q->where('mitra.kae_code', $kaeCode))
-            ->groupBy('mitra.id')
-            ->selectRaw('mitra.id as mitra_id, SUM(orders.total_transaksi) as omset')
+            ->groupBy('mitra.id', 'mitra.nama', 'mitra.kode_mitra')
+            ->selectRaw('mitra.id as mitra_id, mitra.nama, mitra.kode_mitra, SUM(orders.total_transaksi) as omset')
             ->get();
 
         $newMitra = $noTargetOrders->whereIn('mitra_id', $newMitraIds);
+
+        // Mitra yang belanja tapi sama sekali gak punya baris target_bulanan
+        // (dan gak ditandai New Mitra) tetap dilipat ke baris Reguler, biar
+        // omsetnya kelihatan di ringkasan — jumlah_mitra Reguler jadi
+        // bertambah, tapi kontribusi target-nya 0 (gak ada target buat dia).
+        $unflaggedNoTarget = $noTargetOrders->whereNotIn('mitra_id', $newMitraIds)
+            ->map(fn ($r) => (object) [
+                'mitra_id' => $r->mitra_id,
+                'nama' => $r->nama,
+                'kode_mitra' => $r->kode_mitra,
+                'target' => 0.0,
+                'omset' => (float) $r->omset,
+                'pct' => null,
+            ]);
+
+        $rows->push(self::buildRow('Reguler', $regulerCounted->concat($unflaggedNoTarget)));
+        $rows->push(self::buildRow('Reactivation', $mitraRows->whereIn('mitra_id', $reaktivasiMitraIds)));
 
         $rows->push([
             'segmen' => 'New Mitra',
@@ -122,18 +136,14 @@ class SpecialDealPerformanceService
     }
 
     /**
-     * Mitra with orders this month that aren't counted in any Pareto/RTP/
-     * Special Reguler/Reguler row (no target_bulanan row, or one with a
-     * zero effective target) — the pool the admin picks "New Mitra" from;
-     * everything left over is "Reactivation".
-     */
-    /**
      * List gabungan buat tabel "Reactivation & New Mitra" di Dashboard:
      * - Mitra kategori REAKTIVASI bulan ini (dari target_bulanan, sumber
      *   otoritatif dari Excel) — is_new_mitra selalu false, from_kategori
      *   true (gak ada tombol toggle, kategorinya sudah pasti dari import).
      * - Sisa mitra yang belanja bulan ini tapi gak ke-cover di segmen/
-     *   kategori apa pun — pool buat admin manual tandai "New Mitra".
+     *   kategori apa pun — pool buat admin manual tandai "New Mitra". Yang
+     *   gak ditandai dari pool ini tetap dilipat ke baris Reguler di
+     *   summary() (lihat komentar di sana), jadi tetap tercatat di ringkasan.
      */
     public static function reactivationCandidates(int $bulan, int $tahun, ?string $kaeCode = null): Collection
     {
