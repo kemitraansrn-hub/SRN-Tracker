@@ -9,12 +9,16 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * "Special Deal Performance" summary — per-segmen rollup of target vs
- * realisasi for the month, plus two extra buckets that don't come from
- * target_bulanan.segmen directly:
- *   - Reactivation: mitra with orders this month but no target_bulanan row
- *     (or a zero target) for this month, i.e. they weren't expected to buy.
- *   - New Mitra: a subset of that same pool the admin manually tags as new
- *     (there's no reliable automatic signal for "first ever order").
+ * realisasi for the month, buat SEMUA mitra aktif (bukan cuma yang punya
+ * baris target_bulanan), plus dua baris tambahan di luar segmen biasa:
+ *   - Reactivation: mitra dengan target_bulanan.kategori = REAKTIVASI
+ *     bulan ini (sumber otoritatif dari Excel import).
+ *   - New Mitra: mitra yang ditandai manual admin (NewMitraFlag) — gak ada
+ *     sinyal otomatis yang reliable buat "order pertama kali".
+ * Sisanya (gak Pareto/RTP/Special Reguler/REAKTIVASI/New Mitra) jatuh ke
+ * baris Reguler apa adanya, termasuk yang target-nya 0 atau gak punya
+ * baris target_bulanan sama sekali — biar kalau ternyata belanja, omsetnya
+ * otomatis kehitung di situ tanpa perlu ditandai manual dulu.
  * Ported from the "Spesial Deal Performance" sheet in the source workbook,
  * with Ach% standardized to Ach/Target for every row (the original sheet's
  * Reguler row computed Ach% from a slightly different numerator than the
@@ -32,20 +36,30 @@ class SpecialDealPerformanceService
     {
         $targetSql = TargetBulanan::effectiveTargetSql();
 
-        $mitraRows = DB::table('target_bulanan')
-            ->join('mitra', 'mitra.id', '=', 'target_bulanan.mitra_id')
+        // Basis-nya SEMUA mitra aktif (bukan cuma yang punya baris
+        // target_bulanan) — left join target_bulanan & orders, jadi mitra
+        // tanpa target sama sekali tetap kebawa (target default 0, omset
+        // default 0) dan otomatis nyantol ke baris Reguler di bawah kalau
+        // gak masuk kategori/segmen khusus mana pun.
+        $mitraRows = DB::table('mitra')
+            ->leftJoin('target_bulanan', function ($join) use ($bulan, $tahun) {
+                $join->on('target_bulanan.mitra_id', '=', 'mitra.id')
+                    ->where('target_bulanan.bulan', $bulan)
+                    ->where('target_bulanan.tahun', $tahun);
+            })
             ->leftJoin('orders', function ($join) use ($bulan, $tahun) {
                 $join->on('orders.mitra_id', '=', 'mitra.id')
                     ->whereYear('orders.tanggal_order', $tahun)
                     ->whereMonth('orders.tanggal_order', $bulan);
             })
-            ->where('target_bulanan.bulan', $bulan)
-            ->where('target_bulanan.tahun', $tahun)
+            ->where('mitra.status', 'aktif')
             ->when($kaeCode, fn ($q) => $q->where('mitra.kae_code', $kaeCode))
-            ->groupBy('mitra.id', 'mitra.nama', 'mitra.kode_mitra', 'target_bulanan.segmen', 'target_bulanan.komit', 'target_bulanan.target', 'target_bulanan.stretch', 'target_bulanan.tier_dipakai')
-            ->selectRaw("mitra.id as mitra_id, mitra.nama, mitra.kode_mitra, target_bulanan.segmen, $targetSql as target, COALESCE(SUM(orders.total_transaksi), 0) as omset")
+            ->groupBy('mitra.id', 'mitra.nama', 'mitra.kode_mitra', 'target_bulanan.segmen', 'target_bulanan.kategori', 'target_bulanan.komit', 'target_bulanan.target', 'target_bulanan.stretch', 'target_bulanan.tier_dipakai')
+            ->selectRaw("mitra.id as mitra_id, mitra.nama, mitra.kode_mitra, target_bulanan.segmen, target_bulanan.kategori, COALESCE($targetSql, 0) as target, COALESCE(SUM(orders.total_transaksi), 0) as omset")
             ->get()
             ->map(function ($r) {
+                $r->target = (float) $r->target;
+                $r->omset = (float) $r->omset;
                 $r->pct = $r->target > 0 ? round($r->omset / $r->target * 100, 1) : null;
 
                 return $r;
@@ -55,7 +69,7 @@ class SpecialDealPerformanceService
         // (Pareto/RTP/Special Reguler/Reguler) biar gak dobel hitung — mereka
         // dapat baris "Reactivation" sendiri dengan target/ach asli dari
         // target_bulanan-nya (bukan lagi ditandai null kayak sebelumnya).
-        $reaktivasiMitraIds = self::reaktivasiMitraIds($bulan, $tahun, $kaeCode);
+        $reaktivasiMitraIds = $mitraRows->where('kategori', 'REAKTIVASI')->pluck('mitra_id')->all();
         $mitraRowsNonReaktivasi = $mitraRows->whereNotIn('mitra_id', $reaktivasiMitraIds);
 
         $rows = collect();
@@ -63,47 +77,21 @@ class SpecialDealPerformanceService
             $rows->push(self::buildRow($label, $mitraRowsNonReaktivasi->where('segmen', $segmenValue)));
         }
 
-        $regulerAll = $mitraRowsNonReaktivasi->where('segmen', 'REGULER');
-        $regulerCounted = $regulerAll->where('target', '>', 0);
-
-        // Mitra already accounted for in one of the rows above (Pareto/RTP/
-        // Special Reguler always count regardless of target; Reguler only
-        // counts if target > 0; Reactivation counts via kategori REAKTIVASI)
-        // — anyone else with orders this month, including a REGULER row
-        // with a zero target, falls into the pool below.
-        $countedMitraIds = $mitraRowsNonReaktivasi->whereIn('segmen', array_keys(self::SEGMEN_LABELS))->pluck('mitra_id')
-            ->merge($regulerCounted->pluck('mitra_id'))
-            ->merge($reaktivasiMitraIds)
-            ->all();
         $newMitraIds = NewMitraFlag::where('bulan', $bulan)->where('tahun', $tahun)->pluck('mitra_id')->all();
+        $newMitra = $mitraRowsNonReaktivasi->whereIn('mitra_id', $newMitraIds);
 
-        $noTargetOrders = DB::table('orders')
-            ->join('mitra', 'mitra.id', '=', 'orders.mitra_id')
-            ->whereYear('orders.tanggal_order', $tahun)
-            ->whereMonth('orders.tanggal_order', $bulan)
-            ->whereNotIn('mitra.id', $countedMitraIds)
-            ->when($kaeCode, fn ($q) => $q->where('mitra.kae_code', $kaeCode))
-            ->groupBy('mitra.id', 'mitra.nama', 'mitra.kode_mitra')
-            ->selectRaw('mitra.id as mitra_id, mitra.nama, mitra.kode_mitra, SUM(orders.total_transaksi) as omset')
-            ->get();
+        // Reguler = catch-all: semua mitra aktif yang gak masuk Pareto/RTP/
+        // Special Reguler, gak kategori REAKTIVASI, dan gak ditandai New
+        // Mitra — termasuk yang target_bulanan-nya 0 atau gak punya baris
+        // sama sekali. Mereka tetap kehitung (target 0, omset ikut real
+        // kalau ada) biar kalau bulan ini/depan ternyata belanja, langsung
+        // nambah ke pencapaian Reguler tanpa perlu ditandai manual dulu.
+        $specialSegmenIds = $mitraRowsNonReaktivasi->whereIn('segmen', array_keys(self::SEGMEN_LABELS))->pluck('mitra_id')->all();
+        $regulerRows = $mitraRowsNonReaktivasi
+            ->whereNotIn('mitra_id', $specialSegmenIds)
+            ->whereNotIn('mitra_id', $newMitraIds);
 
-        $newMitra = $noTargetOrders->whereIn('mitra_id', $newMitraIds);
-
-        // Mitra yang belanja tapi sama sekali gak punya baris target_bulanan
-        // (dan gak ditandai New Mitra) tetap dilipat ke baris Reguler, biar
-        // omsetnya kelihatan di ringkasan — jumlah_mitra Reguler jadi
-        // bertambah, tapi kontribusi target-nya 0 (gak ada target buat dia).
-        $unflaggedNoTarget = $noTargetOrders->whereNotIn('mitra_id', $newMitraIds)
-            ->map(fn ($r) => (object) [
-                'mitra_id' => $r->mitra_id,
-                'nama' => $r->nama,
-                'kode_mitra' => $r->kode_mitra,
-                'target' => 0.0,
-                'omset' => (float) $r->omset,
-                'pct' => null,
-            ]);
-
-        $rows->push(self::buildRow('Reguler', $regulerCounted->concat($unflaggedNoTarget)));
+        $rows->push(self::buildRow('Reguler', $regulerRows));
         $rows->push(self::buildRow('Reactivation', $mitraRows->whereIn('mitra_id', $reaktivasiMitraIds)));
 
         $rows->push([
