@@ -31,11 +31,12 @@ class ArController extends Controller
         $user = $request->user();
 
         $orderResults = collect();
-        if ($user->canViewAll() && ($request->filled('cari_no_order') || $request->filled('cari_dari') || $request->filled('cari_sampai'))) {
+        if ($user->canViewAll() && ($request->filled('cari_no_order') || $request->filled('cari_mitra') || $request->filled('cari_dari') || $request->filled('cari_sampai'))) {
             $orderResults = Order::query()
                 ->with('mitra:id,nama,kode_mitra')
                 ->whereDoesntHave('arReceivable')
                 ->when($request->filled('cari_no_order'), fn ($q) => $q->where('no_order', 'like', '%'.$request->input('cari_no_order').'%'))
+                ->when($request->filled('cari_mitra'), fn ($q) => $q->whereHas('mitra', fn ($qq) => $qq->where('nama', 'like', '%'.$request->input('cari_mitra').'%')))
                 ->when($request->filled('cari_dari'), fn ($q) => $q->whereDate('tanggal_order', '>=', $request->input('cari_dari')))
                 ->when($request->filled('cari_sampai'), fn ($q) => $q->whereDate('tanggal_order', '<=', $request->input('cari_sampai')))
                 ->orderByDesc('tanggal_order')

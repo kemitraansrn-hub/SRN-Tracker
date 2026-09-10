@@ -79,13 +79,17 @@
         </section>
     @endif
 
-    @if (auth()->user()->isAdmin())
+    @if (auth()->user()->canViewAll())
     <section class="card" style="margin-bottom:20px;">
             <div class="info-label" style="margin-bottom:10px;">Cari Order untuk Input AR Baru</div>
             <form method="GET" action="{{ route('ar.index') }}" class="field-row" style="align-items:flex-end;">
                 <div class="field" style="margin-bottom:0; flex:1; min-width:160px;">
                     <label>No Order</label>
                     <input type="text" name="cari_no_order" value="{{ request('cari_no_order') }}" placeholder="mis. 14226">
+                </div>
+                <div class="field" style="margin-bottom:0; flex:1; min-width:160px;">
+                    <label>Nama Mitra</label>
+                    <input type="text" name="cari_mitra" value="{{ request('cari_mitra') }}" placeholder="Nama mitra...">
                 </div>
                 <div class="field" style="margin-bottom:0;">
                     <label>Tgl Order Dari</label>
@@ -96,12 +100,12 @@
                     <input type="date" name="cari_sampai" value="{{ request('cari_sampai') }}">
                 </div>
                 <button type="submit" class="btn" style="width:auto;">Cari</button>
-                @if (request('cari_no_order') || request('cari_dari') || request('cari_sampai'))
+                @if (request('cari_no_order') || request('cari_mitra') || request('cari_dari') || request('cari_sampai'))
                     <a href="{{ route('ar.index') }}" class="btn" style="width:auto;">Reset</a>
                 @endif
             </form>
 
-            @if (request('cari_no_order') || request('cari_dari') || request('cari_sampai'))
+            @if (request('cari_no_order') || request('cari_mitra') || request('cari_dari') || request('cari_sampai'))
                 <div class="table-scroll" style="margin-top:16px;">
                     <table>
                         <thead>
