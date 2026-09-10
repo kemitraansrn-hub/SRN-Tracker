@@ -124,10 +124,14 @@ class SpecialDealPerformanceService
     }
 
     /**
-     * List gabungan buat tabel "Reactivation & New Mitra" di Dashboard:
+     * List gabungan buat tabel "Reactivation & New Mitra" di Dashboard —
+     * cuma mitra yang BENERAN BELANJA bulan ini (omset > 0), beda dengan
+     * baris "Reactivation" di summary() yang nampilin semua mitra kategori
+     * REAKTIVASI apa adanya termasuk yang belum belanja:
      * - Mitra kategori REAKTIVASI bulan ini (dari target_bulanan, sumber
-     *   otoritatif dari Excel) — is_new_mitra selalu false, from_kategori
-     *   true (gak ada tombol toggle, kategorinya sudah pasti dari import).
+     *   otoritatif dari Excel) DENGAN omset > 0 — is_new_mitra selalu
+     *   false, from_kategori true (gak ada tombol toggle, kategorinya
+     *   sudah pasti dari import).
      * - Sisa mitra yang belanja bulan ini tapi gak ke-cover di segmen/
      *   kategori apa pun — pool buat admin manual tandai "New Mitra". Yang
      *   gak ditandai dari pool ini tetap dilipat ke baris Reguler di
@@ -152,6 +156,7 @@ class SpecialDealPerformanceService
             })
             ->when($kaeCode, fn ($q) => $q->where('mitra.kae_code', $kaeCode))
             ->groupBy('mitra.id', 'mitra.nama', 'mitra.kode_mitra', 'mitra.kae_code')
+            ->havingRaw('COALESCE(SUM(orders.total_transaksi), 0) > 0')
             ->selectRaw('mitra.id as mitra_id, mitra.nama, mitra.kode_mitra, mitra.kae_code, COALESCE(SUM(orders.total_transaksi), 0) as omset')
             ->get()
             ->map(function ($r) {
