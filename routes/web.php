@@ -8,6 +8,7 @@ use App\Http\Controllers\BuybackSettingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataDevelopmentController;
 use App\Http\Controllers\DataHealthController;
+use App\Http\Controllers\DevelopmentModuleController;
 use App\Http\Controllers\FollowupLogController;
 use App\Http\Controllers\ForecastController;
 use App\Http\Controllers\ImportController;
@@ -220,4 +221,10 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::delete('/{specialDeal}', [SpecialDealController::class, 'destroy'])->middleware('role:admin')->name('destroy');
         Route::get('/{specialDeal}/mou', [SpecialDealController::class, 'mou'])->name('mou');
     });
+
+    // Placeholder "Coming Soon" buat menu Development — ganti satu-satu
+    // dengan route/controller khusus begitu fiturnya beneran dibangun
+    // (taruh route spesifiknya SEBELUM baris {page} ini biar gak ketiban
+    // wildcard-nya).
+    Route::get('development/{page}', [DevelopmentModuleController::class, 'show'])->name('development.show');
 });
