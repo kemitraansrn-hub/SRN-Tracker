@@ -17,14 +17,14 @@
 
     @php $kpiTileCount = ($companyTarget ? 1 : 0) + 1 + ($trendCard ? 1 : 0); @endphp
     <section style="display:grid; grid-template-columns:repeat(12, 1fr); gap:16px; margin-bottom:20px; align-items:stretch;">
-        <div style="grid-column:span {{ $pencapaianTigaTier ? 6 : 12 }}; display:grid; grid-template-columns:repeat({{ $kpiTileCount }}, 1fr); gap:16px;">
+        <div style="grid-column:span {{ $pencapaianTigaTier ? 6 : 12 }}; min-width:0; display:grid; grid-template-columns:repeat({{ $kpiTileCount }}, 1fr); gap:16px;">
             @if ($companyTarget)
                 @php
                     $donutR = 40;
                     $donutCirc = 2 * M_PI * $donutR;
                     $donutFilled = min($companyAchPct, 100) / 100 * $donutCirc;
                 @endphp
-                <div class="card">
+                <div class="card" style="min-width:0; border-color:var(--ink-faint);">
                     <div class="info-label" style="margin-bottom:10px;">Target Perusahaan vs Pencapaian</div>
                     <div style="display:flex; align-items:center; gap:14px;">
                         <svg width="88" height="88" viewBox="0 0 100 100" style="flex-shrink:0;">
@@ -49,7 +49,7 @@
                     </div>
                 </div>
             @endif
-            <div class="card">
+            <div class="card" style="min-width:0; border-color:var(--ink-faint);">
                 <div class="info-label" style="margin-bottom:10px;">MTD vs Bulan Lalu</div>
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
                     <div style="font-size:25px; font-weight:700;" class="tnum">{{ $rp($mtdIni) }}</div>
@@ -76,7 +76,7 @@
                 </div>
             </div>
             @if ($trendCard)
-                <div class="card">
+                <div class="card" style="min-width:0; border-color:var(--ink-faint);">
                     <div class="info-label" style="margin-bottom:10px;">{{ $trendCard['label'] }}</div>
                     @php $g = $trendCard['growth']; @endphp
                     <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
@@ -106,17 +106,17 @@
         </div>
 
         @if ($pencapaianTigaTier)
-            <div class="card" style="grid-column:span 6;">
-                <div class="card-head">
-                    <div class="card-title">Pencapaian vs 3 Tier Target</div>
-                    <div class="card-hint">Omset {{ $periodeLabel }}: {{ $rp($totalOmsetBulanIni) }}</div>
+            <div class="card" style="grid-column:span 6; min-width:0; border-color:var(--ink-faint);">
+                <div class="card-head" style="flex-wrap:wrap; row-gap:4px;">
+                    <div class="card-title" style="flex-shrink:0;">Pencapaian vs 3 Tier Target</div>
+                    <div class="card-hint" style="white-space:nowrap;">Omset {{ $periodeLabel }}: {{ $rp($totalOmsetBulanIni) }}</div>
                 </div>
-                <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;">
+                <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; min-width:0;">
                     @foreach (['komit' => 'Komit', 'target' => 'Target', 'stretch' => 'Stretch'] as $key => $label)
                         @php $t = $pencapaianTigaTier[$key]; @endphp
-                        <div>
+                        <div style="min-width:0;">
                             <div class="info-label" style="margin-bottom:6px;">{{ $label }}</div>
-                            <div style="font-size:13px; color:var(--ink-muted); margin-bottom:8px;" class="tnum">{{ $rp($t['target']) }}</div>
+                            <div style="font-size:13px; color:var(--ink-muted); margin-bottom:8px; overflow-wrap:anywhere;" class="tnum">{{ $rp($t['target']) }}</div>
                             <div style="height:6px; border-radius:4px; background:var(--line); overflow:hidden;">
                                 <div style="height:100%; border-radius:4px; background:var(--accent); width:{{ $t['pct'] !== null ? min($t['pct'], 100) : 0 }}%;"></div>
                             </div>
