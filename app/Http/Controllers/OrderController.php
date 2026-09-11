@@ -52,15 +52,18 @@ class OrderController extends Controller
         $this->authorizeOrder($request, $order);
 
         $data = $request->validate([
+            'tanggal_order' => ['required', 'date'],
             'total_transaksi' => ['required', 'numeric', 'min:0'],
             'status_pembayaran' => ['nullable', 'string', 'max:50'],
             'status' => ['nullable', 'string', 'max:50'],
             'alasan_edit' => ['required', 'string', 'max:500'],
         ]);
 
-        $before = $order->only(['total_transaksi', 'status_pembayaran', 'status']);
+        $before = $order->only(['tanggal_order', 'total_transaksi', 'status_pembayaran', 'status']);
+        $before['tanggal_order'] = $order->tanggal_order->toDateString();
 
         $order->update([
+            'tanggal_order' => $data['tanggal_order'],
             'total_transaksi' => $data['total_transaksi'],
             'status_pembayaran' => $data['status_pembayaran'],
             'status' => $data['status'],
@@ -75,7 +78,7 @@ class OrderController extends Controller
             'tabel_terkait' => 'orders',
             'record_id' => $order->id,
             'data_lama' => [...$before, 'alasan' => $data['alasan_edit']],
-            'data_baru' => $order->only(['total_transaksi', 'status_pembayaran', 'status']),
+            'data_baru' => $order->only(['tanggal_order', 'total_transaksi', 'status_pembayaran', 'status']),
         ]);
 
         return redirect()->route('order.show', $order)->with('status', 'Order berhasil dikoreksi. Perubahan tercatat di riwayat.');

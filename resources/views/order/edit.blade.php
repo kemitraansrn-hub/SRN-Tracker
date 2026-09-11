@@ -19,6 +19,11 @@
         @method('PUT')
 
         <div class="field">
+            <label>Tanggal Order</label>
+            <input type="date" name="tanggal_order" value="{{ old('tanggal_order', $order->tanggal_order->toDateString()) }}" required>
+        </div>
+
+        <div class="field">
             <label>Total Transaksi (Rp)</label>
             <input type="number" step="1" min="0" name="total_transaksi" value="{{ old('total_transaksi', $order->total_transaksi) }}" required>
         </div>
