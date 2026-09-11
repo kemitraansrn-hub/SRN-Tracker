@@ -19,22 +19,46 @@
     <section style="display:grid; grid-template-columns:repeat(12, 1fr); gap:16px; margin-bottom:20px; align-items:stretch;">
         <div style="grid-column:span {{ $pencapaianTigaTier ? 6 : 12 }}; display:grid; grid-template-columns:repeat({{ $kpiTileCount }}, 1fr); gap:16px;">
             @if ($companyTarget)
+                @php
+                    $donutR = 40;
+                    $donutCirc = 2 * M_PI * $donutR;
+                    $donutFilled = min($companyAchPct, 100) / 100 * $donutCirc;
+                @endphp
                 <div class="card">
                     <div class="info-label" style="margin-bottom:10px;">Target Perusahaan vs Pencapaian</div>
-                    <div style="font-size:25px; font-weight:700;" class="tnum">{{ $rp($totalOmsetBulanIni) }}</div>
-                    <div style="font-size:11.5px; color:var(--ink-muted); margin-top:2px;">dari target {{ $rp($companyTarget) }} / bulan</div>
-                    <div style="height:6px; border-radius:4px; background:var(--line); overflow:hidden; margin-top:10px;">
-                        <div style="height:100%; border-radius:4px; background:var(--accent); width:{{ min($companyAchPct, 100) }}%;"></div>
-                    </div>
-                    <div style="margin-top:10px;">
-                        @php $companyColor = $companyAchPct >= 100 ? 'good' : ($companyAchPct >= 70 ? 'warn' : 'critical'); @endphp
-                        <span class="chip chip-{{ $companyColor }}">{{ $companyAchPct }}%</span>
+                    <div style="display:flex; align-items:center; gap:14px;">
+                        <svg width="88" height="88" viewBox="0 0 100 100" style="flex-shrink:0;">
+                            <circle cx="50" cy="50" r="{{ $donutR }}" fill="none" stroke="var(--line)" stroke-width="11"/>
+                            <circle cx="50" cy="50" r="{{ $donutR }}" fill="none" stroke="var(--accent)" stroke-width="11"
+                                stroke-linecap="round" transform="rotate(-90 50 50)"
+                                stroke-dasharray="{{ $donutFilled }} {{ $donutCirc }}"/>
+                            <text x="50" y="50" text-anchor="middle" dominant-baseline="central" class="tnum" style="font-size:19px; font-weight:700; fill:var(--ink);">{{ $companyAchPct }}%</text>
+                        </svg>
+                        <div style="flex:1; min-width:0;">
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <span style="width:8px; height:8px; border-radius:50%; background:var(--accent); flex-shrink:0;"></span>
+                                <span style="font-size:11.5px; color:var(--ink-muted);">Pencapaian</span>
+                            </div>
+                            <div class="tnum" style="font-size:13px; font-weight:700; margin:2px 0 8px 14px;">{{ $rp($totalOmsetBulanIni) }}</div>
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <span style="width:8px; height:8px; border-radius:50%; background:var(--line); flex-shrink:0;"></span>
+                                <span style="font-size:11.5px; color:var(--ink-muted);">Target</span>
+                            </div>
+                            <div class="tnum" style="font-size:13px; font-weight:700; margin:2px 0 0 14px;">{{ $rp($companyTarget) }}</div>
+                        </div>
                     </div>
                 </div>
             @endif
             <div class="card">
                 <div class="info-label" style="margin-bottom:10px;">MTD vs Bulan Lalu</div>
-                <div style="font-size:25px; font-weight:700;" class="tnum">{{ $rp($mtdIni) }}</div>
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                    <div style="font-size:25px; font-weight:700;" class="tnum">{{ $rp($mtdIni) }}</div>
+                    @if ($mtdGrowthPct !== null)
+                        <svg width="44" height="24" viewBox="0 0 44 24" fill="none" style="flex-shrink:0;">
+                            <polyline points="{{ $mtdGrowthPct >= 0 ? '0,20 9,15 18,17 27,9 35,11 44,2' : '0,4 9,9 18,7 27,15 35,13 44,22' }}" stroke="{{ $mtdGrowthPct >= 0 ? 'var(--good)' : 'var(--critical)' }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    @endif
+                </div>
                 <div style="font-size:11.5px; color:var(--ink-muted); margin-top:2px;">vs {{ $rp($mtdLalu) }} ({{ $dayCap }} hari pertama bulan lalu)</div>
                 <div style="margin-top:10px; display:flex; align-items:center; gap:5px;">
                     @if ($mtdGrowthPct === null)
@@ -54,8 +78,15 @@
             @if ($trendCard)
                 <div class="card">
                     <div class="info-label" style="margin-bottom:10px;">{{ $trendCard['label'] }}</div>
-                    <div style="font-size:25px; font-weight:700;" class="tnum">{{ $rp($trendCard['omset_ini']) }}</div>
                     @php $g = $trendCard['growth']; @endphp
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                        <div style="font-size:25px; font-weight:700;" class="tnum">{{ $rp($trendCard['omset_ini']) }}</div>
+                        @if ($g !== null)
+                            <svg width="44" height="24" viewBox="0 0 44 24" fill="none" style="flex-shrink:0;">
+                                <polyline points="{{ $g >= 0 ? '0,20 9,15 18,17 27,9 35,11 44,2' : '0,4 9,9 18,7 27,15 35,13 44,22' }}" stroke="{{ $g >= 0 ? 'var(--good)' : 'var(--critical)' }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        @endif
+                    </div>
                     <div style="margin-top:10px; display:flex; align-items:center; gap:5px;">
                         @if ($g === null)
                             <span style="font-size:12px; color:var(--ink-faint);">Tidak ada data pembanding</span>
