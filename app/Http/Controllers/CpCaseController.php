@@ -7,6 +7,7 @@ use App\Models\CpTakedownBanding;
 use App\Models\KotaKabupaten;
 use App\Models\Mitra;
 use App\Models\PriceAdjustmentRequest;
+use App\Models\Produk;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -32,7 +33,7 @@ class CpCaseController extends Controller
 
     public function index(Request $request): View
     {
-        $query = CpCase::with(['mitra', 'kotaKabupaten', 'takedownBanding'])
+        $query = CpCase::with(['mitra', 'kotaKabupaten', 'produk', 'takedownBanding'])
             ->when($request->filled('q'), fn ($q) => $q->where(function ($qq) use ($request) {
                 $qq->where('nama_toko', 'like', '%'.$request->input('q').'%')
                     ->orWhere('kode', 'like', '%'.$request->input('q').'%')
@@ -54,12 +55,7 @@ class CpCaseController extends Controller
 
     public function create(): View
     {
-        return view('cp-case.form', [
-            'mitraOptions' => Mitra::where('status', 'aktif')->orderBy('nama')->get(['id', 'nama', 'kode_mitra']),
-            'kotaOptions' => KotaKabupaten::orderBy('nama')->get(['id', 'nama', 'provinsi']),
-            'platformOptions' => self::PLATFORM_OPTIONS,
-            'statusOptions' => self::STATUS_KASUS_OPTIONS,
-        ]);
+        return view('cp-case.form', $this->formOptions());
     }
 
     public function store(Request $request): RedirectResponse
@@ -83,13 +79,18 @@ class CpCaseController extends Controller
 
     public function edit(CpCase $cpCase): View
     {
-        return view('cp-case.form', [
-            'cpCase' => $cpCase,
+        return view('cp-case.form', [...$this->formOptions(), 'cpCase' => $cpCase]);
+    }
+
+    private function formOptions(): array
+    {
+        return [
             'mitraOptions' => Mitra::where('status', 'aktif')->orderBy('nama')->get(['id', 'nama', 'kode_mitra']),
             'kotaOptions' => KotaKabupaten::orderBy('nama')->get(['id', 'nama', 'provinsi']),
+            'produkOptions' => Produk::where('status', 'aktif')->orderBy('nama')->get(['id', 'nama', 'brand', 'harga_het']),
             'platformOptions' => self::PLATFORM_OPTIONS,
             'statusOptions' => self::STATUS_KASUS_OPTIONS,
-        ]);
+        ];
     }
 
     public function update(Request $request, CpCase $cpCase): RedirectResponse
@@ -124,7 +125,7 @@ class CpCaseController extends Controller
             'kota_kabupaten_id' => ['nullable', 'exists:kota_kabupatens,id'],
             'link_etalase' => ['nullable', 'url', 'max:500'],
             'kode_barcode' => ['nullable', 'string', 'max:100'],
-            'produk' => ['required', 'string', 'max:255'],
+            'produk_id' => ['required', 'exists:produk,id'],
             'harga_sop' => ['required', 'numeric', 'min:0'],
             'harga_pelanggaran' => ['required', 'numeric', 'min:0'],
             'status_kasus' => ['required', 'string', 'in:'.implode(',', self::STATUS_KASUS_OPTIONS)],

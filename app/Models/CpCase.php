@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
     'kode', 'tanggal_temuan', 'mitra_id', 'nama_mitra_manual', 'nama_toko', 'platform',
-    'kota_kabupaten_id', 'link_etalase', 'kode_barcode', 'produk', 'harga_sop', 'harga_pelanggaran',
+    'kota_kabupaten_id', 'link_etalase', 'kode_barcode', 'produk_id', 'harga_sop', 'harga_pelanggaran',
     'status_kasus', 'follow_up_1_tanggal', 'follow_up_1_status', 'follow_up_2_tanggal', 'follow_up_2_status',
     'follow_up_3_tanggal', 'follow_up_3_status', 'bukti_temuan', 'bukti_case_close', 'tanggal_case_close',
     'approval_takedown', 'status_takedown', 'banding', 'created_by',
@@ -40,6 +40,11 @@ class CpCase extends Model
     public function kotaKabupaten()
     {
         return $this->belongsTo(KotaKabupaten::class);
+    }
+
+    public function produk()
+    {
+        return $this->belongsTo(Produk::class);
     }
 
     public function creator()

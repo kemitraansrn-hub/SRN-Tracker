@@ -74,8 +74,13 @@
 
         <div class="field-row">
             <div class="field" style="flex:1;">
-                <label>Produk</label>
-                <input type="text" name="produk" value="{{ old('produk', $isEdit ? $cpCase->produk : '') }}" required>
+                <label>Produk (dari Master Produk)</label>
+                <select name="produk_id" id="produkSelect" onchange="isiHargaHet()" required>
+                    <option value="">— pilih —</option>
+                    @foreach ($produkOptions as $p)
+                        <option value="{{ $p->id }}" data-het="{{ $p->harga_het }}" {{ (string) old('produk_id', $isEdit ? $cpCase->produk_id : '') === (string) $p->id ? 'selected' : '' }}>{{ $p->nama }} ({{ $p->brand }})</option>
+                    @endforeach
+                </select>
             </div>
             <div class="field" style="flex:1;">
                 <label>Kode Barcode</label>
@@ -85,8 +90,8 @@
 
         <div class="field-row">
             <div class="field" style="flex:1;">
-                <label>Harga SOP (Rp)</label>
-                <input type="number" step="1" min="0" name="harga_sop" value="{{ old('harga_sop', $isEdit ? $cpCase->harga_sop : '') }}" required>
+                <label>Harga SOP (Rp) — otomatis dari Harga HET produk, bisa diubah</label>
+                <input type="number" step="1" min="0" name="harga_sop" id="hargaSopInput" value="{{ old('harga_sop', $isEdit ? $cpCase->harga_sop : '') }}" required>
             </div>
             <div class="field" style="flex:1;">
                 <label>Harga Pelanggaran (Rp)</label>
@@ -169,4 +174,15 @@
 
         <button type="submit" class="btn btn-primary" style="width:auto; margin-top:8px;">{{ $isEdit ? 'Simpan Perubahan' : 'Simpan Kasus' }}</button>
     </form>
+
+    <script>
+        function isiHargaHet() {
+            const select = document.getElementById('produkSelect');
+            const opt = select.options[select.selectedIndex];
+            const het = opt ? opt.getAttribute('data-het') : null;
+            if (het && het !== '' && het !== 'null') {
+                document.getElementById('hargaSopInput').value = Math.round(parseFloat(het));
+            }
+        }
+    </script>
 @endsection

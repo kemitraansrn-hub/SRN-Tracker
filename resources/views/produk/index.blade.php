@@ -52,6 +52,10 @@
                 <input type="number" name="harga" min="0" placeholder="mis. 54000">
             </div>
             <div class="field" style="margin-bottom:0;">
+                <label>Harga HET (Rp)</label>
+                <input type="number" name="harga_het" min="0" placeholder="mis. 99000">
+            </div>
+            <div class="field" style="margin-bottom:0;">
                 <label>Qty per Poin</label>
                 <input type="number" name="qty_per_poin" min="0.0001" step="0.0001" placeholder="mis. 3 atau 0.5">
             </div>
@@ -87,7 +91,7 @@
         <div class="table-scroll">
             <table>
                 <thead>
-                    <tr><th>Kode SKU</th><th>Nama</th><th>Brand</th><th>Kategori</th><th>Harga Jual</th><th>Qty per Poin</th><th>Status</th><th></th></tr>
+                    <tr><th>Kode SKU</th><th>Nama</th><th>Brand</th><th>Kategori</th><th>Harga Jual</th><th>Harga HET</th><th>Qty per Poin</th><th>Status</th><th></th></tr>
                 </thead>
                 <tbody>
                     @forelse ($produkList as $p)
@@ -97,6 +101,7 @@
                             <td>{{ $p->brand }}</td>
                             <td>{{ $p->kategori ?? '—' }}</td>
                             <td class="tnum">{{ $rp($p->harga) }}</td>
+                            <td class="tnum">{{ $rp($p->harga_het) }}</td>
                             <td class="tnum">{{ $poinFmt($p->qty_per_poin) ?: '—' }}</td>
                             <td>
                                 @if ($p->status === 'aktif')
@@ -117,7 +122,7 @@
                             </td>
                         </tr>
                         <tr id="edit-produk-{{ $p->id }}" style="display:none;">
-                            <td colspan="8" style="background:var(--surface-alt);">
+                            <td colspan="9" style="background:var(--surface-alt);">
                                 <form method="POST" action="{{ route('produk.update', $p) }}" class="field-row" style="align-items:flex-end; padding:10px 4px;">
                                     @csrf
                                     @method('PUT')
@@ -146,6 +151,10 @@
                                         <input type="number" name="harga" min="0" value="{{ $clean($p->harga) }}">
                                     </div>
                                     <div class="field" style="margin-bottom:0;">
+                                        <label>Harga HET (Rp)</label>
+                                        <input type="number" name="harga_het" min="0" value="{{ $clean($p->harga_het) }}">
+                                    </div>
+                                    <div class="field" style="margin-bottom:0;">
                                         <label>Qty per Poin</label>
                                         <input type="number" name="qty_per_poin" min="0.0001" step="0.0001" value="{{ $poinFmt($p->qty_per_poin) }}">
                                     </div>
@@ -161,7 +170,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" style="color:var(--ink-muted);">Belum ada produk.</td></tr>
+                        <tr><td colspan="9" style="color:var(--ink-muted);">Belum ada produk.</td></tr>
                     @endforelse
                 </tbody>
             </table>

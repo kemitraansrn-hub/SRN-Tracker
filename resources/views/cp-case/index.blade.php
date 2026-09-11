@@ -76,7 +76,7 @@
                                 <div style="font-weight:600;">{{ $c->nama_toko }}</div>
                                 <div style="font-size:11px; color:var(--ink-muted);">{{ $c->platform }}{{ $c->kotaKabupaten ? ' · '.$c->kotaKabupaten->nama : '' }}</div>
                             </td>
-                            <td>{{ $c->produk }}</td>
+                            <td>{{ $c->produk->nama ?? '—' }}</td>
                             <td class="tnum">{{ $rp($c->harga_sop) }}</td>
                             <td class="tnum">{{ $rp($c->harga_pelanggaran) }}</td>
                             <td class="tnum" style="color:var(--critical);">{{ $c->persentaseSelisih() }}%</td>

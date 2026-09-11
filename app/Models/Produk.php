@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['kode_sku', 'nama', 'brand', 'kategori', 'harga', 'qty_per_poin', 'status', 'auto_created', 'reviewed_at'])]
+#[Fillable(['kode_sku', 'nama', 'brand', 'kategori', 'harga', 'harga_het', 'qty_per_poin', 'status', 'auto_created', 'reviewed_at'])]
 class Produk extends Model
 {
     protected $table = 'produk';
@@ -21,6 +21,11 @@ class Produk extends Model
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function cpCases()
+    {
+        return $this->hasMany(CpCase::class);
     }
 
     /** Produk yang ke-create otomatis pas import order harian dan belum di-review admin. */

@@ -33,6 +33,7 @@ class ProdukController extends Controller
             'brand' => ['required', 'string', 'max:255'],
             'kategori' => ['nullable', 'string', 'max:255'],
             'harga' => ['nullable', 'numeric', 'min:0'],
+            'harga_het' => ['nullable', 'numeric', 'min:0'],
             'qty_per_poin' => ['nullable', 'numeric', 'min:0.0001'],
             'status' => ['required', 'in:aktif,nonaktif'],
         ]);
@@ -50,6 +51,7 @@ class ProdukController extends Controller
             'brand' => ['required', 'string', 'max:255'],
             'kategori' => ['nullable', 'string', 'max:255'],
             'harga' => ['nullable', 'numeric', 'min:0'],
+            'harga_het' => ['nullable', 'numeric', 'min:0'],
             'qty_per_poin' => ['nullable', 'numeric', 'min:0.0001'],
             'status' => ['required', 'in:aktif,nonaktif'],
         ]);
