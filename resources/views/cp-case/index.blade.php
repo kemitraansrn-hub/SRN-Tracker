@@ -101,7 +101,14 @@
                                 @endif
                             </td>
                             <td>
-                                <a href="{{ route('tracking-cp.edit', $c) }}" class="link-action" style="color:var(--accent-ink); font-size:12px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 9px;">Edit</a>
+                                <div style="display:flex; gap:6px;">
+                                    <a href="{{ route('tracking-cp.edit', $c) }}" class="link-action" style="color:var(--accent-ink); font-size:12px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 9px;">Edit</a>
+                                    <form method="POST" action="{{ route('tracking-cp.destroy', $c) }}" onsubmit="return confirm('Hapus kasus {{ $c->kode }}?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger" style="width:auto; font-size:11.5px; padding:5px 10px;">Hapus</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty

@@ -113,6 +113,13 @@ class CpCaseController extends Controller
         return redirect()->route('tracking-cp.index')->with('status', 'Kasus berhasil diperbarui.');
     }
 
+    public function destroy(CpCase $cpCase): RedirectResponse
+    {
+        $cpCase->delete();
+
+        return redirect()->route('tracking-cp.index')->with('status', 'Kasus berhasil dihapus.');
+    }
+
     private function validated(Request $request, ?CpCase $cpCase = null): array
     {
         $data = $request->validate([

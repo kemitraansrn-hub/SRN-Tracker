@@ -229,6 +229,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::post('/', [CpCaseController::class, 'store'])->name('store');
         Route::get('/{cpCase}/edit', [CpCaseController::class, 'edit'])->name('edit');
         Route::put('/{cpCase}', [CpCaseController::class, 'update'])->name('update');
+        Route::delete('/{cpCase}', [CpCaseController::class, 'destroy'])->name('destroy');
     });
 
     // Placeholder "Coming Soon" buat sisa menu Development — ganti satu-satu
