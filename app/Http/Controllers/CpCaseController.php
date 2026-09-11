@@ -98,7 +98,6 @@ class CpCaseController extends Controller
             'kotaOptions' => KotaKabupaten::orderBy('nama')->get(['id', 'nama', 'provinsi']),
             'produkOptions' => Produk::where('status', 'aktif')->orderBy('nama')->get(['id', 'nama', 'brand', 'harga_het']),
             'platformOptions' => self::PLATFORM_OPTIONS,
-            'statusOptions' => self::STATUS_KASUS_OPTIONS,
         ];
     }
 

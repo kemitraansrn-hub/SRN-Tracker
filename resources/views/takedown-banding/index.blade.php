@@ -53,7 +53,7 @@
                             <td>{{ $r->cpCase->namaMitraTampil() }}</td>
                             <td class="tnum">{{ $r->tanggal_takedown?->format('d/m/Y') ?? '—' }}</td>
                             <td class="tnum">{{ $r->jumlah_follow_up ?? '—' }}</td>
-                            <td style="max-width:220px;">{{ $r->alasan_takedown ?? '—' }}</td>
+                            <td style="max-width:220px; overflow:hidden; text-overflow:ellipsis;" title="{{ $r->alasan_takedown }}">{{ $r->alasan_takedown ?? '—' }}</td>
                             <td>
                                 @if ($r->status_banding)
                                     <span class="chip {{ $statusChip($r->status_banding) }}">{{ $r->status_banding }}</span>
@@ -96,8 +96,9 @@
                     </div>
                     <div class="field-row">
                         <div class="field" style="flex:1;">
-                            <label>Tanggal Banding (kalau mitra mengajukan)</label>
+                            <label>Tanggal Banding</label>
                             <input type="date" name="tanggal_banding" value="{{ $r->tanggal_banding?->toDateString() }}">
+                            <div style="font-size:11px; color:var(--ink-muted);">Isi kalau mitra mengajukan banding</div>
                         </div>
                         <div class="field" style="flex:1;">
                             <label>Status Banding</label>
@@ -111,7 +112,7 @@
                     </div>
                     <div class="field-row">
                         <div class="field" style="flex:1;">
-                            <label>SP (Surat Peringatan)</label>
+                            <label>SP</label>
                             <select name="sp">
                                 <option value="">—</option>
                                 @foreach ($spOptions as $s)
@@ -120,7 +121,7 @@
                             </select>
                         </div>
                         <div class="field" style="flex:1;">
-                            <label>Status Takedown Final</label>
+                            <label>Status Final</label>
                             <select name="status_takedown_final">
                                 <option value="">—</option>
                                 @foreach ($statusOptions as $s)

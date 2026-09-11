@@ -128,10 +128,10 @@
   thead th {
     position: sticky; top: 0; z-index: 1;
     text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em;
-    color: var(--table-head-ink); font-weight: 600; padding: 10px 20px;
+    color: var(--table-head-ink); font-weight: 600; padding: 10px 20px; white-space: nowrap;
     border-bottom: 1px solid var(--line); background: var(--table-head-bg);
   }
-  tbody td { padding: 12px 20px; border-bottom: 1px solid var(--line); font-size: 13px; }
+  tbody td { padding: 12px 20px; border-bottom: 1px solid var(--line); font-size: 13px; white-space: nowrap; }
   tbody tr:last-child td { border-bottom: none; }
   .chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 100px; font-size: 11px; font-weight: 600; white-space: nowrap; }
   .chip-good { background: var(--good-soft); color: var(--good); }

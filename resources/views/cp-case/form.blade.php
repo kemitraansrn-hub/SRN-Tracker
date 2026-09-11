@@ -88,9 +88,9 @@
 
         <div class="field-row">
             <div class="field" style="flex:1;">
-                <label>Produk (dari Master Produk)</label>
+                <label>Produk</label>
                 <select name="produk_id" id="produkSelect" onchange="isiHargaHet()" required>
-                    <option value="">— pilih —</option>
+                    <option value="">— pilih dari Master Produk —</option>
                     @foreach ($produkOptions as $p)
                         <option value="{{ $p->id }}" data-het="{{ $p->harga_het }}" {{ (string) old('produk_id', $isEdit ? $cpCase->produk_id : '') === (string) $p->id ? 'selected' : '' }}>{{ $p->nama }} ({{ $p->brand }})</option>
                     @endforeach
@@ -115,11 +115,13 @@
 
         <div class="field">
             <label>Status Kasus</label>
-            <select name="status_kasus" required>
-                @foreach ($statusOptions as $s)
-                    <option value="{{ $s }}" {{ old('status_kasus', $isEdit ? $cpCase->status_kasus : 'Baru Ditemukan') === $s ? 'selected' : '' }}>{{ $s }}</option>
-                @endforeach
-            </select>
+            <div style="padding:10px 13px; border:1px solid var(--line); border-radius:10px; background:var(--surface-alt); color:var(--ink-muted); font-size:14px;">
+                {{ $isEdit ? $cpCase->status_kasus : 'Baru Ditemukan' }}
+            </div>
+            <input type="hidden" name="status_kasus" value="{{ $isEdit ? $cpCase->status_kasus : 'Baru Ditemukan' }}">
+            @unless ($isEdit)
+                <div style="font-size:11px; color:var(--ink-muted); margin-top:4px;">Status berubah otomatis lewat tombol di daftar Tracking CP, bukan di sini.</div>
+            @endunless
         </div>
 
         <div class="field">
