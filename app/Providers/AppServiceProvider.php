@@ -41,6 +41,14 @@ class AppServiceProvider extends ServiceProvider
             $view->with('takedownApprovalCount', Auth::check() && Auth::user()->isHead()
                 ? CpCase::where('status_takedown', 'Menunggu Approval')->count()
                 : 0);
+
+            // Badge notifikasi buat Compliance: kasus yang keputusan Head-nya
+            // udah keluar (Approved atau Rejected) — Compliance perlu tindak
+            // lanjut (List to Shopee kalau Approved, atau ajukan ulang kalau
+            // Rejected).
+            $view->with('takedownKeputusanCount', Auth::check() && Auth::user()->isCompliance()
+                ? CpCase::whereIn('status_takedown', ['Approved', 'Rejected'])->count()
+                : 0);
         });
     }
 }

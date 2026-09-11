@@ -416,6 +416,14 @@
                         @endif
                     </a>
                 @endif
+                @if (auth()->user()->isCompliance())
+                    <a href="{{ route('tracking-cp.index', ['keputusan_head' => 1]) }}" title="Kasus yang keputusan Head-nya udah keluar" aria-label="Kasus yang keputusan Head-nya udah keluar" style="position:relative; display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; color:var(--ink-muted); flex-shrink:0;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.73 21a2 2 0 0 1-3.46 0" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        @if ($takedownKeputusanCount > 0)
+                            <span style="position:absolute; top:2px; right:2px; min-width:16px; height:16px; padding:0 3px; border-radius:8px; background:#E0483C; color:#fff; font-size:10px; font-weight:700; line-height:16px; text-align:center;">{{ $takedownKeputusanCount > 99 ? '99+' : $takedownKeputusanCount }}</span>
+                        @endif
+                    </a>
+                @endif
                 <div class="avatar" title="{{ auth()->user()->name }}">{{ collect(explode(' ', auth()->user()->name))->map(fn($w) => mb_substr($w, 0, 1))->take(2)->implode('') }}</div>
                 <div class="who-info" style="flex:1; min-width:0; overflow:hidden;">
                     <div class="who-name" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ auth()->user()->name }}</div>

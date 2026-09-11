@@ -50,6 +50,7 @@ class CpCaseController extends Controller
             }))
             ->when($request->filled('status_kasus'), fn ($q) => $q->where('status_kasus', $request->input('status_kasus')))
             ->when($request->boolean('menunggu_approval'), fn ($q) => $q->where('status_takedown', 'Menunggu Approval'))
+            ->when($request->boolean('keputusan_head'), fn ($q) => $q->whereIn('status_takedown', ['Approved', 'Rejected']))
             ->when($request->filled('platform'), fn ($q) => $q->where('platform', $request->input('platform')))
             ->when($request->filled('dari'), fn ($q) => $q->whereDate('tanggal_temuan', '>=', $request->input('dari')))
             ->when($request->filled('sampai'), fn ($q) => $q->whereDate('tanggal_temuan', '<=', $request->input('sampai')))
