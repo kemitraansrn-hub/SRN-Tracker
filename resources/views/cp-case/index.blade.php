@@ -96,12 +96,18 @@
                             <td class="tnum">{{ $rp($c->harga_sop) }}</td>
                             <td class="tnum">{{ $rp($c->harga_pelanggaran) }}</td>
                             <td class="tnum" style="color:var(--critical);">{{ $c->persentaseSelisih() }}%</td>
-                            <td><span class="chip {{ $statusChip($c->status_kasus) }}">{{ $c->status_kasus }}</span></td>
+                            <td>
+                                @if ($c->takedownBanding)
+                                    <span class="chip chip-critical">Take Down</span>
+                                @else
+                                    <span class="chip {{ $statusChip($c->status_kasus) }}">{{ $c->status_kasus }}</span>
+                                @endif
+                            </td>
                             <td>
                                 @if ($c->status_kasus === 'Case Closed')
                                     <span style="font-size:12.5px;">Mitra menaikan harga</span>
                                 @elseif ($c->takedownBanding)
-                                    <span class="chip chip-good">Take Down</span>
+                                    <span style="font-size:12.5px;">Take Down</span>
                                     @if ($c->takedownBanding->status_banding)
                                         <div style="font-size:11px; color:var(--ink-muted); margin-top:3px;">Banding: {{ $c->takedownBanding->status_banding }}</div>
                                     @endif
