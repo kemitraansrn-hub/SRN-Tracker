@@ -28,6 +28,7 @@ class OrderImportService
 
     private const HEADER_ALIASES_TRANSAKSI = [
         'tanggal' => ['TANGGAL', 'TANGGAL ORDER'],
+        'bulan_order' => ['BULAN ORDER', 'BULAN'],
         'id_transaksi' => ['ID TRANSAKSI (CORE)', 'ID TRANSAKSI'],
         'id_transaksi_perpack' => ['ID TRANSAKSI (PERPACK)'],
         'reseller' => ['RESELLER'],
@@ -126,6 +127,10 @@ class OrderImportService
 
         if ($alignmentError = $this->detectColumnShift($orders)) {
             return ['ok' => false, 'errors' => [$alignmentError]];
+        }
+
+        if ($bulanError = $this->detectBulanMismatch($orders)) {
+            return ['ok' => false, 'errors' => [$bulanError]];
         }
 
         $dates = collect($orders)->pluck('tanggal')->filter()->unique();
@@ -229,6 +234,10 @@ class OrderImportService
 
         if ($alignmentError = $this->detectColumnShift($orders)) {
             return ['ok' => false, 'errors' => [$alignmentError]];
+        }
+
+        if ($bulanError = $this->detectBulanMismatch($orders)) {
+            return ['ok' => false, 'errors' => [$bulanError]];
         }
 
         $dates = collect($orders)->pluck('tanggal')->filter()->unique()->sort()->values();
@@ -493,6 +502,58 @@ class OrderImportService
         }
 
         return null;
+    }
+
+    private const NAMA_BULAN_KE_ANGKA = [
+        // Indonesia
+        'januari' => 1, 'februari' => 2, 'maret' => 3, 'april' => 4, 'mei' => 5, 'juni' => 6,
+        'juli' => 7, 'agustus' => 8, 'september' => 9, 'oktober' => 10, 'november' => 11, 'desember' => 12,
+        // English (beberapa file sumber nulis nama bulan bahasa Inggris)
+        'january' => 1, 'february' => 2, 'march' => 3, 'may' => 5, 'june' => 6,
+        'july' => 7, 'august' => 8, 'october' => 10, 'december' => 12,
+    ];
+
+    /**
+     * Cross-check kolom TANGGAL (angka serial Excel, dikonversi apa adanya)
+     * terhadap kolom BULAN ORDER (teks, kadang Indonesia kadang Inggris)
+     * kalau ada di file — nangkep kasus di mana sumbernya sendiri salah
+     * nyimpen tanggal (mis. 10/09 kebaca format Amerika jadi 9 Oktober)
+     * sebelum data salah itu masuk database. Dibandingin sebagai ANGKA
+     * bulan (bukan nama teks) biar gak kejebak beda bahasa. Kalau file gak
+     * punya kolom BULAN ORDER, atau isinya nama bulan yang gak dikenali,
+     * cross-check ini dilewat (gak reject, biar aman kalau formatnya beda).
+     */
+    private function detectBulanMismatch(array $orders): ?string
+    {
+        $mismatches = [];
+
+        foreach ($orders as $row) {
+            $bulanText = mb_strtolower(trim((string) ($row['bulan_order'] ?? '')));
+            $tanggal = $row['tanggal'] ?? null;
+
+            if ($bulanText === '' || ! $tanggal || ! isset(self::NAMA_BULAN_KE_ANGKA[$bulanText])) {
+                continue;
+            }
+
+            $bulanDariTanggal = (int) Carbon::parse($tanggal)->format('n');
+
+            if ($bulanDariTanggal !== self::NAMA_BULAN_KE_ANGKA[$bulanText]) {
+                $mismatches[] = ($row['id_transaksi'] ?? $row['id_transaksi_perpack'] ?? '?')
+                    .' (kolom TANGGAL = '.$tanggal.', kolom BULAN ORDER = '.$row['bulan_order'].')';
+            }
+
+            if (count($mismatches) >= 5) {
+                break;
+            }
+        }
+
+        if (empty($mismatches)) {
+            return null;
+        }
+
+        return 'Kolom TANGGAL gak cocok sama kolom BULAN ORDER di beberapa baris — kemungkinan tanggalnya kebaca salah format (mis. 10/09 kebaca jadi 9 Oktober alih-alih 10 September). '
+            .'Contoh: '.implode('; ', $mismatches).'. '
+            .'Perbaiki dulu kolom TANGGAL di file sumbernya sebelum upload lagi — belum ada data yang disimpan.';
     }
 
     /**
