@@ -24,7 +24,7 @@
                     $donutCirc = 2 * M_PI * $donutR;
                     $donutFilled = min($companyAchPct, 100) / 100 * $donutCirc;
                 @endphp
-                <div class="card" style="min-width:0; border-color:var(--accent);">
+                <div class="card" style="min-width:0;">
                     <div class="info-label" style="margin-bottom:10px;">Target Perusahaan vs Pencapaian</div>
                     <div style="display:flex; align-items:center; gap:14px;">
                         <svg width="88" height="88" viewBox="0 0 100 100" style="flex-shrink:0;">
@@ -49,7 +49,7 @@
                     </div>
                 </div>
             @endif
-            <div class="card" style="min-width:0; border-color:var(--accent);">
+            <div class="card" style="min-width:0;">
                 <div class="info-label" style="margin-bottom:10px;">MTD vs Bulan Lalu</div>
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
                     <div style="font-size:19px; font-weight:700; min-width:0; flex-shrink:1; overflow-wrap:anywhere;" class="tnum">{{ $rp($mtdIni) }}</div>
@@ -76,7 +76,7 @@
                 </div>
             </div>
             @if ($trendCard)
-                <div class="card" style="min-width:0; border-color:var(--accent);">
+                <div class="card" style="min-width:0;">
                     <div class="info-label" style="margin-bottom:10px;">{{ $trendCard['label'] }}</div>
                     @php $g = $trendCard['growth']; @endphp
                     <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
@@ -106,7 +106,7 @@
         </div>
 
         @if ($pencapaianTigaTier)
-            <div class="card" style="grid-column:span 6; min-width:0; border-color:var(--accent);">
+            <div class="card" style="grid-column:span 6; min-width:0;">
                 <div class="card-head" style="flex-wrap:wrap; row-gap:4px;">
                     <div class="card-title" style="flex-shrink:0;">Pencapaian vs 3 Tier Target</div>
                     <div class="card-hint" style="white-space:nowrap;">Omset {{ $periodeLabel }}: {{ $rp($totalOmsetBulanIni) }}</div>
