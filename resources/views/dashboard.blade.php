@@ -131,9 +131,9 @@
                                 <th>Week</th>
                                 @foreach ($runRateWeekly as $w => $data)
                                     @php $isCurrentWeek = 'W'.$w === $currentWeekLabel; @endphp
-                                    <th style="{{ $isCurrentWeek ? 'background:var(--good-soft);' : '' }}">
+                                    <th style="{{ $isCurrentWeek ? 'background:var(--accent-ink);' : '' }}">
                                         W{{ $w }}
-                                        <div style="font-weight:400; font-size:10.5px; color:var(--ink-faint); text-transform:none;">s/d {{ $runRateWeekEndDate[$w]->format('d/m') }}</div>
+                                        <div style="font-weight:400; font-size:10.5px; color:rgba(255,255,255,0.8); text-transform:none;">s/d {{ $runRateWeekEndDate[$w]->format('d/m') }}</div>
                                     </th>
                                 @endforeach
                             </tr>
@@ -143,21 +143,21 @@
                                 <td>Target</td>
                                 @foreach ($runRateWeekly as $w => $data)
                                     @php $isCurrentWeek = 'W'.$w === $currentWeekLabel; @endphp
-                                    <td class="tnum" style="{{ $isCurrentWeek ? 'background:var(--good-soft);' : '' }}">{{ $rp($data['target']) }}</td>
+                                    <td class="tnum" style="{{ $isCurrentWeek ? 'background:var(--accent-soft);' : '' }}">{{ $rp($data['target']) }}</td>
                                 @endforeach
                             </tr>
                             <tr>
                                 <td>Run Rate Weekly</td>
                                 @foreach ($runRateWeekly as $w => $data)
                                     @php $isCurrentWeek = 'W'.$w === $currentWeekLabel; @endphp
-                                    <td class="tnum" style="color:var(--ink-muted); {{ $isCurrentWeek ? 'background:var(--good-soft);' : '' }}">{{ $rp($data['run_rate']) }}</td>
+                                    <td class="tnum" style="color:var(--ink-muted); {{ $isCurrentWeek ? 'background:var(--accent-soft);' : '' }}">{{ $rp($data['run_rate']) }}</td>
                                 @endforeach
                             </tr>
                             <tr>
                                 <td>Growth</td>
                                 @foreach ($runRateWeekly as $w => $data)
                                     @php $g = $data['growth']; $isCurrentWeek = 'W'.$w === $currentWeekLabel; @endphp
-                                    <td class="tnum" style="{{ $isCurrentWeek ? 'background:var(--good-soft);' : '' }} {{ $g !== null && $g < 0 ? 'color:var(--critical);' : ($g !== null ? 'color:var(--good);' : '') }}">
+                                    <td class="tnum" style="{{ $isCurrentWeek ? 'background:var(--accent-soft);' : '' }} {{ $g !== null && $g < 0 ? 'color:var(--critical);' : ($g !== null ? 'color:var(--good);' : '') }}">
                                         {{ $g !== null ? $g.'%' : '—' }}
                                     </td>
                                 @endforeach
@@ -281,7 +281,7 @@
                             <tr>
                                 <th>Agen</th>
                                 @foreach ($runRate['months'] as $m)
-                                    <th style="{{ $m === $runRate['currentMonth'] ? 'background:var(--good-soft);' : '' }}">{{ $runRate['monthLabels'][$m] }}</th>
+                                    <th style="{{ $m === $runRate['currentMonth'] ? 'background:var(--accent-ink);' : '' }}">{{ $runRate['monthLabels'][$m] }}</th>
                                 @endforeach
                                 <th>vs Target</th>
                             </tr>
@@ -291,7 +291,7 @@
                                 <tr>
                                     <td style="font-weight:600;">{{ $r['nama'] }}</td>
                                     @foreach ($runRate['months'] as $m)
-                                        <td class="tnum" style="{{ $m === $runRate['currentMonth'] ? 'background:var(--good-soft);' : '' }}">{{ $r['counts'][$m] }}</td>
+                                        <td class="tnum" style="{{ $m === $runRate['currentMonth'] ? 'background:var(--accent-soft);' : '' }}">{{ $r['counts'][$m] }}</td>
                                     @endforeach
                                     <td class="tnum">{{ $r['vs_target'] !== null ? $r['vs_target'].'%' : '—' }}</td>
                                 </tr>
@@ -299,14 +299,14 @@
                             <tr style="font-weight:700; background:var(--surface-alt);">
                                 <td>Total</td>
                                 @foreach ($runRate['months'] as $m)
-                                    <td class="tnum" style="{{ $m === $runRate['currentMonth'] ? 'background:var(--good-soft);' : '' }}">{{ $runRate['total']['counts'][$m] }}</td>
+                                    <td class="tnum" style="{{ $m === $runRate['currentMonth'] ? 'background:var(--accent-soft);' : '' }}">{{ $runRate['total']['counts'][$m] }}</td>
                                 @endforeach
                                 <td class="tnum">{{ $runRate['total']['vs_target'] !== null ? $runRate['total']['vs_target'].'%' : '—' }}</td>
                             </tr>
                             <tr style="font-weight:700;">
                                 <td>Avg Daily</td>
                                 @foreach ($runRate['months'] as $m)
-                                    <td class="tnum" style="{{ $m === $runRate['currentMonth'] ? 'background:var(--good-soft);' : '' }}">{{ $runRate['avg_daily'][$m] }}</td>
+                                    <td class="tnum" style="{{ $m === $runRate['currentMonth'] ? 'background:var(--accent-soft);' : '' }}">{{ $runRate['avg_daily'][$m] }}</td>
                                 @endforeach
                                 <td></td>
                             </tr>
@@ -314,7 +314,7 @@
                                 <td>% Growth</td>
                                 @foreach ($runRate['months'] as $m)
                                     @php $g = $runRate['growth'][$m]; @endphp
-                                    <td class="tnum" style="{{ $m === $runRate['currentMonth'] ? 'background:var(--good-soft);' : '' }} {{ $g !== null && $g < 0 ? 'color:var(--critical);' : ($g !== null ? 'color:var(--good);' : '') }}">
+                                    <td class="tnum" style="{{ $m === $runRate['currentMonth'] ? 'background:var(--accent-soft);' : '' }} {{ $g !== null && $g < 0 ? 'color:var(--critical);' : ($g !== null ? 'color:var(--good);' : '') }}">
                                         {{ $g !== null ? $g.'%' : '—' }}
                                     </td>
                                 @endforeach

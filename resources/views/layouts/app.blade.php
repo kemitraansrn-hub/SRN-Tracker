@@ -50,18 +50,26 @@
         html.sidebar-collapsed .nav-item-toggle { justify-content: center; }
         html.sidebar-collapsed .sidebar-foot { flex-direction: column; gap: 10px; }
         .nav-item {
-            display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 9px;
+            display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 9px;
             color: var(--ink-muted); text-decoration: none; font-size: 13.5px;
             box-shadow: inset 3px 0 0 transparent;
             transition: background-color 0.14s ease, color 0.14s ease, box-shadow 0.14s ease;
         }
-        .nav-item:hover { background: var(--accent-soft); color: var(--ink); }
+        .nav-item:hover, .nav-item-toggle:hover { background: #FFFBEB; color: var(--accent); }
         .nav-item.active {
-            background: var(--accent-soft); color: var(--accent-ink); font-weight: 600;
+            background: #FFFBEB; color: var(--accent); font-weight: 600;
             box-shadow: inset 3px 0 0 var(--accent);
         }
+        .nav-item:hover .nav-icon, .nav-item-toggle:hover .nav-icon, .nav-item.active .nav-icon {
+            background: var(--accent); color: #fff; opacity: 1;
+        }
+        .nav-item:hover .chevron, .nav-item-toggle:hover .chevron { opacity: 1; }
         .nav-item-toggle { justify-content: space-between; cursor: pointer; }
-        .nav-icon { width: 16px; height: 16px; flex: none; opacity: 0.7; }
+        .nav-icon {
+            width: 16px; height: 16px; flex: none; opacity: 0.7;
+            padding: 7px; box-sizing: content-box; border-radius: 8px; background: var(--surface-alt);
+            transition: background-color 0.14s ease, color 0.14s ease, opacity 0.14s ease;
+        }
         .nav-item-toggle-label { display: flex; align-items: center; gap: 10px; }
         .chevron { width: 13px; height: 13px; flex: none; opacity: 0.6; transition: transform 0.16s ease; }
         .nav-sub {
