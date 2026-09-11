@@ -8,12 +8,6 @@
         'Case Closed' => 'chip-good',
         default => 'chip-neutral',
     };
-    $takedownChip = fn ($s) => match ($s) {
-        'Approved' => 'chip-good',
-        'Rejected' => 'chip-critical',
-        'Menunggu Approval', 'Listed ke Shopee' => 'chip-warn',
-        default => 'chip-neutral',
-    };
 @endphp
 
 @section('content')
@@ -112,7 +106,7 @@
                                         <div style="font-size:11px; color:var(--ink-muted); margin-top:3px;">Banding: {{ $c->takedownBanding->status_banding }}</div>
                                     @endif
                                 @elseif ($c->status_takedown)
-                                    <span class="chip {{ $takedownChip($c->status_takedown) }}">{{ $c->status_takedown }}</span>
+                                    <span style="font-size:12.5px;">{{ $c->status_takedown }}</span>
                                 @else
                                     <span style="color:var(--ink-faint); font-size:12px;">—</span>
                                 @endif

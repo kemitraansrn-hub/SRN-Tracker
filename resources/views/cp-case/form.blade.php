@@ -92,7 +92,7 @@
                 <select name="produk_id" id="produkSelect" onchange="isiHargaHet()" required>
                     <option value="">— pilih dari Master Produk —</option>
                     @foreach ($produkOptions as $p)
-                        <option value="{{ $p->id }}" data-het="{{ $p->harga_het }}" {{ (string) old('produk_id', $isEdit ? $cpCase->produk_id : '') === (string) $p->id ? 'selected' : '' }}>{{ $p->nama }} ({{ $p->brand }})</option>
+                        <option value="{{ $p->id }}" data-het="{{ $p->harga_het }}" {{ (string) old('produk_id', $isEdit ? $cpCase->produk_id : '') === (string) $p->id ? 'selected' : '' }}>{{ \Illuminate\Support\Str::limit($p->nama, 45) }} ({{ $p->brand }})</option>
                     @endforeach
                 </select>
             </div>
