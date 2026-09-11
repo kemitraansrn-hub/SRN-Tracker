@@ -101,8 +101,25 @@
                                 @endif
                             </td>
                             <td>
-                                <div style="display:flex; gap:6px;">
+                                @php
+                                    $fu1Done = (bool) $c->follow_up_1_tanggal;
+                                    $fu2Done = (bool) $c->follow_up_2_tanggal;
+                                    $fu3Done = (bool) $c->follow_up_3_tanggal;
+                                    $belumDiputuskan = in_array($c->status_kasus, ['Baru Ditemukan', 'Progres'], true);
+                                @endphp
+                                <div style="display:flex; gap:6px; flex-wrap:wrap;">
                                     <a href="{{ route('tracking-cp.edit', $c) }}" class="link-action" style="color:var(--accent-ink); font-size:12px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 9px;">Edit</a>
+
+                                    @if (! $fu1Done)
+                                        <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="openStageModal('modal-fu1-{{ $c->id }}')">FU 1</button>
+                                    @elseif (! $fu2Done)
+                                        <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="openStageModal('modal-fu2-{{ $c->id }}')">FU 2</button>
+                                    @elseif (! $fu3Done)
+                                        <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="openStageModal('modal-fu3-{{ $c->id }}')">FU 3</button>
+                                    @elseif ($belumDiputuskan)
+                                        <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="showStatusChoice('{{ $c->id }}'); openStageModal('modal-status-{{ $c->id }}')">Status Kasus</button>
+                                    @endif
+
                                     <form method="POST" action="{{ route('tracking-cp.destroy', $c) }}" onsubmit="return confirm('Hapus kasus {{ $c->kode }}?');">
                                         @csrf
                                         @method('DELETE')
@@ -120,4 +137,127 @@
     </section>
 
     <div style="margin-top:16px;">{{ $cases->links() }}</div>
+
+    @foreach ($cases as $c)
+        @for ($i = 1; $i <= 3; $i++)
+            <div class="modal-overlay" id="modal-fu{{ $i }}-{{ $c->id }}" style="display:none;">
+                <div class="modal-box">
+                    <div class="modal-title">Follow Up {{ $i }} — {{ $c->kode }}</div>
+                    <form method="POST" action="{{ route('tracking-cp.follow-up.update', [$c, $i]) }}">
+                        @csrf
+                        @method('PATCH')
+                        <div class="field">
+                            <label>Tanggal Follow Up {{ $i }}</label>
+                            <input type="date" name="tanggal" value="{{ $c->{"follow_up_{$i}_tanggal"}?->toDateString() }}" required>
+                        </div>
+                        <label style="display:flex; align-items:center; gap:7px; margin:10px 0 20px;">
+                            <input type="checkbox" name="status" value="1" {{ $c->{"follow_up_{$i}_status"} ? 'checked' : '' }}>
+                            Direspon mitra
+                        </label>
+                        <div class="modal-actions">
+                            <button type="button" class="btn" style="width:auto;" onclick="closeStageModal('modal-fu{{ $i }}-{{ $c->id }}')">Batal</button>
+                            <button type="submit" class="btn btn-primary" style="width:auto;">Simpan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        @endfor
+
+        <div class="modal-overlay" id="modal-status-{{ $c->id }}" style="display:none;">
+            <div class="modal-box">
+                <div class="modal-title">Status Kasus — {{ $c->kode }}</div>
+
+                <div id="status-choice-{{ $c->id }}">
+                    <div class="modal-body">Follow up 3 ronde sudah selesai. Pilih status akhir kasus ini:</div>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <button type="button" class="btn" style="width:auto; text-align:left;" onclick="showStatusSub('{{ $c->id }}', 'closed')">Case Closed — mitra sudah naikkan harga</button>
+                        <button type="button" class="btn" style="width:auto; text-align:left;" onclick="showStatusSub('{{ $c->id }}', 'takedown')">Pengajuan Takedown</button>
+                        <button type="button" class="btn" style="width:auto; text-align:left;" onclick="showStatusSub('{{ $c->id }}', 'progres')">Masih Progres</button>
+                    </div>
+                    <div class="modal-actions" style="margin-top:16px;">
+                        <button type="button" class="btn" style="width:auto;" onclick="closeStageModal('modal-status-{{ $c->id }}')">Batal</button>
+                    </div>
+                </div>
+
+                <div id="status-sub-closed-{{ $c->id }}" style="display:none;">
+                    <form method="POST" action="{{ route('tracking-cp.case-close.update', $c) }}">
+                        @csrf
+                        @method('PATCH')
+                        <div class="field">
+                            <label>Tanggal Case Close</label>
+                            <input type="date" name="tanggal_case_close" value="{{ now()->toDateString() }}" required>
+                        </div>
+                        <div class="field" style="margin-bottom:20px;">
+                            <label>Bukti Case Close (link)</label>
+                            <input type="text" name="bukti_case_close" placeholder="https://drive.google.com/...">
+                        </div>
+                        <div class="modal-actions">
+                            <button type="button" class="btn" style="width:auto;" onclick="showStatusChoice('{{ $c->id }}')">Kembali</button>
+                            <button type="submit" class="btn btn-primary" style="width:auto;">Tutup Kasus</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="status-sub-takedown-{{ $c->id }}" style="display:none;">
+                    <form method="POST" action="{{ route('tracking-cp.takedown.update', $c) }}">
+                        @csrf
+                        @method('PATCH')
+                        <div class="field">
+                            <label>Status Take Down</label>
+                            <select name="status_takedown" required>
+                                <option value="">— pilih —</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                            </select>
+                        </div>
+                        <label style="display:flex; align-items:center; gap:7px; margin:12px 0;">
+                            <input type="checkbox" name="approval_takedown" value="1">
+                            Approval Takedown disetujui
+                        </label>
+                        <label style="display:flex; align-items:center; gap:7px; margin-bottom:20px;">
+                            <input type="checkbox" name="banding" value="1">
+                            Mitra mengajukan banding
+                        </label>
+                        <div class="modal-actions">
+                            <button type="button" class="btn" style="width:auto;" onclick="showStatusChoice('{{ $c->id }}')">Kembali</button>
+                            <button type="submit" class="btn btn-primary" style="width:auto;">Simpan</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="status-sub-progres-{{ $c->id }}" style="display:none;">
+                    <div class="modal-body">Kasus akan ditandai <b>Progres</b> — follow up sudah selesai, masih menunggu keputusan lebih lanjut.</div>
+                    <form method="POST" action="{{ route('tracking-cp.status-kasus.progres', $c) }}">
+                        @csrf
+                        @method('PATCH')
+                        <div class="modal-actions">
+                            <button type="button" class="btn" style="width:auto;" onclick="showStatusChoice('{{ $c->id }}')">Kembali</button>
+                            <button type="submit" class="btn btn-primary" style="width:auto;">Konfirmasi</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endforeach
+
+    <script>
+        function openStageModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+        function closeStageModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+        function showStatusSub(caseId, key) {
+            document.getElementById('status-choice-' + caseId).style.display = 'none';
+            document.getElementById('status-sub-' + key + '-' + caseId).style.display = 'block';
+        }
+        function showStatusChoice(caseId) {
+            ['closed', 'takedown', 'progres'].forEach(function (key) {
+                var el = document.getElementById('status-sub-' + key + '-' + caseId);
+                if (el) el.style.display = 'none';
+            });
+            document.getElementById('status-choice-' + caseId).style.display = 'block';
+        }
+    </script>
 @endsection

@@ -109,10 +109,10 @@ class CpCaseController extends Controller
     }
 
     /**
-     * Progres kasus (Follow Up 1-3 -> Case Close -> Takedown) diisi bertahap
-     * lewat pop-up terpisah di halaman edit, bukan lewat form utama — tiap
-     * tahap baru kebuka begitu tahap sebelumnya sudah keisi, jadi urutannya
-     * kejaga rapi.
+     * Progres kasus (Follow Up 1-3 -> keputusan Status Kasus) dipicu lewat
+     * tombol dinamis di daftar Tracking CP, bukan dari halaman Edit — Edit
+     * cuma buat koreksi data input awal. Tombolnya berubah tahap begitu
+     * tahap sebelumnya sudah keisi: FU1 -> FU2 -> FU3 -> Status Kasus.
      */
     public function updateFollowUp(Request $request, CpCase $cpCase, int $round): RedirectResponse
     {
@@ -128,9 +128,17 @@ class CpCaseController extends Controller
             "follow_up_{$round}_status" => $request->boolean('status'),
         ]);
 
-        return redirect()->route('tracking-cp.edit', $cpCase)->with('status', "Follow Up {$round} berhasil disimpan.");
+        if ($cpCase->status_kasus === 'Baru Ditemukan') {
+            $cpCase->update(['status_kasus' => 'Progres']);
+        }
+
+        return redirect()->route('tracking-cp.index')->with('status', "Follow Up {$round} berhasil disimpan.");
     }
 
+    /**
+     * Salah satu dari 3 keputusan Status Kasus (dipilih lewat pop-up setelah
+     * Follow Up 3 selesai): mitra sudah naikkan harga -> tutup kasus.
+     */
     public function updateCaseClose(Request $request, CpCase $cpCase): RedirectResponse
     {
         $data = $request->validate([
@@ -138,11 +146,28 @@ class CpCaseController extends Controller
             'bukti_case_close' => ['nullable', 'url', 'max:500'],
         ]);
 
+        $data['status_kasus'] = 'Case Closed';
+
         $cpCase->update($data);
 
-        return redirect()->route('tracking-cp.edit', $cpCase)->with('status', 'Case Close berhasil disimpan.');
+        return redirect()->route('tracking-cp.index')->with('status', 'Kasus berhasil ditutup.');
     }
 
+    /**
+     * Keputusan Status Kasus: masih dipantau, belum ditutup/takedown —
+     * tombol "Status Kasus" tetap muncul di daftar buat diputuskan lagi
+     * nanti.
+     */
+    public function markProgres(CpCase $cpCase): RedirectResponse
+    {
+        $cpCase->update(['status_kasus' => 'Progres']);
+
+        return redirect()->route('tracking-cp.index')->with('status', 'Kasus ditandai masih Progres.');
+    }
+
+    /**
+     * Keputusan Status Kasus: ajukan takedown ke marketplace.
+     */
     public function updateTakedown(Request $request, CpCase $cpCase): RedirectResponse
     {
         $data = $request->validate([
@@ -153,6 +178,7 @@ class CpCaseController extends Controller
 
         $data['approval_takedown'] = $request->boolean('approval_takedown');
         $data['banding'] = $request->boolean('banding');
+        $data['status_kasus'] = 'Pengajuan Takedown';
 
         $cpCase->update($data);
 
@@ -168,7 +194,7 @@ class CpCaseController extends Controller
             ]);
         }
 
-        return redirect()->route('tracking-cp.edit', $cpCase)->with('status', 'Data Takedown berhasil disimpan.');
+        return redirect()->route('tracking-cp.index')->with('status', 'Data Takedown berhasil disimpan.');
     }
 
     private function validated(Request $request, ?CpCase $cpCase = null): array
