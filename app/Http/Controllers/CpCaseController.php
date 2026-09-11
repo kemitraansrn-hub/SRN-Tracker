@@ -1,0 +1,165 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\CpCase;
+use App\Models\CpTakedownBanding;
+use App\Models\KotaKabupaten;
+use App\Models\Mitra;
+use App\Models\PriceAdjustmentRequest;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+
+/**
+ * "Tracking CP" — log kasus pelanggaran cutting price yang ditemukan tim
+ * Compliance di marketplace (Shopee/Tokopedia/dst), lengkap alur follow-up
+ * 3 ronde sampai approval takedown. Begitu satu kasus disetujui takedown-nya
+ * DAN mitra-nya banding, otomatis dibuatkan 1 baris CpTakedownBanding
+ * (lihat updateStatus()) — bukan "pindah data", cuma nambah detail proses
+ * bandingnya.
+ */
+class CpCaseController extends Controller
+{
+    public const PLATFORM_OPTIONS = [
+        'Shopee', 'Tokopedia', 'TikTok Shop', 'Lazada', 'Facebook Ads', 'Instagram Ads',
+    ];
+
+    public const STATUS_KASUS_OPTIONS = [
+        'Baru Ditemukan', 'Menunggu Respon', 'Sudah Follow Up', 'Sudah Naik Harga',
+        'Tidak Respon', 'Take Down', 'Di Blok Mitra',
+    ];
+
+    public function index(Request $request): View
+    {
+        $query = CpCase::with(['mitra', 'kotaKabupaten', 'takedownBanding'])
+            ->when($request->filled('q'), fn ($q) => $q->where(function ($qq) use ($request) {
+                $qq->where('nama_toko', 'like', '%'.$request->input('q').'%')
+                    ->orWhere('kode', 'like', '%'.$request->input('q').'%')
+                    ->orWhere('nama_mitra_manual', 'like', '%'.$request->input('q').'%')
+                    ->orWhereHas('mitra', fn ($m) => $m->where('nama', 'like', '%'.$request->input('q').'%'));
+            }))
+            ->when($request->filled('status_kasus'), fn ($q) => $q->where('status_kasus', $request->input('status_kasus')))
+            ->when($request->filled('platform'), fn ($q) => $q->where('platform', $request->input('platform')))
+            ->when($request->filled('dari'), fn ($q) => $q->whereDate('tanggal_temuan', '>=', $request->input('dari')))
+            ->when($request->filled('sampai'), fn ($q) => $q->whereDate('tanggal_temuan', '<=', $request->input('sampai')))
+            ->latest('tanggal_temuan');
+
+        return view('cp-case.index', [
+            'cases' => $query->paginate(20)->withQueryString(),
+            'statusOptions' => self::STATUS_KASUS_OPTIONS,
+            'platformOptions' => self::PLATFORM_OPTIONS,
+        ]);
+    }
+
+    public function create(): View
+    {
+        return view('cp-case.form', [
+            'mitraOptions' => Mitra::where('status', 'aktif')->orderBy('nama')->get(['id', 'nama', 'kode_mitra']),
+            'kotaOptions' => KotaKabupaten::orderBy('nama')->get(['id', 'nama', 'provinsi']),
+            'platformOptions' => self::PLATFORM_OPTIONS,
+            'statusOptions' => self::STATUS_KASUS_OPTIONS,
+        ]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $data = $this->validated($request);
+
+        if ($data['mitra_id'] && PriceAdjustmentRequest::adaIzinAktif($data['mitra_id'], $data['tanggal_temuan'])) {
+            return back()->withInput()->withErrors([
+                'mitra_id' => 'Mitra ini punya izin Price Adjustment yang aktif & disetujui buat tanggal ini — penurunan harganya sah, jangan dicatat sebagai pelanggaran.',
+            ]);
+        }
+
+        CpCase::create([
+            ...$data,
+            'kode' => $this->generateKode(),
+            'created_by' => $request->user()->id,
+        ]);
+
+        return redirect()->route('tracking-cp.index')->with('status', 'Kasus baru berhasil dicatat.');
+    }
+
+    public function edit(CpCase $cpCase): View
+    {
+        return view('cp-case.form', [
+            'cpCase' => $cpCase,
+            'mitraOptions' => Mitra::where('status', 'aktif')->orderBy('nama')->get(['id', 'nama', 'kode_mitra']),
+            'kotaOptions' => KotaKabupaten::orderBy('nama')->get(['id', 'nama', 'provinsi']),
+            'platformOptions' => self::PLATFORM_OPTIONS,
+            'statusOptions' => self::STATUS_KASUS_OPTIONS,
+        ]);
+    }
+
+    public function update(Request $request, CpCase $cpCase): RedirectResponse
+    {
+        $data = $this->validated($request, $cpCase);
+
+        $cpCase->update($data);
+
+        // Begitu takedown disetujui DAN mitra banding, otomatis bikin satu
+        // baris detail proses banding kalau belum ada (idempotent).
+        if ($cpCase->approval_takedown && $cpCase->banding && ! $cpCase->takedownBanding) {
+            CpTakedownBanding::create([
+                'cp_case_id' => $cpCase->id,
+                'jumlah_follow_up' => collect([1, 2, 3])->filter(fn ($n) => $cpCase->{"follow_up_{$n}_tanggal"})->count(),
+                'status_banding' => 'Pending',
+                'keputusan_final' => CpTakedownBanding::KEPUTUSAN_FINAL_DEFAULT,
+                'status_takedown_final' => 'Pending',
+            ]);
+        }
+
+        return redirect()->route('tracking-cp.index')->with('status', 'Kasus berhasil diperbarui.');
+    }
+
+    private function validated(Request $request, ?CpCase $cpCase = null): array
+    {
+        $data = $request->validate([
+            'tanggal_temuan' => ['required', 'date'],
+            'mitra_id' => ['nullable', 'exists:mitra,id'],
+            'nama_mitra_manual' => ['nullable', 'string', 'max:255', 'required_without:mitra_id'],
+            'nama_toko' => ['required', 'string', 'max:255'],
+            'platform' => ['required', 'string', 'in:'.implode(',', self::PLATFORM_OPTIONS)],
+            'kota_kabupaten_id' => ['nullable', 'exists:kota_kabupatens,id'],
+            'link_etalase' => ['nullable', 'url', 'max:500'],
+            'kode_barcode' => ['nullable', 'string', 'max:100'],
+            'produk' => ['required', 'string', 'max:255'],
+            'harga_sop' => ['required', 'numeric', 'min:0'],
+            'harga_pelanggaran' => ['required', 'numeric', 'min:0'],
+            'status_kasus' => ['required', 'string', 'in:'.implode(',', self::STATUS_KASUS_OPTIONS)],
+            'follow_up_1_tanggal' => ['nullable', 'date'],
+            'follow_up_1_status' => ['nullable', 'boolean'],
+            'follow_up_2_tanggal' => ['nullable', 'date'],
+            'follow_up_2_status' => ['nullable', 'boolean'],
+            'follow_up_3_tanggal' => ['nullable', 'date'],
+            'follow_up_3_status' => ['nullable', 'boolean'],
+            'bukti_temuan' => ['nullable', 'url', 'max:500'],
+            'bukti_case_close' => ['nullable', 'url', 'max:500'],
+            'tanggal_case_close' => ['nullable', 'date'],
+            'approval_takedown' => ['nullable', 'boolean'],
+            'status_takedown' => ['nullable', 'string', 'max:50'],
+            'banding' => ['nullable', 'boolean'],
+        ]);
+
+        if (empty($data['mitra_id'])) {
+            $data['mitra_id'] = null;
+        } else {
+            $data['nama_mitra_manual'] = null;
+        }
+
+        foreach (['approval_takedown', 'banding'] as $bool) {
+            $data[$bool] = $request->boolean($bool);
+        }
+
+        return $data;
+    }
+
+    private function generateKode(): string
+    {
+        $last = CpCase::where('kode', 'like', 'PC-%')->orderByDesc('id')->value('kode');
+        $next = $last ? ((int) substr($last, 3)) + 1 : 1;
+
+        return 'PC-'.str_pad((string) $next, 4, '0', STR_PAD_LEFT);
+    }
+}

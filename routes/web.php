@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\BuybackRequestController;
 use App\Http\Controllers\BuybackSettingController;
+use App\Http\Controllers\CpCaseController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataDevelopmentController;
 use App\Http\Controllers\DataHealthController;
@@ -222,7 +223,15 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::get('/{specialDeal}/mou', [SpecialDealController::class, 'mou'])->name('mou');
     });
 
-    // Placeholder "Coming Soon" buat menu Development — ganti satu-satu
+    Route::prefix('tracking-cp')->name('tracking-cp.')->group(function () {
+        Route::get('/', [CpCaseController::class, 'index'])->name('index');
+        Route::get('/create', [CpCaseController::class, 'create'])->name('create');
+        Route::post('/', [CpCaseController::class, 'store'])->name('store');
+        Route::get('/{cpCase}/edit', [CpCaseController::class, 'edit'])->name('edit');
+        Route::put('/{cpCase}', [CpCaseController::class, 'update'])->name('update');
+    });
+
+    // Placeholder "Coming Soon" buat sisa menu Development — ganti satu-satu
     // dengan route/controller khusus begitu fiturnya beneran dibangun
     // (taruh route spesifiknya SEBELUM baris {page} ini biar gak ketiban
     // wildcard-nya).
