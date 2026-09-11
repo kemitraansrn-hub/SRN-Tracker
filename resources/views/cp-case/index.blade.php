@@ -8,6 +8,12 @@
         'Case Closed' => 'chip-good',
         default => 'chip-neutral',
     };
+    $takedownChip = fn ($s) => match ($s) {
+        'Approved' => 'chip-good',
+        'Rejected' => 'chip-critical',
+        'Menunggu Approval', 'Listed ke Shopee' => 'chip-warn',
+        default => 'chip-neutral',
+    };
 @endphp
 
 @section('content')
@@ -93,9 +99,12 @@
                             <td><span class="chip {{ $statusChip($c->status_kasus) }}">{{ $c->status_kasus }}</span></td>
                             <td>
                                 @if ($c->takedownBanding)
-                                    <span class="chip chip-warn">Banding: {{ $c->takedownBanding->status_banding ?? '—' }}</span>
-                                @elseif ($c->approval_takedown)
-                                    <span class="chip chip-good">Takedown Disetujui</span>
+                                    <span class="chip chip-good">Take Down</span>
+                                    @if ($c->takedownBanding->status_banding)
+                                        <div style="font-size:11px; color:var(--ink-muted); margin-top:3px;">Banding: {{ $c->takedownBanding->status_banding }}</div>
+                                    @endif
+                                @elseif ($c->status_takedown)
+                                    <span class="chip {{ $takedownChip($c->status_takedown) }}">{{ $c->status_takedown }}</span>
                                 @else
                                     <span style="color:var(--ink-faint); font-size:12px;">—</span>
                                 @endif
@@ -106,8 +115,10 @@
                                     $fu2Done = (bool) $c->follow_up_2_tanggal;
                                     $fu3Done = (bool) $c->follow_up_3_tanggal;
                                     $belumDiputuskan = in_array($c->status_kasus, ['Baru Ditemukan', 'Progres'], true);
+                                    $sedangTakedown = $c->status_kasus === 'Pengajuan Takedown';
+                                    $bolehApprove = auth()->user()->isHead() || auth()->user()->isAdmin();
                                 @endphp
-                                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
                                     <a href="{{ route('tracking-cp.edit', $c) }}" class="link-action" style="color:var(--accent-ink); font-size:12px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 9px;">Edit</a>
 
                                     @if (! $fu1Done)
@@ -118,6 +129,24 @@
                                         <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="openStageModal('modal-fu3-{{ $c->id }}')">FU 3</button>
                                     @elseif ($belumDiputuskan)
                                         <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="showStatusChoice('{{ $c->id }}'); openStageModal('modal-status-{{ $c->id }}')">Status Kasus</button>
+                                    @elseif ($sedangTakedown && $c->status_takedown === 'Menunggu Approval')
+                                        @if ($bolehApprove)
+                                            <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="openStageModal('modal-approval-{{ $c->id }}')">Waiting Approval</button>
+                                        @else
+                                            <span style="font-size:11.5px; color:var(--ink-muted);">Menunggu Approval Head</span>
+                                        @endif
+                                    @elseif ($sedangTakedown && $c->status_takedown === 'Approved')
+                                        <form method="POST" action="{{ route('tracking-cp.takedown.listed', $c) }}" onsubmit="return confirm('Tandai kasus {{ $c->kode }} sudah dilist ke Shopee?');">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;">List to Shopee</button>
+                                        </form>
+                                    @elseif ($sedangTakedown && $c->status_takedown === 'Listed ke Shopee')
+                                        <form method="POST" action="{{ route('tracking-cp.takedown.selesai', $c) }}" onsubmit="return confirm('Konfirmasi kasus {{ $c->kode }} sudah take down di Shopee?');">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;">Take Down</button>
+                                        </form>
                                     @endif
 
                                     <form method="POST" action="{{ route('tracking-cp.destroy', $c) }}" onsubmit="return confirm('Hapus kasus {{ $c->kode }}?');">
@@ -199,29 +228,13 @@
                 </div>
 
                 <div id="status-sub-takedown-{{ $c->id }}" style="display:none;">
+                    <div class="modal-body">Kasus akan diajukan <b>Takedown</b> — notifikasi masuk ke Head of SRN buat di-approve/reject dulu.</div>
                     <form method="POST" action="{{ route('tracking-cp.takedown.update', $c) }}">
                         @csrf
                         @method('PATCH')
-                        <div class="field">
-                            <label>Status Take Down</label>
-                            <select name="status_takedown" required>
-                                <option value="">— pilih —</option>
-                                <option value="Pending">Pending</option>
-                                <option value="Approved">Approved</option>
-                                <option value="Rejected">Rejected</option>
-                            </select>
-                        </div>
-                        <label style="display:flex; align-items:center; gap:7px; margin:12px 0;">
-                            <input type="checkbox" name="approval_takedown" value="1">
-                            Approval Takedown disetujui
-                        </label>
-                        <label style="display:flex; align-items:center; gap:7px; margin-bottom:20px;">
-                            <input type="checkbox" name="banding" value="1">
-                            Mitra mengajukan banding
-                        </label>
                         <div class="modal-actions">
                             <button type="button" class="btn" style="width:auto;" onclick="showStatusChoice('{{ $c->id }}')">Kembali</button>
-                            <button type="submit" class="btn btn-primary" style="width:auto;">Simpan</button>
+                            <button type="submit" class="btn btn-primary" style="width:auto;">Ajukan Takedown</button>
                         </div>
                     </form>
                 </div>
@@ -236,6 +249,30 @@
                             <button type="submit" class="btn btn-primary" style="width:auto;">Konfirmasi</button>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="modal-approval-{{ $c->id }}" style="display:none;">
+            <div class="modal-box">
+                <div class="modal-title">Waiting Approval — {{ $c->kode }}</div>
+                <div class="modal-body">Compliance mengajukan Takedown buat kasus ini. Setujui atau tolak?</div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <form method="POST" action="{{ route('tracking-cp.takedown.decision', $c) }}">
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="keputusan" value="Approved">
+                        <button type="submit" class="btn btn-primary" style="width:100%;">Approve</button>
+                    </form>
+                    <form method="POST" action="{{ route('tracking-cp.takedown.decision', $c) }}">
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="keputusan" value="Rejected">
+                        <button type="submit" class="btn btn-danger" style="width:100%;">Reject</button>
+                    </form>
+                </div>
+                <div class="modal-actions" style="margin-top:16px;">
+                    <button type="button" class="btn" style="width:auto;" onclick="closeStageModal('modal-approval-{{ $c->id }}')">Batal</button>
                 </div>
             </div>
         </div>

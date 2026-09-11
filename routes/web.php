@@ -24,6 +24,7 @@ use App\Http\Controllers\RunRateTargetController;
 use App\Http\Controllers\SalesDraftController;
 use App\Http\Controllers\SegmentasiController;
 use App\Http\Controllers\SpecialDealController;
+use App\Http\Controllers\TakedownBandingController;
 use App\Http\Controllers\TierTargetController;
 use App\Http\Controllers\TrendController;
 use App\Http\Controllers\UserController;
@@ -234,6 +235,14 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::patch('/{cpCase}/case-close', [CpCaseController::class, 'updateCaseClose'])->name('case-close.update');
         Route::patch('/{cpCase}/status-kasus/progres', [CpCaseController::class, 'markProgres'])->name('status-kasus.progres');
         Route::patch('/{cpCase}/takedown', [CpCaseController::class, 'updateTakedown'])->name('takedown.update');
+        Route::patch('/{cpCase}/takedown/decision', [CpCaseController::class, 'decideTakedown'])->name('takedown.decision');
+        Route::patch('/{cpCase}/takedown/listed', [CpCaseController::class, 'markListedToShopee'])->name('takedown.listed');
+        Route::patch('/{cpCase}/takedown/selesai', [CpCaseController::class, 'markTakeDown'])->name('takedown.selesai');
+    });
+
+    Route::prefix('take-down-banding')->name('takedown-banding.')->group(function () {
+        Route::get('/', [TakedownBandingController::class, 'index'])->name('index');
+        Route::patch('/{cpTakedownBanding}', [TakedownBandingController::class, 'update'])->name('update');
     });
 
     // Placeholder "Coming Soon" buat sisa menu Development — ganti satu-satu

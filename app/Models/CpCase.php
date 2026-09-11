@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
     'kota_kabupaten_id', 'link_etalase', 'kode_barcode', 'produk_id', 'harga_sop', 'harga_pelanggaran',
     'status_kasus', 'follow_up_1_tanggal', 'follow_up_1_status', 'follow_up_2_tanggal', 'follow_up_2_status',
     'follow_up_3_tanggal', 'follow_up_3_status', 'bukti_temuan', 'bukti_case_close', 'tanggal_case_close',
-    'approval_takedown', 'status_takedown', 'banding', 'created_by',
+    'status_takedown', 'takedown_decided_by', 'takedown_decided_at', 'created_by',
 ])]
 class CpCase extends Model
 {
@@ -27,8 +27,7 @@ class CpCase extends Model
             'tanggal_case_close' => 'date',
             'harga_sop' => 'decimal:2',
             'harga_pelanggaran' => 'decimal:2',
-            'approval_takedown' => 'boolean',
-            'banding' => 'boolean',
+            'takedown_decided_at' => 'datetime',
         ];
     }
 
@@ -55,6 +54,11 @@ class CpCase extends Model
     public function takedownBanding()
     {
         return $this->hasOne(CpTakedownBanding::class);
+    }
+
+    public function takedownDecider()
+    {
+        return $this->belongsTo(User::class, 'takedown_decided_by');
     }
 
     public function namaMitraTampil(): string

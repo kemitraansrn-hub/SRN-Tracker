@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\CpCase;
 use App\Models\Produk;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
@@ -31,6 +32,13 @@ class AppServiceProvider extends ServiceProvider
         View::composer('layouts.app', function ($view) {
             $view->with('produkBaruCount', Auth::check() && Auth::user()->isAdmin()
                 ? Produk::pendingReview()->count()
+                : 0);
+
+            // Badge notifikasi "pengajuan takedown menunggu approval" — cuma
+            // Head of SRN (atau Admin) yang boleh approve/reject, jadi cuma
+            // mereka yang perlu lihat badge-nya.
+            $view->with('takedownApprovalCount', Auth::check() && (Auth::user()->isHead() || Auth::user()->isAdmin())
+                ? CpCase::where('status_takedown', 'Menunggu Approval')->count()
                 : 0);
         });
     }

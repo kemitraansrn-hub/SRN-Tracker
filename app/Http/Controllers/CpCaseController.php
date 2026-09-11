@@ -30,6 +30,15 @@ class CpCaseController extends Controller
         'Baru Ditemukan', 'Progres', 'Pengajuan Takedown', 'Case Closed',
     ];
 
+    /**
+     * Pipeline status_takedown setelah Compliance mengajukan Pengajuan
+     * Takedown: Head of SRN approve/reject dulu, baru Compliance bisa list
+     * ke marketplace, baru dikonfirmasi take down beneran.
+     */
+    public const STATUS_TAKEDOWN_OPTIONS = [
+        'Menunggu Approval', 'Approved', 'Rejected', 'Listed ke Shopee', 'Take Down',
+    ];
+
     public function index(Request $request): View
     {
         $query = CpCase::with(['mitra', 'kotaKabupaten', 'produk', 'takedownBanding'])
@@ -40,6 +49,7 @@ class CpCaseController extends Controller
                     ->orWhereHas('mitra', fn ($m) => $m->where('nama', 'like', '%'.$request->input('q').'%'));
             }))
             ->when($request->filled('status_kasus'), fn ($q) => $q->where('status_kasus', $request->input('status_kasus')))
+            ->when($request->boolean('menunggu_approval'), fn ($q) => $q->where('status_takedown', 'Menunggu Approval'))
             ->when($request->filled('platform'), fn ($q) => $q->where('platform', $request->input('platform')))
             ->when($request->filled('dari'), fn ($q) => $q->whereDate('tanggal_temuan', '>=', $request->input('dari')))
             ->when($request->filled('sampai'), fn ($q) => $q->whereDate('tanggal_temuan', '<=', $request->input('sampai')))
@@ -166,35 +176,77 @@ class CpCaseController extends Controller
     }
 
     /**
-     * Keputusan Status Kasus: ajukan takedown ke marketplace.
+     * Keputusan Status Kasus: ajukan takedown ke marketplace — cuma
+     * mengajukan, belum ada keputusan. Head of SRN yang approve/reject lewat
+     * decideTakedown().
      */
-    public function updateTakedown(Request $request, CpCase $cpCase): RedirectResponse
+    public function updateTakedown(CpCase $cpCase): RedirectResponse
     {
-        $data = $request->validate([
-            'status_takedown' => ['required', 'string', 'in:Pending,Approved,Rejected'],
-            'approval_takedown' => ['nullable', 'boolean'],
-            'banding' => ['nullable', 'boolean'],
+        $cpCase->update([
+            'status_kasus' => 'Pengajuan Takedown',
+            'status_takedown' => 'Menunggu Approval',
         ]);
 
-        $data['approval_takedown'] = $request->boolean('approval_takedown');
-        $data['banding'] = $request->boolean('banding');
-        $data['status_kasus'] = 'Pengajuan Takedown';
+        return redirect()->route('tracking-cp.index')->with('status', 'Kasus diajukan takedown, menunggu approval Head.');
+    }
 
-        $cpCase->update($data);
+    /**
+     * Cuma Head of SRN (atau Admin) yang boleh approve/reject pengajuan
+     * takedown. Kalau ditolak, kasus balik ke Progres supaya Compliance bisa
+     * ambil keputusan lain.
+     */
+    public function decideTakedown(Request $request, CpCase $cpCase): RedirectResponse
+    {
+        abort_unless($request->user()->isHead() || $request->user()->isAdmin(), 403);
 
-        // Begitu takedown disetujui DAN mitra banding, otomatis bikin satu
-        // baris detail proses banding kalau belum ada (idempotent).
-        if ($cpCase->approval_takedown && $cpCase->banding && ! $cpCase->takedownBanding) {
+        $data = $request->validate([
+            'keputusan' => ['required', 'string', 'in:Approved,Rejected'],
+        ]);
+
+        $cpCase->update([
+            'status_takedown' => $data['keputusan'],
+            'takedown_decided_by' => $request->user()->id,
+            'takedown_decided_at' => now(),
+            'status_kasus' => $data['keputusan'] === 'Rejected' ? 'Progres' : 'Pengajuan Takedown',
+        ]);
+
+        return redirect()->route('tracking-cp.index')->with('status', $data['keputusan'] === 'Approved' ? 'Pengajuan takedown disetujui.' : 'Pengajuan takedown ditolak, kasus balik ke Progres.');
+    }
+
+    /**
+     * Compliance menandai udah dilist ke Shopee, setelah Head approve.
+     */
+    public function markListedToShopee(CpCase $cpCase): RedirectResponse
+    {
+        abort_unless($cpCase->status_takedown === 'Approved', 404);
+
+        $cpCase->update(['status_takedown' => 'Listed ke Shopee']);
+
+        return redirect()->route('tracking-cp.index')->with('status', 'Kasus ditandai sudah dilist ke Shopee.');
+    }
+
+    /**
+     * Compliance konfirmasi Shopee udah beneran take down produknya —
+     * titik ini kasusnya resmi masuk menu Take Down & Banding, otomatis
+     * dibikinkan 1 baris CpTakedownBanding (idempotent) buat nyimpen detail
+     * proses bandingnya nanti.
+     */
+    public function markTakeDown(CpCase $cpCase): RedirectResponse
+    {
+        abort_unless($cpCase->status_takedown === 'Listed ke Shopee', 404);
+
+        $cpCase->update(['status_takedown' => 'Take Down']);
+
+        if (! $cpCase->takedownBanding) {
             CpTakedownBanding::create([
                 'cp_case_id' => $cpCase->id,
+                'tanggal_takedown' => now()->toDateString(),
                 'jumlah_follow_up' => collect([1, 2, 3])->filter(fn ($n) => $cpCase->{"follow_up_{$n}_tanggal"})->count(),
-                'status_banding' => 'Pending',
                 'keputusan_final' => CpTakedownBanding::KEPUTUSAN_FINAL_DEFAULT,
-                'status_takedown_final' => 'Pending',
             ]);
         }
 
-        return redirect()->route('tracking-cp.index')->with('status', 'Data Takedown berhasil disimpan.');
+        return redirect()->route('tracking-cp.index')->with('status', 'Kasus ditandai Take Down, masuk ke menu Take Down & Banding.');
     }
 
     private function validated(Request $request, ?CpCase $cpCase = null): array
