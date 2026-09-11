@@ -283,11 +283,23 @@
                     </span>
                     <svg class="chevron" id="devChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="{{ $developmentActive ? 'transform:rotate(90deg);' : '' }}"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </a>
-                <div class="nav-sub" id="devSubmenu" style="display:{{ $developmentActive ? 'flex' : 'none' }};">
-                    <a href="{{ route('development.show', 'tracking-cp') }}" class="nav-subitem {{ request()->routeIs('development.*') && request()->route('page') === 'tracking-cp' ? 'active' : '' }}">Tracking CP</a>
-                    <a href="{{ route('development.show', 'take-down-banding') }}" class="nav-subitem {{ request()->routeIs('development.*') && request()->route('page') === 'take-down-banding' ? 'active' : '' }}">Take Down &amp; Banding</a>
-                    <a href="{{ route('development.show', 'price-adjustment-monitoring') }}" class="nav-subitem {{ request()->routeIs('development.*') && request()->route('page') === 'price-adjustment-monitoring' ? 'active' : '' }}">Price Adjustment Monitoring</a>
-                    <a href="{{ route('development.show', 'kpi-partnership-compliance') }}" class="nav-subitem {{ request()->routeIs('development.*') && request()->route('page') === 'kpi-partnership-compliance' ? 'active' : '' }}">KPI Partnership Compliance</a>
+                <div class="nav-sub" id="devSubmenu" style="display:{{ $developmentActive ? 'flex' : 'none' }}; flex-direction:column; gap:2px;">
+                    <a href="{{ route('development.show', 'tracking-cp') }}" class="nav-item {{ request()->routeIs('development.*') && request()->route('page') === 'tracking-cp' ? 'active' : '' }}" title="Tracking CP">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke-linecap="round"/></svg>
+                        <span class="nav-label">Tracking CP</span>
+                    </a>
+                    <a href="{{ route('development.show', 'take-down-banding') }}" class="nav-item {{ request()->routeIs('development.*') && request()->route('page') === 'take-down-banding' ? 'active' : '' }}" title="Take Down & Banding">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" stroke-linecap="round" stroke-linejoin="round"/><line x1="4" y1="22" x2="4" y2="15" stroke-linecap="round"/></svg>
+                        <span class="nav-label">Take Down &amp; Banding</span>
+                    </a>
+                    <a href="{{ route('development.show', 'price-adjustment-monitoring') }}" class="nav-item {{ request()->routeIs('development.*') && request()->route('page') === 'price-adjustment-monitoring' ? 'active' : '' }}" title="Price Adjustment Monitoring">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+                        <span class="nav-label">Price Adjustment Monitoring</span>
+                    </a>
+                    <a href="{{ route('development.show', 'kpi-partnership-compliance') }}" class="nav-item {{ request()->routeIs('development.*') && request()->route('page') === 'kpi-partnership-compliance' ? 'active' : '' }}" title="KPI Partnership Compliance">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span class="nav-label">KPI Partnership Compliance</span>
+                    </a>
                 </div>
 
                 @if (auth()->user()->isAdmin())
