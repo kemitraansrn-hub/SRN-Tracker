@@ -5,12 +5,17 @@
 @endphp
 
 @section('content')
+    <h1 class="display" style="font-size:24px; margin-bottom:16px;">Dashboard</h1>
+
+    <div style="display:flex; gap:4px; margin-bottom:22px; border-bottom:1px solid var(--line);">
+        <button type="button" id="dashtab-sales-btn" onclick="switchDashboardTab('sales')" style="padding:10px 4px; margin-right:22px; background:none; border:none; border-bottom:2px solid var(--accent); font-family:inherit; font-size:14px; font-weight:700; color:var(--ink); cursor:pointer;">Sales</button>
+        <button type="button" id="dashtab-development-btn" onclick="switchDashboardTab('development')" style="padding:10px 4px; margin-right:22px; background:none; border:none; border-bottom:2px solid transparent; font-family:inherit; font-size:14px; font-weight:600; color:var(--ink-muted); cursor:pointer;">Development</button>
+    </div>
+
+    <div id="dashtab-sales">
     <div class="topbar" style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:22px; flex-wrap:wrap;">
-        <div>
-            <h1 class="display" style="font-size:24px;">Dashboard</h1>
-            <div style="color:var(--ink-muted); font-size:13px; margin-top:4px;">
-                Ringkasan performa {{ auth()->user()->canViewAll() ? 'semua mitra' : 'mitra kamu' }} &mdash; {{ $periodeLabel }}
-            </div>
+        <div style="color:var(--ink-muted); font-size:13px;">
+            Ringkasan performa {{ auth()->user()->canViewAll() ? 'semua mitra' : 'mitra kamu' }} &mdash; {{ $periodeLabel }}
         </div>
         @include('partials.bulan-tahun-filter', ['action' => route('dashboard'), 'bulan' => $bulanIni, 'tahun' => $tahunIni, 'isBulanIni' => $isBulanIni])
     </div>
@@ -487,4 +492,25 @@
     @endif
 
     @include('partials.reveal-on-scroll')
+    </div>
+
+    <div id="dashtab-development" style="display:none;">
+        <div class="card" style="text-align:center; padding:60px 20px; color:var(--ink-muted);">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="margin:0 auto 16px; opacity:0.5;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div style="font-size:15px; font-weight:600; color:var(--ink); margin-bottom:6px;">Segera Hadir</div>
+            <div style="font-size:13px;">Dashboard Development masih dalam tahap perencanaan.</div>
+        </div>
+    </div>
+
+    <script>
+        function switchDashboardTab(tab) {
+            ['sales', 'development'].forEach(function (t) {
+                document.getElementById('dashtab-' + t).style.display = (t === tab) ? '' : 'none';
+                var btn = document.getElementById('dashtab-' + t + '-btn');
+                btn.style.borderBottomColor = (t === tab) ? 'var(--accent)' : 'transparent';
+                btn.style.color = (t === tab) ? 'var(--ink)' : 'var(--ink-muted)';
+                btn.style.fontWeight = (t === tab) ? '700' : '600';
+            });
+        }
+    </script>
 @endsection
