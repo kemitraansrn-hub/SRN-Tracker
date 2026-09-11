@@ -179,10 +179,10 @@
                         $segmenList = collect(['PARETO', 'RTP (ROAD TO PARETO)', 'REGULER', 'SPECIAL REGULER']);
                     }
 
-                    $salesRoutes = ['sales-overview.*', 'segmentasi.*', 'trend.*', 'omset-bulanan.*', 'weekly-plan.*', 'forecast.*', 'action-plan.*', 'mitra.*', 'order.*', 'followup.*', 'special-deal.*', 'data-development.*', 'ar.*', 'sales-draft.*', 'buyback.*', 'poin.*', 'poin-redemption.*'];
+                    $salesRoutes = ['sales-overview.*', 'segmentasi.*', 'trend.*', 'omset-bulanan.*', 'weekly-plan.*', 'forecast.*', 'action-plan.*', 'mitra.*', 'order.*', 'followup.*', 'special-deal.*', 'ar.*', 'sales-draft.*', 'buyback.*', 'poin.*', 'poin-redemption.*'];
                     $adminRoutes = ['reward.*', 'produk.*', 'import.*', 'data-health.*', 'pengaturan.*', 'run-rate-target.*', 'buyback-setting.*', 'npd.*', 'users.*', 'backup.*'];
                     $salesActive = request()->routeIs(...$salesRoutes);
-                    $developmentActive = request()->routeIs('development.*');
+                    $developmentActive = request()->routeIs('development.*', 'data-development.*');
                     $adminActive = request()->routeIs(...$adminRoutes);
                 @endphp
 
@@ -250,10 +250,6 @@
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z"/><circle cx="7" cy="7" r="1"/></svg>
                         <span class="nav-label">Special Deal</span>
                     </a>
-                    <a href="{{ route('data-development.index') }}" class="nav-item {{ request()->routeIs('data-development.*') ? 'active' : '' }}" title="Data Development">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                        <span class="nav-label">Data Development</span>
-                    </a>
                     <a href="{{ route('ar.index') }}" class="nav-item {{ request()->routeIs('ar.*') ? 'active' : '' }}" title="Data Piutang / AR">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
                         <span class="nav-label">Data Piutang / AR</span>
@@ -284,6 +280,10 @@
                     <svg class="chevron" id="devChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="{{ $developmentActive ? 'transform:rotate(90deg);' : '' }}"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </a>
                 <div class="nav-sub" id="devSubmenu" style="display:{{ $developmentActive ? 'flex' : 'none' }}; flex-direction:column; gap:2px;">
+                    <a href="{{ route('data-development.index') }}" class="nav-item {{ request()->routeIs('data-development.*') ? 'active' : '' }}" title="Data Development">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                        <span class="nav-label">Data Development</span>
+                    </a>
                     <a href="{{ route('development.show', 'tracking-cp') }}" class="nav-item {{ request()->routeIs('development.*') && request()->route('page') === 'tracking-cp' ? 'active' : '' }}" title="Tracking CP">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke-linecap="round"/></svg>
                         <span class="nav-label">Tracking CP</span>
