@@ -4,6 +4,7 @@
     --ink: #2B2620; --ink-muted: #756E63; --ink-faint: #A39C8E; --line: #EBEBEB;
     --accent: #F2994A; --accent-ink: #B8641E; --accent-soft: #FCEEDD;
     --brand-blue: #1D63C4; --brand-blue-soft: #E7F0FC;
+    --table-head-bg: #E7ECF2; --table-head-ink: #1D3557; --table-head-current: #C9D5E1;
     --highlight: #C97C3D; --highlight-soft: #F5E6D8;
     --good: #4C7A5C; --good-soft: #E1EBE3;
     --warn: #A8783A; --warn-soft: #F3E9D8;
@@ -127,8 +128,8 @@
   thead th {
     position: sticky; top: 0; z-index: 1;
     text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em;
-    color: #FFFFFF; font-weight: 600; padding: 10px 20px;
-    border-bottom: 1px solid var(--line); background: var(--accent);
+    color: var(--table-head-ink); font-weight: 600; padding: 10px 20px;
+    border-bottom: 1px solid var(--line); background: var(--table-head-bg);
   }
   tbody td { padding: 12px 20px; border-bottom: 1px solid var(--line); font-size: 13px; }
   tbody tr:last-child td { border-bottom: none; }

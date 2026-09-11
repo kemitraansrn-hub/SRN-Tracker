@@ -131,9 +131,9 @@
                                 <th>Week</th>
                                 @foreach ($runRateWeekly as $w => $data)
                                     @php $isCurrentWeek = 'W'.$w === $currentWeekLabel; @endphp
-                                    <th style="{{ $isCurrentWeek ? 'background:var(--accent-ink);' : '' }}">
+                                    <th style="{{ $isCurrentWeek ? 'background:var(--table-head-current);' : '' }}">
                                         W{{ $w }}
-                                        <div style="font-weight:400; font-size:10.5px; color:rgba(255,255,255,0.8); text-transform:none;">s/d {{ $runRateWeekEndDate[$w]->format('d/m') }}</div>
+                                        <div style="font-weight:400; font-size:10.5px; color:var(--ink-muted); text-transform:none;">s/d {{ $runRateWeekEndDate[$w]->format('d/m') }}</div>
                                     </th>
                                 @endforeach
                             </tr>
@@ -281,7 +281,7 @@
                             <tr>
                                 <th>Agen</th>
                                 @foreach ($runRate['months'] as $m)
-                                    <th style="{{ $m === $runRate['currentMonth'] ? 'background:var(--accent-ink);' : '' }}">{{ $runRate['monthLabels'][$m] }}</th>
+                                    <th style="{{ $m === $runRate['currentMonth'] ? 'background:var(--table-head-current);' : '' }}">{{ $runRate['monthLabels'][$m] }}</th>
                                 @endforeach
                                 <th>vs Target</th>
                             </tr>
