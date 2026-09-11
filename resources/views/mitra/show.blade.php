@@ -26,7 +26,7 @@
                 @endif
             </div>
         </div>
-        @if (auth()->user()->isAdmin())
+        @if (auth()->user()->hasAdminAccess())
             <a href="{{ route('mitra.edit', $mitra) }}" class="btn" style="width:auto;">Edit Mitra</a>
         @endif
     </div>
@@ -217,7 +217,7 @@
                                 <div style="display:flex; gap:6px;">
                                     <a href="{{ route('special-deal.edit', $deal) }}" class="link-action" style="color:var(--accent-ink); font-size:12.5px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 10px;">Edit</a>
                                     <a href="{{ route('special-deal.mou', $deal) }}" class="link-action" style="color:var(--ink); font-size:12.5px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 10px;">Cetak MOU</a>
-                                    @if (auth()->user()->isAdmin())
+                                    @if (auth()->user()->hasAdminAccess())
                                         <form method="POST" action="{{ route('special-deal.destroy', $deal) }}" onsubmit="return confirm('Hapus special deal ini? Data tidak bisa dikembalikan.');">
                                             @csrf
                                             @method('DELETE')

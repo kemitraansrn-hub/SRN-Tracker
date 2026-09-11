@@ -56,6 +56,12 @@ class User extends Authenticatable
         return $this->isAdmin() || $this->isHead() || $this->isFinance() || $this->isCompliance();
     }
 
+    /** Head of SRN setara Admin penuh — dipakai buat gerbang akses/UI yang sebelumnya admin-only. */
+    public function hasAdminAccess(): bool
+    {
+        return $this->isAdmin() || $this->isHead();
+    }
+
     public function photoUrl(): ?string
     {
         return $this->photo ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->photo) : null;

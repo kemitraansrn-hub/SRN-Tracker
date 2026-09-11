@@ -23,7 +23,7 @@
                 ({{ $order->mitra->kode_mitra ?? '—' }})
             </div>
         </div>
-        @if (auth()->user()->isAdmin())
+        @if (auth()->user()->hasAdminAccess())
             <a href="{{ route('order.edit', $order) }}" class="btn" style="width:auto;">Koreksi Order</a>
         @endif
     </div>

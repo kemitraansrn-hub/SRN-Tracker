@@ -33,7 +33,7 @@
             @if ($kurang->isNotEmpty() || $warning->isNotEmpty())
                 <a href="{{ route('data-development.download', ['bulan' => $bulan, 'tahun' => $tahun]) }}" class="btn" style="width:auto;">Download Excel</a>
             @endif
-            @if (auth()->user()->isAdmin())
+            @if (auth()->user()->hasAdminAccess())
                 <form method="POST" action="{{ route('data-development.store') }}" onsubmit="return confirm('Simpan snapshot untuk {{ $periodeLabel }}? Snapshot lama untuk periode ini (jika ada) akan ditimpa.');">
                     @csrf
                     <input type="hidden" name="bulan" value="{{ $bulan }}">

@@ -345,7 +345,7 @@
                     </a>
                 </div>
 
-                @if (auth()->user()->isAdmin())
+                @if (auth()->user()->hasAdminAccess())
                     <a class="nav-item nav-item-toggle" tabindex="0" onclick="toggleNavGroup('adminSubmenu', 'adminChevron')" title="Admin">
                         <span class="nav-item-toggle-label">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6 6 1-4.5 4.5L18 20l-6-3-6 3 1.5-6.5L3 9l6-1z"/></svg>
@@ -400,7 +400,7 @@
             </nav>
 
             <div class="sidebar-foot">
-                @if (auth()->user()->isAdmin())
+                @if (auth()->user()->hasAdminAccess())
                     <a href="{{ route('produk.notifications') }}" title="Notifikasi produk baru" aria-label="Notifikasi produk baru" style="position:relative; display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; color:var(--ink-muted); flex-shrink:0;">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.73 21a2 2 0 0 1-3.46 0" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         @if ($produkBaruCount > 0)

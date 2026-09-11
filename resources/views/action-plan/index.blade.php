@@ -8,7 +8,7 @@
                 Slide rencana aksi tim, format PDF.
             </div>
         </div>
-        @if (auth()->user()->isAdmin())
+        @if (auth()->user()->hasAdminAccess())
             <div style="display:flex; gap:8px;">
                 <button type="button" class="btn btn-primary" style="width:auto;" onclick="const d = document.getElementById('upload-action-plan'); d.style.display = d.style.display === 'none' ? '' : 'none';">
                     {{ $actionPlan ? 'Ganti File' : '+ Upload Action Plan' }}
@@ -31,7 +31,7 @@
         <div class="alert-error">{{ $errors->first() }}</div>
     @endif
 
-    @if (auth()->user()->isAdmin())
+    @if (auth()->user()->hasAdminAccess())
         <section id="upload-action-plan" class="card" style="margin-bottom:20px; display:none;">
             <div class="info-label" style="margin-bottom:10px;">{{ $actionPlan ? 'Upload File Baru (gantiin yang lama)' : 'Upload Action Plan' }}</div>
             <form method="POST" action="{{ route('action-plan.store') }}" enctype="multipart/form-data" class="field-row" style="align-items:flex-end;">

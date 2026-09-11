@@ -116,11 +116,11 @@ class BuybackRequestController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->isAdmin() && $buybackRequest->created_by !== $user->id) {
+        if (! $user->hasAdminAccess() && $buybackRequest->created_by !== $user->id) {
             throw new HttpException(403, 'Kamu tidak punya akses ke pengajuan ini.');
         }
 
-        if ($buybackRequest->isApproved() && ! $user->isAdmin()) {
+        if ($buybackRequest->isApproved() && ! $user->hasAdminAccess()) {
             throw new HttpException(403, 'Pengajuan yang sudah Approved tidak bisa dihapus.');
         }
 
@@ -190,7 +190,7 @@ class BuybackRequestController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->isAdmin() && $buybackRequest->created_by !== $user->id) {
+        if (! $user->hasAdminAccess() && $buybackRequest->created_by !== $user->id) {
             throw new HttpException(403, 'Kamu tidak punya akses ke pengajuan ini.');
         }
 

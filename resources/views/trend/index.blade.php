@@ -84,7 +84,7 @@
             @endif
         </section>
 
-        @if (auth()->user()->isAdmin())
+        @if (auth()->user()->hasAdminAccess())
             <form method="POST" action="{{ route('trend.saveDashboardCard') }}" class="card" style="margin-top:16px;">
                 @csrf
                 <input type="hidden" name="ini_mulai" value="{{ $iniMulai }}">

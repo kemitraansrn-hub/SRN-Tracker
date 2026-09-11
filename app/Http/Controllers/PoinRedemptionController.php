@@ -194,11 +194,11 @@ class PoinRedemptionController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->isAdmin() && $poinRedemption->created_by !== $user->id) {
+        if (! $user->hasAdminAccess() && $poinRedemption->created_by !== $user->id) {
             throw new HttpException(403, 'Kamu tidak punya akses ke pengajuan ini.');
         }
 
-        if ($poinRedemption->isApproved() && ! $user->isAdmin()) {
+        if ($poinRedemption->isApproved() && ! $user->hasAdminAccess()) {
             throw new HttpException(403, 'Pengajuan yang sudah Approved tidak bisa dihapus.');
         }
 
@@ -243,7 +243,7 @@ class PoinRedemptionController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->isAdmin() && $poinRedemption->created_by !== $user->id) {
+        if (! $user->hasAdminAccess() && $poinRedemption->created_by !== $user->id) {
             throw new HttpException(403, 'Kamu tidak punya akses ke pengajuan ini.');
         }
 

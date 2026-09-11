@@ -69,10 +69,10 @@
                                             <button type="submit" class="btn btn-primary" style="width:auto; font-size:11.5px; padding:5px 10px;">Approve</button>
                                         </form>
                                     @endif
-                                    @if (! $r->isApproved() && (auth()->user()->isAdmin() || $r->created_by === auth()->id()))
+                                    @if (! $r->isApproved() && (auth()->user()->hasAdminAccess() || $r->created_by === auth()->id()))
                                         <a href="{{ route('poin-redemption.edit', $r) }}" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;">Edit</a>
                                     @endif
-                                    @if (auth()->user()->isAdmin() || ($r->created_by === auth()->id() && ! $r->isApproved()))
+                                    @if (auth()->user()->hasAdminAccess() || ($r->created_by === auth()->id() && ! $r->isApproved()))
                                         <form method="POST" action="{{ route('poin-redemption.destroy', $r) }}" onsubmit="return confirm('Hapus penukaran poin untuk {{ $r->mitra->nama ?? 'mitra ini' }}?');">
                                             @csrf
                                             @method('DELETE')

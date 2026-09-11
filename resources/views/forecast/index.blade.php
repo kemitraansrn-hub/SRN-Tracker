@@ -186,7 +186,7 @@
                                 @endif
                             </td>
                             <td>
-                                @if (auth()->user()->isAdmin() || $e->created_by === auth()->id())
+                                @if (auth()->user()->hasAdminAccess() || $e->created_by === auth()->id())
                                     <form method="POST" action="{{ route('forecast.destroy', $e) }}" onsubmit="return confirm('Hapus Plan RO ini?');">
                                         @csrf
                                         @method('DELETE')

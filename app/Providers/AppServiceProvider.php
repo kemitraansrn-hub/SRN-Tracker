@@ -30,7 +30,7 @@ class AppServiceProvider extends ServiceProvider
         // harian, belum di-review) — dipasang di layout utama biar
         // kelihatan di semua halaman, admin doang yang urus Master Produk.
         View::composer('layouts.app', function ($view) {
-            $view->with('produkBaruCount', Auth::check() && Auth::user()->isAdmin()
+            $view->with('produkBaruCount', Auth::check() && Auth::user()->hasAdminAccess()
                 ? Produk::pendingReview()->count()
                 : 0);
 

@@ -12,7 +12,7 @@
                 {{ $periodeLabel }} &middot; "Minggu Andalan" dihitung dari minggu dengan omset terbesar 6 bulan terakhir
             </div>
         </div>
-        @if (auth()->user()->isAdmin())
+        @if (auth()->user()->hasAdminAccess())
             <a href="{{ route('pengaturan.minggu') }}" class="btn" style="width:auto;">Atur Periode Mingguan</a>
         @endif
     </div>
@@ -147,7 +147,7 @@
                                 <a href="{{ route('mitra.show', $p->mitra) }}" style="color:var(--ink); text-decoration:none; font-weight:600;">{{ $p->mitra->nama }}</a>
                             </td>
                             <td>
-                                @if ($p->target_row && auth()->user()->isAdmin())
+                                @if ($p->target_row && auth()->user()->hasAdminAccess())
                                     <form method="POST" action="{{ route('tier-target.update', $p->target_row) }}">
                                         @csrf
                                         <select name="tier_dipakai" class="select-pill" onchange="this.form.submit()">

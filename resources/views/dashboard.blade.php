@@ -113,7 +113,7 @@
     @if ($jumlahOrderBulanIni === 0)
         <div class="card" style="text-align:center; padding:40px 20px; color:var(--ink-muted);">
             Belum ada data order untuk {{ $periodeLabel }}.
-            @if (auth()->user()->isAdmin())
+            @if (auth()->user()->hasAdminAccess())
                 <br>Mulai dengan <a href="{{ route('import.index') }}" style="color:var(--accent-ink); font-weight:600;">import data harian</a>.
             @endif
         </div>

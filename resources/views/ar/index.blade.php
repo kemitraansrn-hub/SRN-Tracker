@@ -219,13 +219,13 @@
                             </td>
                             <td>
                                 <div style="display:flex; gap:6px;">
-                                    @if (auth()->user()->isAdmin())
+                                    @if (auth()->user()->hasAdminAccess())
                                         <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="const d = document.getElementById('edit-ar-{{ $ar->id }}'); d.style.display = d.style.display === 'none' ? '' : 'none';">Edit AR</button>
                                     @endif
-                                    @if (! $ar->lunas && (auth()->user()->isAdmin() || auth()->user()->kae_code === ($ar->order->mitra->kae_code ?? null)))
+                                    @if (! $ar->lunas && (auth()->user()->hasAdminAccess() || auth()->user()->kae_code === ($ar->order->mitra->kae_code ?? null)))
                                         <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="const d = document.getElementById('bayar-ar-{{ $ar->id }}'); d.style.display = d.style.display === 'none' ? '' : 'none';">Bayar AR</button>
                                     @endif
-                                    @if (auth()->user()->isAdmin())
+                                    @if (auth()->user()->hasAdminAccess())
                                         <form method="POST" action="{{ route('ar.destroy', $ar) }}" onsubmit="return confirm('Hapus seluruh data AR order {{ $ar->order->no_order }} beserta semua cicilannya? Data tidak bisa dikembalikan.');">
                                             @csrf
                                             @method('DELETE')
@@ -235,7 +235,7 @@
                                 </div>
                             </td>
                         </tr>
-                        @if (auth()->user()->isAdmin())
+                        @if (auth()->user()->hasAdminAccess())
                             <tr id="edit-ar-{{ $ar->id }}" style="display:none;">
                                 <td colspan="11" style="background:var(--surface-alt);">
                                     <form method="POST" action="{{ route('ar.update', $ar) }}" class="field-row" style="align-items:flex-end; padding:10px 4px;">
@@ -268,7 +268,7 @@
                                     @foreach ($ar->payments as $p)
                                         <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink-muted); margin-bottom:2px;">
                                             <span>Cicilan ke-{{ $p->cicilan_ke }}: {{ $rp($p->jumlah_bayar) }} &middot; {{ $p->tanggal_bayar->format('d/m/Y') }}</span>
-                                            @if (auth()->user()->isAdmin() || auth()->user()->kae_code === ($ar->order->mitra->kae_code ?? null))
+                                            @if (auth()->user()->hasAdminAccess() || auth()->user()->kae_code === ($ar->order->mitra->kae_code ?? null))
                                                 <form method="POST" action="{{ route('ar.payment.destroy', $p) }}" onsubmit="return confirm('Hapus cicilan ke-{{ $p->cicilan_ke }} ini? Data tidak bisa dikembalikan.');">
                                                     @csrf
                                                     @method('DELETE')
@@ -280,7 +280,7 @@
                                 </td>
                             </tr>
                         @endif
-                        @if (! $ar->lunas && (auth()->user()->isAdmin() || auth()->user()->kae_code === ($ar->order->mitra->kae_code ?? null)))
+                        @if (! $ar->lunas && (auth()->user()->hasAdminAccess() || auth()->user()->kae_code === ($ar->order->mitra->kae_code ?? null)))
                             <tr id="bayar-ar-{{ $ar->id }}" style="display:none;">
                                 <td colspan="11" style="background:var(--surface-alt);">
                                     <form method="POST" action="{{ route('ar.pay', $ar) }}" class="field-row" style="align-items:flex-end; padding:10px 4px;">

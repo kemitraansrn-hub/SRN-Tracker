@@ -12,7 +12,7 @@
                 {{ $mitraList->total() }} mitra {{ auth()->user()->canViewAll() ? '' : 'kamu' }}
             </div>
         </div>
-        @if (auth()->user()->isAdmin())
+        @if (auth()->user()->hasAdminAccess())
             <a href="{{ route('mitra.create') }}" class="btn btn-primary" style="width:auto;">+ Tambah Mitra</a>
         @endif
     </div>
