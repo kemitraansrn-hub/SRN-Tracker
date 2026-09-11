@@ -98,6 +98,64 @@ class CpCaseController extends Controller
 
         $cpCase->update($data);
 
+        return redirect()->route('tracking-cp.index')->with('status', 'Kasus berhasil diperbarui.');
+    }
+
+    public function destroy(CpCase $cpCase): RedirectResponse
+    {
+        $cpCase->delete();
+
+        return redirect()->route('tracking-cp.index')->with('status', 'Kasus berhasil dihapus.');
+    }
+
+    /**
+     * Progres kasus (Follow Up 1-3 -> Case Close -> Takedown) diisi bertahap
+     * lewat pop-up terpisah di halaman edit, bukan lewat form utama — tiap
+     * tahap baru kebuka begitu tahap sebelumnya sudah keisi, jadi urutannya
+     * kejaga rapi.
+     */
+    public function updateFollowUp(Request $request, CpCase $cpCase, int $round): RedirectResponse
+    {
+        abort_unless(in_array($round, [1, 2, 3], true), 404);
+
+        $data = $request->validate([
+            'tanggal' => ['required', 'date'],
+            'status' => ['nullable', 'boolean'],
+        ]);
+
+        $cpCase->update([
+            "follow_up_{$round}_tanggal" => $data['tanggal'],
+            "follow_up_{$round}_status" => $request->boolean('status'),
+        ]);
+
+        return redirect()->route('tracking-cp.edit', $cpCase)->with('status', "Follow Up {$round} berhasil disimpan.");
+    }
+
+    public function updateCaseClose(Request $request, CpCase $cpCase): RedirectResponse
+    {
+        $data = $request->validate([
+            'tanggal_case_close' => ['required', 'date'],
+            'bukti_case_close' => ['nullable', 'url', 'max:500'],
+        ]);
+
+        $cpCase->update($data);
+
+        return redirect()->route('tracking-cp.edit', $cpCase)->with('status', 'Case Close berhasil disimpan.');
+    }
+
+    public function updateTakedown(Request $request, CpCase $cpCase): RedirectResponse
+    {
+        $data = $request->validate([
+            'status_takedown' => ['required', 'string', 'in:Pending,Approved,Rejected'],
+            'approval_takedown' => ['nullable', 'boolean'],
+            'banding' => ['nullable', 'boolean'],
+        ]);
+
+        $data['approval_takedown'] = $request->boolean('approval_takedown');
+        $data['banding'] = $request->boolean('banding');
+
+        $cpCase->update($data);
+
         // Begitu takedown disetujui DAN mitra banding, otomatis bikin satu
         // baris detail proses banding kalau belum ada (idempotent).
         if ($cpCase->approval_takedown && $cpCase->banding && ! $cpCase->takedownBanding) {
@@ -110,14 +168,7 @@ class CpCaseController extends Controller
             ]);
         }
 
-        return redirect()->route('tracking-cp.index')->with('status', 'Kasus berhasil diperbarui.');
-    }
-
-    public function destroy(CpCase $cpCase): RedirectResponse
-    {
-        $cpCase->delete();
-
-        return redirect()->route('tracking-cp.index')->with('status', 'Kasus berhasil dihapus.');
+        return redirect()->route('tracking-cp.edit', $cpCase)->with('status', 'Data Takedown berhasil disimpan.');
     }
 
     private function validated(Request $request, ?CpCase $cpCase = null): array
@@ -137,28 +188,13 @@ class CpCaseController extends Controller
             'harga_sop' => ['required', 'numeric', 'min:0'],
             'harga_pelanggaran' => ['required', 'numeric', 'min:0'],
             'status_kasus' => ['required', 'string', 'in:'.implode(',', self::STATUS_KASUS_OPTIONS)],
-            'follow_up_1_tanggal' => ['nullable', 'date'],
-            'follow_up_1_status' => ['nullable', 'boolean'],
-            'follow_up_2_tanggal' => ['nullable', 'date'],
-            'follow_up_2_status' => ['nullable', 'boolean'],
-            'follow_up_3_tanggal' => ['nullable', 'date'],
-            'follow_up_3_status' => ['nullable', 'boolean'],
             'bukti_temuan' => ['nullable', 'url', 'max:500'],
-            'bukti_case_close' => ['nullable', 'url', 'max:500'],
-            'tanggal_case_close' => ['nullable', 'date'],
-            'approval_takedown' => ['nullable', 'boolean'],
-            'status_takedown' => ['nullable', 'string', 'max:50'],
-            'banding' => ['nullable', 'boolean'],
         ]);
 
         if (empty($data['mitra_id'])) {
             $data['mitra_id'] = null;
         } else {
             $data['nama_mitra_manual'] = null;
-        }
-
-        foreach (['approval_takedown', 'banding'] as $bool) {
-            $data[$bool] = $request->boolean($bool);
         }
 
         return $data;

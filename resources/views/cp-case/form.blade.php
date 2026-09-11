@@ -127,69 +127,143 @@
             <input type="text" name="bukti_temuan" value="{{ old('bukti_temuan', $isEdit ? $cpCase->bukti_temuan : '') }}" placeholder="https://drive.google.com/...">
         </div>
 
-        @if ($isEdit)
-            <div style="border-top:1px solid var(--line); margin:20px 0; padding-top:16px;">
-                <div style="font-weight:700; margin-bottom:14px;">Follow-up</div>
-                @for ($i = 1; $i <= 3; $i++)
-                    <div class="field-row">
-                        <div class="field" style="flex:1;">
-                            <label>Tanggal Follow-up {{ $i }}</label>
-                            <input type="date" name="follow_up_{{ $i }}_tanggal" value="{{ old("follow_up_{$i}_tanggal", $cpCase->{"follow_up_{$i}_tanggal"}?->toDateString()) }}">
-                        </div>
-                        <div class="field" style="flex:1;">
-                            <label style="display:flex; align-items:center; gap:7px; margin-top:8px;">
-                                <input type="checkbox" name="follow_up_{{ $i }}_status" value="1" {{ old("follow_up_{$i}_status", $cpCase->{"follow_up_{$i}_status"}) ? 'checked' : '' }}>
-                                Direspon mitra
-                            </label>
-                        </div>
-                    </div>
-                @endfor
-
-                <div style="font-weight:700; margin:20px 0 14px;">Case Close & Takedown</div>
-                <div class="field-row">
-                    <div class="field" style="flex:1;">
-                        <label>Tanggal Case Close</label>
-                        <input type="date" name="tanggal_case_close" value="{{ old('tanggal_case_close', $cpCase->tanggal_case_close?->toDateString()) }}">
-                    </div>
-                    <div class="field" style="flex:1;">
-                        <label>Bukti Case Close (link)</label>
-                        <input type="text" name="bukti_case_close" value="{{ old('bukti_case_close', $cpCase->bukti_case_close) }}">
-                    </div>
-                </div>
-                <div class="field-row">
-                    <div class="field" style="flex:1;">
-                        <label>Status Take Down</label>
-                        <select name="status_takedown">
-                            <option value="">—</option>
-                            <option value="Pending" {{ old('status_takedown', $cpCase->status_takedown) === 'Pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="Approved" {{ old('status_takedown', $cpCase->status_takedown) === 'Approved' ? 'selected' : '' }}>Approved</option>
-                            <option value="Rejected" {{ old('status_takedown', $cpCase->status_takedown) === 'Rejected' ? 'selected' : '' }}>Rejected</option>
-                        </select>
-                    </div>
-                    <div class="field" style="flex:1; justify-content:flex-end;">
-                        <label style="display:flex; align-items:center; gap:7px; margin-top:8px;">
-                            <input type="checkbox" name="approval_takedown" value="1" {{ old('approval_takedown', $cpCase->approval_takedown) ? 'checked' : '' }}>
-                            Approval Takedown disetujui
-                        </label>
-                        <label style="display:flex; align-items:center; gap:7px; margin-top:8px;">
-                            <input type="checkbox" name="banding" value="1" {{ old('banding', $cpCase->banding) ? 'checked' : '' }}>
-                            Mitra mengajukan banding
-                        </label>
-                    </div>
-                </div>
-
-                @if ($cpCase->takedownBanding)
-                    <div class="alert-success" style="margin-top:8px;">
-                        Kasus ini sudah masuk data Take Down &amp; Banding (status banding: {{ $cpCase->takedownBanding->status_banding ?? '—' }}).
-                    </div>
-                @endif
-            </div>
-        @endif
-
         <button type="submit" class="btn btn-primary" style="width:auto; margin-top:8px;">{{ $isEdit ? 'Simpan Perubahan' : 'Simpan Kasus' }}</button>
     </form>
 
+    @if ($isEdit)
+        @php
+            $fu1Done = (bool) $cpCase->follow_up_1_tanggal;
+            $fu2Done = (bool) $cpCase->follow_up_2_tanggal;
+            $fu3Done = (bool) $cpCase->follow_up_3_tanggal;
+            $caseCloseDone = (bool) $cpCase->tanggal_case_close;
+            $takedownDone = (bool) $cpCase->status_takedown;
+
+            $stages = [
+                ['key' => 'fu1', 'label' => 'Follow Up 1', 'unlocked' => true, 'done' => $fu1Done, 'info' => $fu1Done ? $cpCase->follow_up_1_tanggal->format('d/m/Y').' — '.($cpCase->follow_up_1_status ? 'Direspon mitra' : 'Belum direspon') : null],
+                ['key' => 'fu2', 'label' => 'Follow Up 2', 'unlocked' => $fu1Done, 'done' => $fu2Done, 'info' => $fu2Done ? $cpCase->follow_up_2_tanggal->format('d/m/Y').' — '.($cpCase->follow_up_2_status ? 'Direspon mitra' : 'Belum direspon') : null, 'lockedMsg' => 'Selesaikan Follow Up 1 dulu'],
+                ['key' => 'fu3', 'label' => 'Follow Up 3', 'unlocked' => $fu2Done, 'done' => $fu3Done, 'info' => $fu3Done ? $cpCase->follow_up_3_tanggal->format('d/m/Y').' — '.($cpCase->follow_up_3_status ? 'Direspon mitra' : 'Belum direspon') : null, 'lockedMsg' => 'Selesaikan Follow Up 2 dulu'],
+                ['key' => 'caseClose', 'label' => 'Case Close', 'unlocked' => $fu3Done, 'done' => $caseCloseDone, 'info' => $caseCloseDone ? $cpCase->tanggal_case_close->format('d/m/Y') : null, 'lockedMsg' => 'Selesaikan Follow Up 3 dulu'],
+                ['key' => 'takedown', 'label' => 'Takedown', 'unlocked' => $caseCloseDone, 'done' => $takedownDone, 'info' => $takedownDone ? 'Status: '.$cpCase->status_takedown : null, 'lockedMsg' => 'Selesaikan Case Close dulu'],
+            ];
+        @endphp
+
+        <div class="card" style="max-width:760px; margin-top:20px;">
+            <div style="font-weight:700; margin-bottom:14px;">Progres Kasus</div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                @foreach ($stages as $s)
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; border:1px solid var(--line); border-radius:8px; background:{{ $s['done'] ? 'var(--accent-soft)' : 'var(--surface-alt)' }};">
+                        <div>
+                            <div style="font-weight:600; font-size:13px;">{{ $s['label'] }}</div>
+                            <div style="font-size:12px; color:var(--ink-muted); margin-top:2px;">
+                                @if ($s['info'])
+                                    {{ $s['info'] }}
+                                @elseif (! $s['unlocked'])
+                                    {{ $s['lockedMsg'] }}
+                                @else
+                                    Belum diisi
+                                @endif
+                            </div>
+                        </div>
+                        @if ($s['unlocked'])
+                            <button type="button" class="btn" style="width:auto; font-size:12px; padding:6px 12px;" onclick="openStageModal('modal-{{ $s['key'] }}')">{{ $s['done'] ? 'Ubah' : 'Isi' }}</button>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+
+            @if ($cpCase->takedownBanding)
+                <div class="alert-success" style="margin-top:14px;">
+                    Kasus ini sudah masuk data Take Down &amp; Banding (status banding: {{ $cpCase->takedownBanding->status_banding ?? '—' }}).
+                </div>
+            @endif
+        </div>
+
+        @for ($i = 1; $i <= 3; $i++)
+            <div class="modal-overlay" id="modal-fu{{ $i }}" style="display:none;">
+                <div class="modal-box">
+                    <div class="modal-title">Follow Up {{ $i }}</div>
+                    <form method="POST" action="{{ route('tracking-cp.follow-up.update', [$cpCase, $i]) }}">
+                        @csrf
+                        @method('PATCH')
+                        <div class="field">
+                            <label>Tanggal Follow Up {{ $i }}</label>
+                            <input type="date" name="tanggal" value="{{ $cpCase->{"follow_up_{$i}_tanggal"}?->toDateString() }}" required>
+                        </div>
+                        <label style="display:flex; align-items:center; gap:7px; margin:10px 0 20px;">
+                            <input type="checkbox" name="status" value="1" {{ $cpCase->{"follow_up_{$i}_status"} ? 'checked' : '' }}>
+                            Direspon mitra
+                        </label>
+                        <div class="modal-actions">
+                            <button type="button" class="btn" style="width:auto;" onclick="closeStageModal('modal-fu{{ $i }}')">Batal</button>
+                            <button type="submit" class="btn btn-primary" style="width:auto;">Simpan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        @endfor
+
+        <div class="modal-overlay" id="modal-caseClose" style="display:none;">
+            <div class="modal-box">
+                <div class="modal-title">Case Close</div>
+                <form method="POST" action="{{ route('tracking-cp.case-close.update', $cpCase) }}">
+                    @csrf
+                    @method('PATCH')
+                    <div class="field">
+                        <label>Tanggal Case Close</label>
+                        <input type="date" name="tanggal_case_close" value="{{ $cpCase->tanggal_case_close?->toDateString() }}" required>
+                    </div>
+                    <div class="field" style="margin-bottom:20px;">
+                        <label>Bukti Case Close (link)</label>
+                        <input type="text" name="bukti_case_close" value="{{ $cpCase->bukti_case_close }}" placeholder="https://drive.google.com/...">
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn" style="width:auto;" onclick="closeStageModal('modal-caseClose')">Batal</button>
+                        <button type="submit" class="btn btn-primary" style="width:auto;">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="modal-takedown" style="display:none;">
+            <div class="modal-box">
+                <div class="modal-title">Takedown</div>
+                <form method="POST" action="{{ route('tracking-cp.takedown.update', $cpCase) }}">
+                    @csrf
+                    @method('PATCH')
+                    <div class="field">
+                        <label>Status Take Down</label>
+                        <select name="status_takedown" required>
+                            <option value="">— pilih —</option>
+                            <option value="Pending" {{ $cpCase->status_takedown === 'Pending' ? 'selected' : '' }}>Pending</option>
+                            <option value="Approved" {{ $cpCase->status_takedown === 'Approved' ? 'selected' : '' }}>Approved</option>
+                            <option value="Rejected" {{ $cpCase->status_takedown === 'Rejected' ? 'selected' : '' }}>Rejected</option>
+                        </select>
+                    </div>
+                    <label style="display:flex; align-items:center; gap:7px; margin:12px 0;">
+                        <input type="checkbox" name="approval_takedown" value="1" {{ $cpCase->approval_takedown ? 'checked' : '' }}>
+                        Approval Takedown disetujui
+                    </label>
+                    <label style="display:flex; align-items:center; gap:7px; margin-bottom:20px;">
+                        <input type="checkbox" name="banding" value="1" {{ $cpCase->banding ? 'checked' : '' }}>
+                        Mitra mengajukan banding
+                    </label>
+                    <div class="modal-actions">
+                        <button type="button" class="btn" style="width:auto;" onclick="closeStageModal('modal-takedown')">Batal</button>
+                        <button type="submit" class="btn btn-primary" style="width:auto;">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
     <script>
+        function openStageModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+        function closeStageModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
         function isiHargaHet() {
             const select = document.getElementById('produkSelect');
             const opt = select.options[select.selectedIndex];

@@ -230,6 +230,9 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::get('/{cpCase}/edit', [CpCaseController::class, 'edit'])->name('edit');
         Route::put('/{cpCase}', [CpCaseController::class, 'update'])->name('update');
         Route::delete('/{cpCase}', [CpCaseController::class, 'destroy'])->name('destroy');
+        Route::patch('/{cpCase}/follow-up/{round}', [CpCaseController::class, 'updateFollowUp'])->where('round', '1|2|3')->name('follow-up.update');
+        Route::patch('/{cpCase}/case-close', [CpCaseController::class, 'updateCaseClose'])->name('case-close.update');
+        Route::patch('/{cpCase}/takedown', [CpCaseController::class, 'updateTakedown'])->name('takedown.update');
     });
 
     // Placeholder "Coming Soon" buat sisa menu Development — ganti satu-satu
