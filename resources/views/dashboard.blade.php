@@ -24,7 +24,7 @@
                     $donutCirc = 2 * M_PI * $donutR;
                     $donutFilled = min($companyAchPct, 100) / 100 * $donutCirc;
                 @endphp
-                <div class="card" style="min-width:0; border-color:var(--ink-faint);">
+                <div class="card" style="min-width:0; border-color:var(--accent);">
                     <div class="info-label" style="margin-bottom:10px;">Target Perusahaan vs Pencapaian</div>
                     <div style="display:flex; align-items:center; gap:14px;">
                         <svg width="88" height="88" viewBox="0 0 100 100" style="flex-shrink:0;">
@@ -49,13 +49,13 @@
                     </div>
                 </div>
             @endif
-            <div class="card" style="min-width:0; border-color:var(--ink-faint);">
+            <div class="card" style="min-width:0; border-color:var(--accent);">
                 <div class="info-label" style="margin-bottom:10px;">MTD vs Bulan Lalu</div>
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-                    <div style="font-size:25px; font-weight:700;" class="tnum">{{ $rp($mtdIni) }}</div>
+                    <div style="font-size:19px; font-weight:700; min-width:0; flex-shrink:1; overflow-wrap:anywhere;" class="tnum">{{ $rp($mtdIni) }}</div>
                     @if ($mtdGrowthPct !== null)
-                        <svg width="44" height="24" viewBox="0 0 44 24" fill="none" style="flex-shrink:0;">
-                            <polyline points="{{ $mtdGrowthPct >= 0 ? '0,20 9,15 18,17 27,9 35,11 44,2' : '0,4 9,9 18,7 27,15 35,13 44,22' }}" stroke="{{ $mtdGrowthPct >= 0 ? 'var(--good)' : 'var(--critical)' }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <svg width="40" height="22" viewBox="0 0 40 22" fill="none" style="flex-shrink:0;">
+                            <polyline points="{{ $mtdGrowthPct >= 0 ? '0,18 8,14 16,15 24,8 32,10 40,2' : '0,4 8,8 16,7 24,14 32,12 40,20' }}" stroke="{{ $mtdGrowthPct >= 0 ? 'var(--good)' : 'var(--critical)' }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     @endif
                 </div>
@@ -76,14 +76,14 @@
                 </div>
             </div>
             @if ($trendCard)
-                <div class="card" style="min-width:0; border-color:var(--ink-faint);">
+                <div class="card" style="min-width:0; border-color:var(--accent);">
                     <div class="info-label" style="margin-bottom:10px;">{{ $trendCard['label'] }}</div>
                     @php $g = $trendCard['growth']; @endphp
                     <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-                        <div style="font-size:25px; font-weight:700;" class="tnum">{{ $rp($trendCard['omset_ini']) }}</div>
+                        <div style="font-size:19px; font-weight:700; min-width:0; flex-shrink:1; overflow-wrap:anywhere;" class="tnum">{{ $rp($trendCard['omset_ini']) }}</div>
                         @if ($g !== null)
-                            <svg width="44" height="24" viewBox="0 0 44 24" fill="none" style="flex-shrink:0;">
-                                <polyline points="{{ $g >= 0 ? '0,20 9,15 18,17 27,9 35,11 44,2' : '0,4 9,9 18,7 27,15 35,13 44,22' }}" stroke="{{ $g >= 0 ? 'var(--good)' : 'var(--critical)' }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <svg width="40" height="22" viewBox="0 0 40 22" fill="none" style="flex-shrink:0;">
+                                <polyline points="{{ $g >= 0 ? '0,18 8,14 16,15 24,8 32,10 40,2' : '0,4 8,8 16,7 24,14 32,12 40,20' }}" stroke="{{ $g >= 0 ? 'var(--good)' : 'var(--critical)' }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                         @endif
                     </div>
@@ -106,7 +106,7 @@
         </div>
 
         @if ($pencapaianTigaTier)
-            <div class="card" style="grid-column:span 6; min-width:0; border-color:var(--ink-faint);">
+            <div class="card" style="grid-column:span 6; min-width:0; border-color:var(--accent);">
                 <div class="card-head" style="flex-wrap:wrap; row-gap:4px;">
                     <div class="card-title" style="flex-shrink:0;">Pencapaian vs 3 Tier Target</div>
                     <div class="card-hint" style="white-space:nowrap;">Omset {{ $periodeLabel }}: {{ $rp($totalOmsetBulanIni) }}</div>
