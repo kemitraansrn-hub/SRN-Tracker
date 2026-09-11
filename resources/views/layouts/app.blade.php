@@ -55,9 +55,9 @@
             box-shadow: inset 3px 0 0 transparent;
             transition: background-color 0.14s ease, color 0.14s ease, box-shadow 0.14s ease;
         }
-        .nav-item:hover, .nav-item-toggle:hover { background: #FFFBEB; color: var(--accent); }
+        .nav-item:hover, .nav-item-toggle:hover { background: var(--accent-soft); color: var(--accent); }
         .nav-item.active {
-            background: #FFFBEB; color: var(--accent); font-weight: 600;
+            background: var(--accent-soft); color: var(--accent); font-weight: 600;
             box-shadow: inset 3px 0 0 var(--accent);
         }
         .nav-item:hover .nav-icon, .nav-item-toggle:hover .nav-icon, .nav-item.active .nav-icon {

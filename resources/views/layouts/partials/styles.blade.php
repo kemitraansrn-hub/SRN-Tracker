@@ -2,7 +2,7 @@
   :root {
     --bg: #FFFFFF; --surface: #FFFFFF; --surface-alt: #FAFAFA;
     --ink: #2B2620; --ink-muted: #756E63; --ink-faint: #A39C8E; --line: #EBEBEB;
-    --accent: #F2994A; --accent-ink: #B8641E; --accent-soft: #FDF3E8;
+    --accent: #F2994A; --accent-ink: #B8641E; --accent-soft: #FFFBEB;
     --brand-blue: #1D63C4; --brand-blue-soft: #E7F0FC;
     --table-head-bg: #F2F5F9; --table-head-ink: #1D3557; --table-head-current: #C9D5E1;
     --highlight: #C97C3D; --highlight-soft: #F5E6D8;
