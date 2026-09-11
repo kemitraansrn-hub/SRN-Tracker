@@ -76,7 +76,7 @@
                         <th>Kode</th><th>Tanggal Temuan</th><th>Mitra</th><th>Toko / Platform</th>
                         <th>Terjual</th><th>Terlaris</th><th>Status Toko</th>
                         <th>Produk</th><th>Harga SOP</th><th>Harga Pelanggaran</th><th>Selisih</th>
-                        <th>Status Kasus</th><th>Takedown / Banding</th><th></th>
+                        <th>Status Kasus</th><th>Keterangan</th><th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -98,7 +98,9 @@
                             <td class="tnum" style="color:var(--critical);">{{ $c->persentaseSelisih() }}%</td>
                             <td><span class="chip {{ $statusChip($c->status_kasus) }}">{{ $c->status_kasus }}</span></td>
                             <td>
-                                @if ($c->takedownBanding)
+                                @if ($c->status_kasus === 'Case Closed')
+                                    <span style="font-size:12.5px;">Mitra menaikan harga</span>
+                                @elseif ($c->takedownBanding)
                                     <span class="chip chip-good">Take Down</span>
                                     @if ($c->takedownBanding->status_banding)
                                         <div style="font-size:11px; color:var(--ink-muted); margin-top:3px;">Banding: {{ $c->takedownBanding->status_banding }}</div>
