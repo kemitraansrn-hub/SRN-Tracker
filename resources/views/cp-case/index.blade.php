@@ -2,6 +2,12 @@
 
 @php
     $rp = fn ($v) => 'Rp'.number_format((float) $v, 0, ',', '.');
+    $statusChip = fn ($s) => match ($s) {
+        'Progres' => 'chip-warn',
+        'Pengajuan Takedown' => 'chip-critical',
+        'Case Closed' => 'chip-good',
+        default => 'chip-neutral',
+    };
 @endphp
 
 @section('content')
@@ -62,6 +68,7 @@
                 <thead>
                     <tr>
                         <th>Kode</th><th>Tanggal Temuan</th><th>Mitra</th><th>Toko / Platform</th>
+                        <th>Terjual</th><th>Terlaris</th><th>Status Toko</th>
                         <th>Produk</th><th>Harga SOP</th><th>Harga Pelanggaran</th><th>Selisih</th>
                         <th>Status Kasus</th><th>Takedown / Banding</th><th></th>
                     </tr>
@@ -76,11 +83,14 @@
                                 <div style="font-weight:600;">{{ $c->nama_toko }}</div>
                                 <div style="font-size:11px; color:var(--ink-muted);">{{ $c->platform }}{{ $c->kotaKabupaten ? ' · '.$c->kotaKabupaten->nama : '' }}</div>
                             </td>
+                            <td class="tnum">{{ $c->terjual ?? '—' }}</td>
+                            <td class="tnum">{{ $c->terlaris ?? '—' }}</td>
+                            <td>{{ $c->statusToko() ?? '—' }}</td>
                             <td>{{ $c->produk->nama ?? '—' }}</td>
                             <td class="tnum">{{ $rp($c->harga_sop) }}</td>
                             <td class="tnum">{{ $rp($c->harga_pelanggaran) }}</td>
                             <td class="tnum" style="color:var(--critical);">{{ $c->persentaseSelisih() }}%</td>
-                            <td><span class="chip chip-neutral">{{ $c->status_kasus }}</span></td>
+                            <td><span class="chip {{ $statusChip($c->status_kasus) }}">{{ $c->status_kasus }}</span></td>
                             <td>
                                 @if ($c->takedownBanding)
                                     <span class="chip chip-warn">Banding: {{ $c->takedownBanding->status_banding ?? '—' }}</span>
@@ -95,7 +105,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="11" style="color:var(--ink-muted);">Belum ada kasus tercatat.</td></tr>
+                        <tr><td colspan="14" style="color:var(--ink-muted);">Belum ada kasus tercatat.</td></tr>
                     @endforelse
                 </tbody>
             </table>

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
-    'kode', 'tanggal_temuan', 'mitra_id', 'nama_mitra_manual', 'nama_toko', 'platform',
+    'kode', 'tanggal_temuan', 'mitra_id', 'nama_mitra_manual', 'nama_toko', 'platform', 'terjual', 'terlaris',
     'kota_kabupaten_id', 'link_etalase', 'kode_barcode', 'produk_id', 'harga_sop', 'harga_pelanggaran',
     'status_kasus', 'follow_up_1_tanggal', 'follow_up_1_status', 'follow_up_2_tanggal', 'follow_up_2_status',
     'follow_up_3_tanggal', 'follow_up_3_status', 'bukti_temuan', 'bukti_case_close', 'tanggal_case_close',
@@ -74,5 +74,19 @@ class CpCase extends Model
         }
 
         return round($this->selisihHarga() / (float) $this->harga_sop * 100, 2);
+    }
+
+    /**
+     * "Toko Besar" kalau jumlah Terlaris >= 1000, "Toko Kecil" kalau di bawah
+     * itu — null kalau Terlaris belum diisi. Ambang batas & rumus ini
+     * mengikuti sheet referensi "Dashboard Partnership Compliance".
+     */
+    public function statusToko(): ?string
+    {
+        if ($this->terlaris === null) {
+            return null;
+        }
+
+        return $this->terlaris >= 1000 ? 'Toko Besar' : 'Toko Kecil';
     }
 }

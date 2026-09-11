@@ -57,6 +57,20 @@
                 <input type="text" name="nama_toko" value="{{ old('nama_toko', $isEdit ? $cpCase->nama_toko : '') }}" required>
             </div>
             <div class="field" style="flex:1;">
+                <label>Terjual (unit)</label>
+                <input type="number" step="1" min="0" name="terjual" value="{{ old('terjual', $isEdit ? $cpCase->terjual : '') }}">
+            </div>
+            <div class="field" style="flex:1;">
+                <label>Terlaris (unit) — menentukan Status Toko</label>
+                <input type="number" step="1" min="0" name="terlaris" value="{{ old('terlaris', $isEdit ? $cpCase->terlaris : '') }}">
+                @if ($isEdit && $cpCase->statusToko())
+                    <div style="font-size:11.5px; color:var(--ink-muted); margin-top:4px;">Status Toko: <strong>{{ $cpCase->statusToko() }}</strong></div>
+                @endif
+            </div>
+        </div>
+
+        <div class="field-row">
+            <div class="field" style="flex:1;">
                 <label>Kota Toko</label>
                 <select name="kota_kabupaten_id">
                     <option value="">— pilih —</option>

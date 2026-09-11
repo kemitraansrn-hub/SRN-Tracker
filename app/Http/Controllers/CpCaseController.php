@@ -27,8 +27,7 @@ class CpCaseController extends Controller
     ];
 
     public const STATUS_KASUS_OPTIONS = [
-        'Baru Ditemukan', 'Menunggu Respon', 'Sudah Follow Up', 'Sudah Naik Harga',
-        'Tidak Respon', 'Take Down', 'Di Blok Mitra',
+        'Baru Ditemukan', 'Progres', 'Pengajuan Takedown', 'Case Closed',
     ];
 
     public function index(Request $request): View
@@ -122,6 +121,8 @@ class CpCaseController extends Controller
             'nama_mitra_manual' => ['nullable', 'string', 'max:255', 'required_without:mitra_id'],
             'nama_toko' => ['required', 'string', 'max:255'],
             'platform' => ['required', 'string', 'in:'.implode(',', self::PLATFORM_OPTIONS)],
+            'terjual' => ['nullable', 'integer', 'min:0'],
+            'terlaris' => ['nullable', 'integer', 'min:0'],
             'kota_kabupaten_id' => ['nullable', 'exists:kota_kabupatens,id'],
             'link_etalase' => ['nullable', 'url', 'max:500'],
             'kode_barcode' => ['nullable', 'string', 'max:100'],
