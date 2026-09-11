@@ -142,11 +142,7 @@
                                             <button type="submit" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;">List to Shopee</button>
                                         </form>
                                     @elseif ($sedangTakedown && $c->status_takedown === 'Listed ke Shopee')
-                                        <form method="POST" action="{{ route('tracking-cp.takedown.selesai', $c) }}" onsubmit="return confirm('Konfirmasi kasus {{ $c->kode }} sudah take down di Shopee?');">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;">Take Down</button>
-                                        </form>
+                                        <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="openStageModal('modal-shopee-{{ $c->id }}')">Keputusan Shopee</button>
                                     @endif
 
                                     <form method="POST" action="{{ route('tracking-cp.destroy', $c) }}" onsubmit="return confirm('Hapus kasus {{ $c->kode }}?');">
@@ -273,6 +269,30 @@
                 </div>
                 <div class="modal-actions" style="margin-top:16px;">
                     <button type="button" class="btn" style="width:auto;" onclick="closeStageModal('modal-approval-{{ $c->id }}')">Batal</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="modal-shopee-{{ $c->id }}" style="display:none;">
+            <div class="modal-box">
+                <div class="modal-title">Keputusan Shopee — {{ $c->kode }}</div>
+                <div class="modal-body">Listing takedown-nya udah dikirim ke Shopee. Disetujui atau ditolak?</div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <form method="POST" action="{{ route('tracking-cp.takedown.selesai', $c) }}">
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="keputusan" value="Approved">
+                        <button type="submit" class="btn btn-primary" style="width:100%;">Approved — Take Down</button>
+                    </form>
+                    <form method="POST" action="{{ route('tracking-cp.takedown.selesai', $c) }}">
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="keputusan" value="Rejected">
+                        <button type="submit" class="btn btn-danger" style="width:100%;">Reject</button>
+                    </form>
+                </div>
+                <div class="modal-actions" style="margin-top:16px;">
+                    <button type="button" class="btn" style="width:auto;" onclick="closeStageModal('modal-shopee-{{ $c->id }}')">Batal</button>
                 </div>
             </div>
         </div>

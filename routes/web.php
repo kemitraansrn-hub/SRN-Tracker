@@ -237,7 +237,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::patch('/{cpCase}/takedown', [CpCaseController::class, 'updateTakedown'])->name('takedown.update');
         Route::patch('/{cpCase}/takedown/decision', [CpCaseController::class, 'decideTakedown'])->name('takedown.decision');
         Route::patch('/{cpCase}/takedown/listed', [CpCaseController::class, 'markListedToShopee'])->name('takedown.listed');
-        Route::patch('/{cpCase}/takedown/selesai', [CpCaseController::class, 'markTakeDown'])->name('takedown.selesai');
+        Route::patch('/{cpCase}/takedown/selesai', [CpCaseController::class, 'decideShopeeListing'])->name('takedown.selesai');
     });
 
     Route::prefix('take-down-banding')->name('takedown-banding.')->group(function () {

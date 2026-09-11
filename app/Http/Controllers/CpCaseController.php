@@ -226,14 +226,29 @@ class CpCaseController extends Controller
     }
 
     /**
-     * Compliance konfirmasi Shopee udah beneran take down produknya —
-     * titik ini kasusnya resmi masuk menu Take Down & Banding, otomatis
-     * dibikinkan 1 baris CpTakedownBanding (idempotent) buat nyimpen detail
-     * proses bandingnya nanti.
+     * Keputusan Shopee atas listing takedown yang diajukan Compliance.
+     * Kalau ditolak, sama seperti reject Head — balik ke Progres, bisa
+     * diajukan Takedown lagi. Kalau disetujui, kasusnya resmi Take Down dan
+     * masuk menu Take Down & Banding, otomatis dibikinkan 1 baris
+     * CpTakedownBanding (idempotent) buat nyimpen detail proses bandingnya
+     * nanti.
      */
-    public function markTakeDown(CpCase $cpCase): RedirectResponse
+    public function decideShopeeListing(Request $request, CpCase $cpCase): RedirectResponse
     {
         abort_unless($cpCase->status_takedown === 'Listed ke Shopee', 404);
+
+        $data = $request->validate([
+            'keputusan' => ['required', 'string', 'in:Approved,Rejected'],
+        ]);
+
+        if ($data['keputusan'] === 'Rejected') {
+            $cpCase->update([
+                'status_takedown' => 'Rejected',
+                'status_kasus' => 'Progres',
+            ]);
+
+            return redirect()->route('tracking-cp.index')->with('status', 'Listing ditolak Shopee, kasus balik ke Progres.');
+        }
 
         $cpCase->update(['status_takedown' => 'Take Down']);
 
