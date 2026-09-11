@@ -37,4 +37,14 @@ class Mitra extends Model
     {
         return $this->hasMany(SpecialDeal::class);
     }
+
+    public function cpCases()
+    {
+        return $this->hasMany(CpCase::class);
+    }
+
+    public function priceAdjustmentRequests()
+    {
+        return $this->hasMany(PriceAdjustmentRequest::class);
+    }
 }
