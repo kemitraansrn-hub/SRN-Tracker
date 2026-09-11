@@ -190,13 +190,14 @@ class CpCaseController extends Controller
     }
 
     /**
-     * Cuma Head of SRN (atau Admin) yang boleh approve/reject pengajuan
-     * takedown. Kalau ditolak, kasus balik ke Progres supaya Compliance bisa
+     * Cuma Head of SRN yang boleh approve/reject pengajuan takedown — bukan
+     * Admin, sengaja dipisah biar approval-nya jelas siapa yang tanggung
+     * jawab. Kalau ditolak, kasus balik ke Progres supaya Compliance bisa
      * ambil keputusan lain.
      */
     public function decideTakedown(Request $request, CpCase $cpCase): RedirectResponse
     {
-        abort_unless($request->user()->isHead() || $request->user()->isAdmin(), 403);
+        abort_unless($request->user()->isHead(), 403);
 
         $data = $request->validate([
             'keputusan' => ['required', 'string', 'in:Approved,Rejected'],

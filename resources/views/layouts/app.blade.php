@@ -408,7 +408,7 @@
                         @endif
                     </a>
                 @endif
-                @if (auth()->user()->isHead() || auth()->user()->isAdmin())
+                @if (auth()->user()->isHead())
                     <a href="{{ route('tracking-cp.index', ['menunggu_approval' => 1]) }}" title="Pengajuan takedown menunggu approval" aria-label="Pengajuan takedown menunggu approval" style="position:relative; display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; color:var(--ink-muted); flex-shrink:0;">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 7v5l3 3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         @if ($takedownApprovalCount > 0)

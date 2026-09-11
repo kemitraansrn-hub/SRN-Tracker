@@ -35,9 +35,10 @@ class AppServiceProvider extends ServiceProvider
                 : 0);
 
             // Badge notifikasi "pengajuan takedown menunggu approval" — cuma
-            // Head of SRN (atau Admin) yang boleh approve/reject, jadi cuma
-            // mereka yang perlu lihat badge-nya.
-            $view->with('takedownApprovalCount', Auth::check() && (Auth::user()->isHead() || Auth::user()->isAdmin())
+            // Head of SRN yang boleh approve/reject, jadi cuma dia yang perlu
+            // lihat badge-nya (Admin sengaja gak ikut, approval-nya harus
+            // jelas tanggung jawab Head).
+            $view->with('takedownApprovalCount', Auth::check() && Auth::user()->isHead()
                 ? CpCase::where('status_takedown', 'Menunggu Approval')->count()
                 : 0);
         });

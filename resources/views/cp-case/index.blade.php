@@ -118,7 +118,7 @@
                                     $fu3Done = (bool) $c->follow_up_3_tanggal;
                                     $belumDiputuskan = in_array($c->status_kasus, ['Baru Ditemukan', 'Progres'], true);
                                     $sedangTakedown = $c->status_kasus === 'Pengajuan Takedown';
-                                    $bolehApprove = auth()->user()->isHead() || auth()->user()->isAdmin();
+                                    $bolehApprove = auth()->user()->isHead();
                                 @endphp
                                 <div style="display:flex; gap:6px; flex-wrap:nowrap; align-items:center;">
                                     <a href="{{ route('tracking-cp.edit', $c) }}" class="link-action" style="color:var(--accent-ink); font-size:12px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 9px; white-space:nowrap;">Edit</a>
