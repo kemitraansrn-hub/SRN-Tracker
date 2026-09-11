@@ -60,6 +60,7 @@
                     <option value="admin" {{ old('role', $targetUser->role) === 'admin' ? 'selected' : '' }}>Admin</option>
                     <option value="head" {{ old('role', $targetUser->role) === 'head' ? 'selected' : '' }}>Head of SRN</option>
                     <option value="finance" {{ old('role', $targetUser->role) === 'finance' ? 'selected' : '' }}>Finance</option>
+                    <option value="compliance" {{ old('role', $targetUser->role) === 'compliance' ? 'selected' : '' }}>Compliance</option>
                 </select>
             </div>
             <div class="field" style="flex:1;" id="kaeCodeField">

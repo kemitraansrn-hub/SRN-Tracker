@@ -79,7 +79,7 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'.($isNew ? '' : ','.$targetUser->id)],
             'password' => [$isNew ? 'required' : 'nullable', 'string', 'min:6'],
-            'role' => ['required', 'in:admin,kae,head,finance'],
+            'role' => ['required', 'in:admin,kae,head,finance,compliance'],
             'kae_code' => [
                 'nullable', 'string', 'max:5',
                 'required_if:role,kae',

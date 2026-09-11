@@ -49,6 +49,8 @@
                                     <span class="chip chip-highlight">Head of SRN</span>
                                 @elseif ($u->role === 'finance')
                                     <span class="chip chip-good">Finance</span>
+                                @elseif ($u->role === 'compliance')
+                                    <span class="chip chip-warn">Compliance</span>
                                 @else
                                     <span class="chip" style="background:var(--surface-alt); color:var(--ink-muted);">KAE</span>
                                 @endif
