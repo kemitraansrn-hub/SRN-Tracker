@@ -60,11 +60,15 @@ class AppServiceProvider extends ServiceProvider
                 : 0);
 
             // Badge notifikasi buat Compliance: hasil keputusan Price
-            // Adjustment (Approved atau Rejected) — biar Compliance tau mitra
-            // mana yang lagi punya izin sah turun harga (jangan ditandai
-            // pelanggaran di Tracking CP) atau yang ditolak.
+            // Adjustment (Approved atau Rejected) yang BELUM dibuka — biar
+            // Compliance tau mitra mana yang lagi punya izin sah turun harga
+            // (jangan ditandai pelanggaran di Tracking CP) atau yang ditolak.
+            // Ke-mark "dilihat" begitu Compliance buka halaman Price
+            // Adjustment Monitoring (lihat PriceAdjustmentRequestController::
+            // monitoring()), jadi badge-nya beneran ilang pas dibuka, bukan
+            // sekadar total mentah yang nyangkut terus.
             $view->with('priceAdjustmentKeputusanCount', Auth::check() && Auth::user()->isCompliance()
-                ? PriceAdjustmentRequest::whereIn('status_approval', ['Approved', 'Rejected'])->count()
+                ? PriceAdjustmentRequest::whereIn('status_approval', ['Approved', 'Rejected'])->whereNull('dilihat_compliance_at')->count()
                 : 0);
         });
     }

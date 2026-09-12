@@ -16,6 +16,7 @@ class PriceAdjustmentRequest extends Model
         return [
             'tanggal_mulai' => 'date',
             'tanggal_selesai' => 'date',
+            'dilihat_compliance_at' => 'datetime',
         ];
     }
 

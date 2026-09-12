@@ -61,6 +61,17 @@ class PriceAdjustmentRequestController extends Controller
     {
         abort_unless($request->user()->canViewAll(), 403);
 
+        // Matikan badge notifikasi keputusan buat Compliance begitu halaman
+        // ini dibuka — sengaja dikunci ke isCompliance() spesifik (bukan
+        // canViewAll() umum) soalnya badge-nya juga cuma buat Compliance,
+        // jangan sampai kebuka sama Admin/Head terus notifnya ikut hilang
+        // padahal Compliance-nya sendiri belum lihat.
+        if ($request->user()->isCompliance()) {
+            PriceAdjustmentRequest::whereIn('status_approval', ['Approved', 'Rejected'])
+                ->whereNull('dilihat_compliance_at')
+                ->update(['dilihat_compliance_at' => now()]);
+        }
+
         $query = PriceAdjustmentRequest::with(['mitra', 'pengaju', 'penyetuju'])
             ->when($request->filled('q'), fn ($q) => $q->where(function ($qq) use ($request) {
                 $qq->where('toko', 'like', '%'.$request->input('q').'%')
