@@ -67,7 +67,7 @@
                             <td>
                                 <div style="display:flex; gap:6px; flex-wrap:nowrap;">
                                     @if ($r->status_approval === 'Pending')
-                                        @if (auth()->user()->isAdmin() || auth()->user()->canActAsHead())
+                                        @if (auth()->user()->isHeadOrManager())
                                             <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="openStageModal('modal-decision-{{ $r->id }}')">Putuskan</button>
                                         @endif
                                         <a href="{{ route('price-adjustment.edit', $r) }}" class="link-action" style="color:var(--accent-ink); font-size:12px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 9px; white-space:nowrap;">Edit</a>

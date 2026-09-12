@@ -100,6 +100,16 @@ class User extends Authenticatable
         return $this->isHead() || $this->isManager() || $this->isSupervisor();
     }
 
+    /**
+     * Beberapa keputusan sengaja dikunci lebih ketat: cuma Head of SRN atau
+     * Manager (setaranya) — Admin dan Supervisor TIDAK termasuk. Dipakai
+     * buat approve/reject pengajuan Price Adjustment.
+     */
+    public function isHeadOrManager(): bool
+    {
+        return $this->isHead() || $this->isManager();
+    }
+
     public function photoUrl(): ?string
     {
         return $this->photo ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->photo) : null;

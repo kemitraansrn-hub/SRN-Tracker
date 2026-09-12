@@ -35,6 +35,7 @@ class PriceAdjustmentRequestController extends Controller
                     ->orWhereHas('mitra', fn ($m) => $m->where('nama', 'like', '%'.$request->input('q').'%'));
             }))
             ->when($request->filled('status_approval'), fn ($q) => $q->where('status_approval', $request->input('status_approval')))
+            ->when($request->boolean('sudah_diputuskan'), fn ($q) => $q->whereIn('status_approval', ['Approved', 'Rejected']))
             ->latest('tanggal_mulai');
 
         return view('price-adjustment.index', [
@@ -85,12 +86,12 @@ class PriceAdjustmentRequestController extends Controller
     }
 
     /**
-     * Keputusan Head (atau setaranya: Manager/Supervisor, juga Admin) atas
-     * satu pengajuan — Approve atau Reject.
+     * Keputusan Approve/Reject dikunci ketat: cuma Head of SRN atau Manager
+     * — Admin dan Supervisor sengaja TIDAK termasuk.
      */
     public function decide(Request $request, PriceAdjustmentRequest $priceAdjustmentRequest): RedirectResponse
     {
-        abort_unless($request->user()->isAdmin() || $request->user()->canActAsHead(), 403);
+        abort_unless($request->user()->isHeadOrManager(), 403);
 
         $data = $request->validate([
             'keputusan' => ['required', 'string', 'in:Approved,Rejected'],

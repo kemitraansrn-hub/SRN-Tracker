@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\CpCase;
+use App\Models\PriceAdjustmentRequest;
 use App\Models\Produk;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
@@ -49,6 +50,21 @@ class AppServiceProvider extends ServiceProvider
             // Rejected).
             $view->with('takedownKeputusanCount', Auth::check() && Auth::user()->isCompliance()
                 ? CpCase::whereIn('status_takedown', ['Approved', 'Rejected'])->count()
+                : 0);
+
+            // Badge notifikasi "pengajuan Price Adjustment menunggu approval"
+            // — dikunci ketat cuma buat Head of SRN & Manager (bukan
+            // canActAsHead(), Supervisor sengaja gak ikut buat approval ini).
+            $view->with('priceAdjustmentApprovalCount', Auth::check() && Auth::user()->isHeadOrManager()
+                ? PriceAdjustmentRequest::where('status_approval', 'Pending')->count()
+                : 0);
+
+            // Badge notifikasi buat Compliance: hasil keputusan Price
+            // Adjustment (Approved atau Rejected) — biar Compliance tau mitra
+            // mana yang lagi punya izin sah turun harga (jangan ditandai
+            // pelanggaran di Tracking CP) atau yang ditolak.
+            $view->with('priceAdjustmentKeputusanCount', Auth::check() && Auth::user()->isCompliance()
+                ? PriceAdjustmentRequest::whereIn('status_approval', ['Approved', 'Rejected'])->count()
                 : 0);
         });
     }
