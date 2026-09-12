@@ -24,8 +24,7 @@ class TakedownBandingController extends Controller
         $query = CpTakedownBanding::with(['cpCase.mitra', 'cpCase.produk'])
             ->when($request->filled('q'), fn ($q) => $q->whereHas('cpCase', function ($qq) use ($request) {
                 $qq->where('nama_toko', 'like', '%'.$request->input('q').'%')
-                    ->orWhere('kode', 'like', '%'.$request->input('q').'%')
-                    ->orWhere('nama_mitra_manual', 'like', '%'.$request->input('q').'%');
+                    ->orWhere('kode', 'like', '%'.$request->input('q').'%');
             }))
             ->latest('tanggal_takedown');
 

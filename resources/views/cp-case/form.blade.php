@@ -35,20 +35,14 @@
             </div>
         </div>
 
-        <div class="field-row">
-            <div class="field" style="flex:1;">
-                <label>Mitra (kosongkan kalau gak ketemu di database)</label>
-                <select name="mitra_id">
-                    <option value="">— manual / gak ketemu —</option>
-                    @foreach ($mitraOptions as $m)
-                        <option value="{{ $m->id }}" {{ (string) old('mitra_id', $isEdit ? $cpCase->mitra_id : '') === (string) $m->id ? 'selected' : '' }}>{{ $m->nama }} ({{ $m->kode_mitra }})</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="field" style="flex:1;">
-                <label>Nama Mitra Manual</label>
-                <input type="text" name="nama_mitra_manual" value="{{ old('nama_mitra_manual', $isEdit ? $cpCase->nama_mitra_manual : '') }}" placeholder="Isi kalau mitra di atas gak dipilih">
-            </div>
+        <div class="field">
+            <label>List Mitra SRN</label>
+            <select name="mitra_id">
+                <option value="">— Mitra Belum Diketahui —</option>
+                @foreach ($mitraOptions as $m)
+                    <option value="{{ $m->id }}" {{ (string) old('mitra_id', $isEdit ? $cpCase->mitra_id : '') === (string) $m->id ? 'selected' : '' }}>{{ $m->nama }} ({{ $m->kode_mitra }})</option>
+                @endforeach
+            </select>
         </div>
 
         <div class="field-row">
