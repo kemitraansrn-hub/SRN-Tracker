@@ -76,7 +76,7 @@
                         <th>Kode</th><th>Tanggal Temuan</th><th>Mitra</th><th>Toko / Platform</th>
                         <th>Terjual</th><th>Terlaris</th><th>Status Toko</th>
                         <th>Produk</th><th>Harga SOP</th><th>Harga Pelanggaran</th><th>Selisih</th>
-                        <th>Status Kasus</th><th>Keterangan</th><th></th>
+                        <th>Status Kasus</th><th>Keterangan</th><th>Link</th><th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -115,6 +115,29 @@
                                     <span style="font-size:12.5px;">{{ $c->status_takedown }}</span>
                                 @else
                                     <span style="color:var(--ink-faint); font-size:12px;">—</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if (! $c->link_etalase && ! $c->bukti_temuan && ! $c->bukti_case_close)
+                                    <span style="color:var(--ink-faint); font-size:12px;">—</span>
+                                @else
+                                    <div style="display:flex; gap:4px;">
+                                        @if ($c->link_etalase)
+                                            <a href="{{ $c->link_etalase }}" target="_blank" rel="noopener" class="link-chip" title="Link Etalase / Produk">
+                                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                                            </a>
+                                        @endif
+                                        @if ($c->bukti_temuan)
+                                            <a href="{{ $c->bukti_temuan }}" target="_blank" rel="noopener" class="link-chip" title="Bukti Temuan">
+                                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="13" r="4"/></svg>
+                                            </a>
+                                        @endif
+                                        @if ($c->bukti_case_close)
+                                            <a href="{{ $c->bukti_case_close }}" target="_blank" rel="noopener" class="link-chip" title="Bukti Case Close">
+                                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                            </a>
+                                        @endif
+                                    </div>
                                 @endif
                             </td>
                             <td>
@@ -162,7 +185,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="14" style="color:var(--ink-muted);">Belum ada kasus tercatat.</td></tr>
+                        <tr><td colspan="15" style="color:var(--ink-muted);">Belum ada kasus tercatat.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -221,8 +244,9 @@
                             <input type="date" name="tanggal_case_close" value="{{ now()->toDateString() }}" required>
                         </div>
                         <div class="field" style="margin-bottom:20px;">
-                            <label>Bukti Case Close (link)</label>
-                            <input type="text" name="bukti_case_close" placeholder="https://drive.google.com/...">
+                            <label>Bukti Case Close — Link Google Drive *</label>
+                            <input type="text" name="bukti_case_close" placeholder="https://drive.google.com/..." required>
+                            <div style="font-size:11px; color:var(--ink-muted); margin-top:4px;">Wajib diisi — upload screenshot bukti mitra sudah menaikkan harga ke Google Drive, lalu tempel link-nya di sini.</div>
                         </div>
                         <div class="modal-actions">
                             <button type="button" class="btn" style="width:auto;" onclick="showStatusChoice('{{ $c->id }}')">Kembali</button>

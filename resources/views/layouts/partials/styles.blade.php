@@ -140,6 +140,13 @@
   .chip-accent { background: var(--accent-soft); color: var(--accent-ink); }
   .chip-highlight { background: var(--highlight-soft); color: var(--highlight); }
   .chip-neutral { background: var(--surface-alt); color: var(--ink-muted); border: 1px solid var(--line); }
+  .link-chip {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 7px; border: 1px solid var(--line);
+    color: var(--ink-muted); text-decoration: none; flex-shrink: 0;
+    transition: color 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+  }
+  .link-chip:hover { border-color: var(--accent); color: var(--accent-ink); background: var(--accent-soft); }
   .reveal-toggle {
     display: inline-flex; align-items: center; gap: 3px; cursor: pointer;
     color: var(--ink-muted); font-size: 11px; font-weight: 500;

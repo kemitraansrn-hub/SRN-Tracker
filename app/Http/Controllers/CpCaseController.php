@@ -215,13 +215,15 @@ class CpCaseController extends Controller
 
     /**
      * Salah satu dari 3 keputusan Status Kasus (dipilih lewat pop-up setelah
-     * Follow Up 3 selesai): mitra sudah naikkan harga -> tutup kasus.
+     * Follow Up 3 selesai): mitra sudah naikkan harga -> tutup kasus. Bukti
+     * (link Google Drive screenshot mitra sudah naikkan harga) wajib diisi
+     * Compliance, gak boleh nutup kasus tanpa bukti.
      */
     public function updateCaseClose(Request $request, CpCase $cpCase): RedirectResponse
     {
         $data = $request->validate([
             'tanggal_case_close' => ['required', 'date'],
-            'bukti_case_close' => ['nullable', 'url', 'max:500'],
+            'bukti_case_close' => ['required', 'url', 'max:500'],
         ]);
 
         $data['status_kasus'] = 'Case Closed';

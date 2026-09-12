@@ -48,7 +48,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Mitra</th><th>Toko / Marketplace</th><th>Periode</th>
+                        <th>Mitra</th><th>Toko / Marketplace</th><th>Link</th><th>Periode</th>
                         <th>Diajukan Oleh</th><th>Status</th><th>Diputuskan Oleh</th><th></th>
                     </tr>
                 </thead>
@@ -59,6 +59,15 @@
                             <td>
                                 <div style="font-weight:600;">{{ $r->toko }}</div>
                                 <div style="font-size:11px; color:var(--ink-muted);">{{ $r->marketplace }}</div>
+                            </td>
+                            <td>
+                                @if ($r->link_toko)
+                                    <a href="{{ $r->link_toko }}" target="_blank" rel="noopener" class="link-chip" title="Link Toko / Marketplace">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                                    </a>
+                                @else
+                                    <span style="color:var(--ink-faint); font-size:12px;">—</span>
+                                @endif
                             </td>
                             <td class="tnum">{{ $r->tanggal_mulai->format('d/m/Y') }} &ndash; {{ $r->tanggal_selesai->format('d/m/Y') }}</td>
                             <td>{{ $r->pengaju->name ?? '—' }}</td>
@@ -81,7 +90,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" style="color:var(--ink-muted);">Belum ada pengajuan tercatat.</td></tr>
+                        <tr><td colspan="8" style="color:var(--ink-muted);">Belum ada pengajuan tercatat.</td></tr>
                     @endforelse
                 </tbody>
             </table>
