@@ -152,13 +152,17 @@
                                 <div style="display:flex; gap:6px; flex-wrap:nowrap; align-items:center;">
                                     <a href="{{ route('tracking-cp.edit', $c) }}" class="link-action" style="color:var(--accent-ink); font-size:12px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 9px; white-space:nowrap;">Edit</a>
 
+                                    {{-- Tombol FU & Status Kasus tampil bareng (bukan salah satu) — mitra bisa
+                                         aja naikin harga di FU manapun, gak wajib nunggu FU 3 buat nutup kasus. --}}
                                     @if (! $fu1Done)
                                         <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="openStageModal('modal-fu1-{{ $c->id }}')">FU 1</button>
                                     @elseif (! $fu2Done)
                                         <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="openStageModal('modal-fu2-{{ $c->id }}')">FU 2</button>
                                     @elseif (! $fu3Done)
                                         <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="openStageModal('modal-fu3-{{ $c->id }}')">FU 3</button>
-                                    @elseif ($belumDiputuskan)
+                                    @endif
+
+                                    @if ($belumDiputuskan)
                                         <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="showStatusChoice('{{ $c->id }}'); openStageModal('modal-status-{{ $c->id }}')">Status Kasus</button>
                                     @elseif ($sedangTakedown && $c->status_takedown === 'Menunggu Approval')
                                         @if ($bolehApprove)
@@ -219,17 +223,30 @@
             </div>
         @endfor
 
+        @php $fu3SudahDone = (bool) $c->follow_up_3_tanggal; @endphp
         <div class="modal-overlay" id="modal-status-{{ $c->id }}" style="display:none;">
             <div class="modal-box">
                 <div class="modal-title">Status Kasus — {{ $c->kode }}</div>
 
                 <div id="status-choice-{{ $c->id }}">
-                    <div class="modal-body">Follow up 3 ronde sudah selesai. Pilih status akhir kasus ini:</div>
+                    <div class="modal-body">
+                        @if ($fu3SudahDone)
+                            Follow up 3 ronde sudah selesai. Pilih status akhir kasus ini:
+                        @else
+                            Mitra sudah naikkan harga sebelum follow up selesai? Kasus bisa langsung ditutup —
+                            gak wajib nunggu 3 ronde follow up dulu.
+                        @endif
+                    </div>
                     <div style="display:flex; flex-direction:column; gap:8px;">
                         <button type="button" class="btn" style="width:auto; text-align:left;" onclick="showStatusSub('{{ $c->id }}', 'closed')">Case Closed — mitra sudah naikkan harga</button>
-                        <button type="button" class="btn" style="width:auto; text-align:left;" onclick="showStatusSub('{{ $c->id }}', 'takedown')">Pengajuan Takedown</button>
+                        @if ($fu3SudahDone)
+                            <button type="button" class="btn" style="width:auto; text-align:left;" onclick="showStatusSub('{{ $c->id }}', 'takedown')">Pengajuan Takedown</button>
+                        @endif
                         <button type="button" class="btn" style="width:auto; text-align:left;" onclick="showStatusSub('{{ $c->id }}', 'progres')">Masih Progres</button>
                     </div>
+                    @if (! $fu3SudahDone)
+                        <div style="font-size:11px; color:var(--ink-muted); margin-top:10px;">Pengajuan Takedown baru bisa dipilih setelah follow up 3 ronde selesai.</div>
+                    @endif
                     <div class="modal-actions" style="margin-top:16px;">
                         <button type="button" class="btn" style="width:auto;" onclick="closeStageModal('modal-status-{{ $c->id }}')">Batal</button>
                     </div>

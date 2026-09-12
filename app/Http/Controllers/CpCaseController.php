@@ -248,10 +248,18 @@ class CpCaseController extends Controller
     /**
      * Keputusan Status Kasus: ajukan takedown ke marketplace — cuma
      * mengajukan, belum ada keputusan. Head of SRN yang approve/reject lewat
-     * decideTakedown().
+     * decideTakedown(). Beda sama Case Closed (bisa kapan aja begitu mitra
+     * naikin harga), Takedown wajib nunggu follow up 3 ronde selesai dulu
+     * sebagai bukti sudah ditegur berkali-kali sebelum ditakedown.
      */
     public function updateTakedown(CpCase $cpCase): RedirectResponse
     {
+        abort_unless(
+            $cpCase->follow_up_1_tanggal && $cpCase->follow_up_2_tanggal && $cpCase->follow_up_3_tanggal,
+            422,
+            'Follow up 3 ronde harus selesai dulu sebelum ajukan Takedown.'
+        );
+
         $cpCase->update([
             'status_kasus' => 'Pengajuan Takedown',
             'status_takedown' => 'Menunggu Approval',
