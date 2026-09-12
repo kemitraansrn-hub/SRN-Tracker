@@ -32,7 +32,10 @@
         }
         .guest-brand-hero .hero-title span { display: block; color: #8FB4F5; }
         .guest-brand-hero .hero-rule {
-            width: 34px; height: 3px; border-radius: 2px; background: var(--accent);
+            {{-- Sengaja pakai biru tetap (#4C6FA0), bukan var(--accent) —
+                 halaman login punya identitas navy/biru sendiri sejak awal
+                 dibuat, gak ikut warna oranye tema internal app (PERPACK). --}}
+            width: 34px; height: 3px; border-radius: 2px; background: #4C6FA0;
             margin: 14px 0;
         }
         .guest-brand-hero .hero-sub {
@@ -77,8 +80,8 @@
             font-family: inherit; transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
         }
         .guest-input-wrap input:focus {
-            outline: none; border-color: var(--accent); background: var(--surface);
-            box-shadow: 0 0 0 3px var(--accent-soft);
+            outline: none; border-color: #4C6FA0; background: var(--surface);
+            box-shadow: 0 0 0 3px #E4EAF3;
         }
         .guest-input-wrap .toggle-eye {
             position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
@@ -94,10 +97,10 @@
         .guest-remember-row label { display: flex; align-items: center; gap: 7px; color: var(--ink-muted); cursor: pointer; }
         .guest-submit {
             width: 100%; padding: 13px; border-radius: 100px; border: none;
-            background: var(--accent); color: #fff; font-size: 14.5px; font-weight: 700;
+            background: #4C6FA0; color: #fff; font-size: 14.5px; font-weight: 700;
             font-family: inherit; cursor: pointer; transition: background-color 0.15s ease, transform 0.08s ease;
         }
-        .guest-submit:hover { background: var(--accent-ink); }
+        .guest-submit:hover { background: #33507A; }
         .guest-submit:active { transform: translateY(1px); }
         .guest-footnote { text-align: center; font-size: 12px; color: var(--ink-faint); margin-top: 18px; }
 
