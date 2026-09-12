@@ -4,6 +4,7 @@
     $isEdit = isset($priceAdjustmentRequest);
     $existingItemsJson = $isEdit ? $priceAdjustmentRequest->items->map(fn ($i) => [
         'produk_id' => $i->produk_id,
+        'nama_produk_manual' => $i->nama_produk_manual,
         'harga_het' => (float) $i->harga_het,
         'harga_diskon' => (float) $i->harga_diskon,
         'link_etalase' => $i->link_etalase,
@@ -97,12 +98,14 @@
             <div class="field-row">
                 <div class="field" style="flex:2; margin-bottom:12px;">
                     <label>Produk</label>
-                    <select name="items[__INDEX__][produk_id]" class="sku-produk-select" onchange="isiHetItem(this)" required>
+                    <select name="items[__INDEX__][produk_id]" class="sku-produk-select" onchange="handleProdukChange(this)" required>
                         <option value="">— pilih dari Master Produk —</option>
                         @foreach ($produkOptions as $p)
                             <option value="{{ $p->id }}" data-het="{{ $p->harga_het }}">{{ \Illuminate\Support\Str::limit($p->nama, 45) }} ({{ $p->brand }})</option>
                         @endforeach
+                        <option value="manual">— Produk Paketan / Belum Ada di Database (isi manual) —</option>
                     </select>
+                    <input type="text" name="items[__INDEX__][nama_produk_manual]" class="sku-nama-manual-input" placeholder="Nama produk paketan..." style="display:none; margin-top:8px;">
                 </div>
                 <div class="field" style="flex:1; margin-bottom:12px;">
                     <label>HET (Rp)</label>
@@ -143,7 +146,16 @@
             if (prefill) {
                 const rows = document.querySelectorAll('#skuItemsContainer .sku-item-row');
                 const row = rows[rows.length - 1];
-                row.querySelector('.sku-produk-select').value = prefill.produk_id ?? '';
+                const select = row.querySelector('.sku-produk-select');
+                if (!prefill.produk_id && prefill.nama_produk_manual) {
+                    select.value = 'manual';
+                    const manualInput = row.querySelector('.sku-nama-manual-input');
+                    manualInput.style.display = '';
+                    manualInput.required = true;
+                    manualInput.value = prefill.nama_produk_manual;
+                } else {
+                    select.value = prefill.produk_id ?? '';
+                }
                 row.querySelector('.sku-het-input').value = prefill.harga_het ?? '';
                 row.querySelector('.sku-diskon-input').value = prefill.harga_diskon ?? '';
                 row.querySelector('.sku-link-input').value = prefill.link_etalase ?? '';
@@ -160,12 +172,23 @@
             btn.closest('.sku-item-row').remove();
         }
 
-        function isiHetItem(select) {
-            const opt = select.options[select.selectedIndex];
-            const het = opt ? opt.getAttribute('data-het') : null;
+        function handleProdukChange(select) {
             const row = select.closest('.sku-item-row');
-            if (het && het !== '' && het !== 'null') {
-                row.querySelector('.sku-het-input').value = Math.round(parseFloat(het));
+            const manualInput = row.querySelector('.sku-nama-manual-input');
+
+            if (select.value === 'manual') {
+                manualInput.style.display = '';
+                manualInput.required = true;
+            } else {
+                manualInput.style.display = 'none';
+                manualInput.required = false;
+                manualInput.value = '';
+
+                const opt = select.options[select.selectedIndex];
+                const het = opt ? opt.getAttribute('data-het') : null;
+                if (het && het !== '' && het !== 'null') {
+                    row.querySelector('.sku-het-input').value = Math.round(parseFloat(het));
+                }
             }
             hitungDiskonItem(row.querySelector('.sku-diskon-input'));
         }

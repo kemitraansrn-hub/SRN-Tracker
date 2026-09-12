@@ -183,6 +183,19 @@ class PriceAdjustmentRequestController extends Controller
      */
     private function validated(Request $request): array
     {
+        // Opsi "manual" di dropdown Produk (buat produk paketan yang gak ada
+        // di Master Produk) dikirim sebagai produk_id="manual" dari form —
+        // normalisasi ke null dulu sebelum divalidasi, biar rule
+        // exists:produk,id gak nabrak string "manual".
+        $items = collect($request->input('items', []))->map(function ($item) {
+            if (($item['produk_id'] ?? null) === 'manual') {
+                $item['produk_id'] = null;
+            }
+
+            return $item;
+        })->all();
+        $request->merge(['items' => $items]);
+
         $validated = $request->validate([
             'mitra_id' => ['required', 'exists:mitra,id'],
             'toko' => ['required', 'string', 'max:255'],
@@ -192,7 +205,8 @@ class PriceAdjustmentRequestController extends Controller
             'tanggal_selesai' => ['required', 'date', 'after_or_equal:tanggal_mulai'],
             'catatan' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.produk_id' => ['required', 'exists:produk,id'],
+            'items.*.produk_id' => ['nullable', 'required_without:items.*.nama_produk_manual', 'exists:produk,id'],
+            'items.*.nama_produk_manual' => ['nullable', 'required_without:items.*.produk_id', 'string', 'max:255'],
             'items.*.harga_het' => ['required', 'numeric', 'min:0'],
             'items.*.harga_diskon' => ['required', 'numeric', 'min:0'],
             'items.*.link_etalase' => ['required', 'url', 'max:500'],

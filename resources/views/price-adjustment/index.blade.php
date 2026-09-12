@@ -105,7 +105,7 @@
                                     <tbody>
                                         @forelse ($r->items as $it)
                                             <tr>
-                                                <td style="padding:6px 10px;">{{ $it->produk->nama ?? '—' }}</td>
+                                                <td style="padding:6px 10px;">{{ $it->namaProdukTampil() }}</td>
                                                 <td class="tnum" style="padding:6px 10px;">{{ number_format((float) $it->harga_het, 0, ',', '.') }}</td>
                                                 <td class="tnum" style="padding:6px 10px;">{{ number_format((float) $it->harga_diskon, 0, ',', '.') }}</td>
                                                 <td class="tnum" style="padding:6px 10px;">
@@ -148,7 +148,7 @@
                         <div style="margin-top:10px; display:flex; flex-direction:column; gap:4px;">
                             @foreach ($r->items as $it)
                                 <div style="font-size:12.5px;">
-                                    <b>{{ $it->produk->nama ?? '—' }}</b>
+                                    <b>{{ $it->namaProdukTampil() }}</b>
                                     <span style="color:var(--ink-muted);">
                                         — HET {{ number_format((float) $it->harga_het, 0, ',', '.') }} &rarr; {{ number_format((float) $it->harga_diskon, 0, ',', '.') }}
                                         @if ($it->persentaseDiskon() !== null) ({{ $it->persentaseDiskon() }}%) @endif

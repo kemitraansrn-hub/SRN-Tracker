@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
-    'price_adjustment_request_id', 'produk_id', 'harga_het', 'harga_diskon', 'link_etalase',
+    'price_adjustment_request_id', 'produk_id', 'nama_produk_manual', 'harga_het', 'harga_diskon', 'link_etalase',
 ])]
 class PriceAdjustmentItem extends Model
 {
@@ -26,6 +26,11 @@ class PriceAdjustmentItem extends Model
     public function produk()
     {
         return $this->belongsTo(Produk::class);
+    }
+
+    public function namaProdukTampil(): string
+    {
+        return $this->produk->nama ?? $this->nama_produk_manual ?? '—';
     }
 
     public function persentaseDiskon(): ?float

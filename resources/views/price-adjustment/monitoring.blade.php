@@ -103,7 +103,7 @@
                                     <tbody>
                                         @forelse ($r->items as $it)
                                             <tr>
-                                                <td style="padding:6px 10px;">{{ $it->produk->nama ?? '—' }}</td>
+                                                <td style="padding:6px 10px;">{{ $it->namaProdukTampil() }}</td>
                                                 <td class="tnum" style="padding:6px 10px;">{{ number_format((float) $it->harga_het, 0, ',', '.') }}</td>
                                                 <td class="tnum" style="padding:6px 10px;">{{ number_format((float) $it->harga_diskon, 0, ',', '.') }}</td>
                                                 <td class="tnum" style="padding:6px 10px;">
