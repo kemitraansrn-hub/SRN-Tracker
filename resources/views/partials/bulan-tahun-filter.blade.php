@@ -6,12 +6,17 @@
       $tahun         (int, required)    — tahun terpilih
       $isBulanIni    (bool, optional)   — tampilkan tombol "Bulan Ini" kalau bukan bulan berjalan
       $resetAction   (string, optional) — route buat tombol "Bulan Ini" (default: $action)
+      $extraHidden   (array, optional)  — hidden input tambahan [name => value], mis. buat
+                                          nyimpen tab yang lagi aktif biar gak reset pas filter submit
 --}}
 @php
     $tahunMulai = $tahunMulai ?? now()->year - 3;
     $tahunSelesai = $tahunSelesai ?? now()->year + 1;
 @endphp
 <form method="GET" action="{{ $action }}" class="field-row" style="align-items:flex-end;">
+    @foreach ($extraHidden ?? [] as $name => $value)
+        <input type="hidden" name="{{ $name }}" value="{{ $value }}">
+    @endforeach
     <div class="field" style="margin-bottom:0;">
         <label>Bulan</label>
         <select class="select-pill" name="bulan" onchange="this.form.submit()">

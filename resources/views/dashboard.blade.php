@@ -2,22 +2,23 @@
 
 @php
     $rp = fn ($v) => 'Rp'.number_format((float) $v, 0, ',', '.');
+    $dashTabAktif = request('tab') === 'development' ? 'development' : 'sales';
 @endphp
 
 @section('content')
     <h1 class="display" style="font-size:24px; margin-bottom:16px;">Dashboard</h1>
 
     <div style="display:flex; gap:4px; margin-bottom:22px; border-bottom:1px solid var(--line);">
-        <button type="button" id="dashtab-sales-btn" onclick="switchDashboardTab('sales')" style="padding:10px 4px; margin-right:22px; background:none; border:none; border-bottom:2px solid var(--accent); font-family:inherit; font-size:14px; font-weight:700; color:var(--ink); cursor:pointer;">Sales</button>
-        <button type="button" id="dashtab-development-btn" onclick="switchDashboardTab('development')" style="padding:10px 4px; margin-right:22px; background:none; border:none; border-bottom:2px solid transparent; font-family:inherit; font-size:14px; font-weight:600; color:var(--ink-muted); cursor:pointer;">Development</button>
+        <button type="button" id="dashtab-sales-btn" onclick="switchDashboardTab('sales')" style="padding:10px 4px; margin-right:22px; background:none; border:none; border-bottom:2px solid {{ $dashTabAktif === 'sales' ? 'var(--accent)' : 'transparent' }}; font-family:inherit; font-size:14px; font-weight:{{ $dashTabAktif === 'sales' ? '700' : '600' }}; color:var(--{{ $dashTabAktif === 'sales' ? 'ink' : 'ink-muted' }}); cursor:pointer;">Sales</button>
+        <button type="button" id="dashtab-development-btn" onclick="switchDashboardTab('development')" style="padding:10px 4px; margin-right:22px; background:none; border:none; border-bottom:2px solid {{ $dashTabAktif === 'development' ? 'var(--accent)' : 'transparent' }}; font-family:inherit; font-size:14px; font-weight:{{ $dashTabAktif === 'development' ? '700' : '600' }}; color:var(--{{ $dashTabAktif === 'development' ? 'ink' : 'ink-muted' }}); cursor:pointer;">Development</button>
     </div>
 
-    <div id="dashtab-sales">
+    <div id="dashtab-sales" style="display:{{ $dashTabAktif === 'sales' ? '' : 'none' }};">
     <div class="topbar" style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:22px; flex-wrap:wrap;">
         <div style="color:var(--ink-muted); font-size:13px;">
             Ringkasan performa {{ auth()->user()->canViewAll() ? 'semua mitra' : 'mitra kamu' }} &mdash; {{ $periodeLabel }}
         </div>
-        @include('partials.bulan-tahun-filter', ['action' => route('dashboard'), 'bulan' => $bulanIni, 'tahun' => $tahunIni, 'isBulanIni' => $isBulanIni])
+        @include('partials.bulan-tahun-filter', ['action' => route('dashboard'), 'bulan' => $bulanIni, 'tahun' => $tahunIni, 'isBulanIni' => $isBulanIni, 'extraHidden' => ['tab' => 'sales'], 'resetAction' => route('dashboard', ['tab' => 'sales'])])
     </div>
 
     @php $kpiTileCount = ($companyTarget ? 1 : 0) + 1 + ($trendCard ? 1 : 0); @endphp
@@ -494,7 +495,13 @@
     @include('partials.reveal-on-scroll')
     </div>
 
-    <div id="dashtab-development" style="display:none;">
+    <div id="dashtab-development" style="display:{{ $dashTabAktif === 'development' ? '' : 'none' }};">
+        <div class="topbar" style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:22px; flex-wrap:wrap;">
+            <div style="color:var(--ink-muted); font-size:13px;">
+                Ringkasan Development &mdash; {{ $periodeLabel }}
+            </div>
+            @include('partials.bulan-tahun-filter', ['action' => route('dashboard'), 'bulan' => $bulanIni, 'tahun' => $tahunIni, 'isBulanIni' => $isBulanIni, 'extraHidden' => ['tab' => 'development'], 'resetAction' => route('dashboard', ['tab' => 'development'])])
+        </div>
         <div class="card" style="text-align:center; padding:60px 20px; color:var(--ink-muted);">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="margin:0 auto 16px; opacity:0.5;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <div style="font-size:15px; font-weight:600; color:var(--ink); margin-bottom:6px;">Segera Hadir</div>
