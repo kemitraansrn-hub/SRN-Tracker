@@ -2,10 +2,11 @@
 
 @php
     $rp = fn ($v) => 'Rp'.number_format((float) $v, 0, ',', '.');
+    $segTabAktif = request('tab') === 'portfolio' ? 'portfolio' : 'segmentasi';
 @endphp
 
 @section('content')
-    <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap; margin-bottom:24px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap; margin-bottom:16px;">
         <div>
             <h1 class="display" style="font-size:24px;">Segmentasi Mitra &mdash; {{ $segmen }}</h1>
             <div style="color:var(--ink-muted); font-size:13px; margin-top:4px;">
@@ -13,6 +14,7 @@
             </div>
         </div>
         <form method="GET" action="{{ route('segmentasi.show', $segmen) }}" class="field-row" style="align-items:flex-end;">
+            <input type="hidden" name="tab" value="{{ $segTabAktif }}">
             <div class="field" style="margin-bottom:0;">
                 <label>Bulan</label>
                 <select class="select-pill" name="bulan" onchange="this.form.submit()">
@@ -32,6 +34,12 @@
         </form>
     </div>
 
+    <div style="display:flex; gap:4px; margin-bottom:22px; border-bottom:1px solid var(--line);">
+        <button type="button" id="segtab-segmentasi-btn" onclick="switchSegmentasiTab('segmentasi')" style="padding:10px 4px; margin-right:22px; background:none; border:none; border-bottom:2px solid {{ $segTabAktif === 'segmentasi' ? 'var(--accent)' : 'transparent' }}; font-family:inherit; font-size:14px; font-weight:{{ $segTabAktif === 'segmentasi' ? '700' : '600' }}; color:var(--{{ $segTabAktif === 'segmentasi' ? 'ink' : 'ink-muted' }}); cursor:pointer;">Segmentasi Mitra</button>
+        <button type="button" id="segtab-portfolio-btn" onclick="switchSegmentasiTab('portfolio')" style="padding:10px 4px; margin-right:22px; background:none; border:none; border-bottom:2px solid {{ $segTabAktif === 'portfolio' ? 'var(--accent)' : 'transparent' }}; font-family:inherit; font-size:14px; font-weight:{{ $segTabAktif === 'portfolio' ? '700' : '600' }}; color:var(--{{ $segTabAktif === 'portfolio' ? 'ink' : 'ink-muted' }}); cursor:pointer;">Portfolio &amp; Assortment Health</button>
+    </div>
+
+    <div id="segtab-segmentasi" style="display:{{ $segTabAktif === 'segmentasi' ? '' : 'none' }};">
     <section style="display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; margin-bottom:20px;">
         <div class="card">
             <div class="info-label" style="margin-bottom:10px;">Jumlah Mitra</div>
@@ -82,7 +90,9 @@
             </table>
         </div>
     </section>
+    </div>
 
+    <div id="segtab-portfolio" style="display:{{ $segTabAktif === 'portfolio' ? '' : 'none' }};">
     @php
         $tierLabels = ['champion' => 'Champion', 'explorer' => 'Explorer', 'traditional' => 'Traditional', 'cherry_picker' => 'Cherry Picker'];
         $tierTotal = array_sum($segmentSummary['tier_counts']);
@@ -378,4 +388,18 @@
             </table>
         </div>
     </section>
+    </div>
+
+    <script>
+        function switchSegmentasiTab(tab) {
+            ['segmentasi', 'portfolio'].forEach(function (t) {
+                document.getElementById('segtab-' + t).style.display = (t === tab) ? '' : 'none';
+                var btn = document.getElementById('segtab-' + t + '-btn');
+                btn.style.borderBottomColor = (t === tab) ? 'var(--accent)' : 'transparent';
+                btn.style.color = (t === tab) ? 'var(--ink)' : 'var(--ink-muted)';
+                btn.style.fontWeight = (t === tab) ? '700' : '600';
+            });
+            document.querySelector('form[action*="segmentasi"] input[name="tab"]').value = tab;
+        }
+    </script>
 @endsection
