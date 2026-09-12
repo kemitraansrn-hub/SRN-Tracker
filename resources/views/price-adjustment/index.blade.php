@@ -11,7 +11,7 @@
 @section('content')
     <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:22px; flex-wrap:wrap;">
         <div>
-            <h1 class="display" style="font-size:24px;">Price Adjustment Monitoring</h1>
+            <h1 class="display" style="font-size:24px;">Price Adjustment</h1>
             <div style="color:var(--ink-muted); font-size:13px; margin-top:4px;">
                 {{ $requests->total() }} pengajuan izin penyesuaian harga
             </div>

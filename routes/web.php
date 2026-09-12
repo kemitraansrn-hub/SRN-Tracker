@@ -257,6 +257,8 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::patch('/{priceAdjustmentRequest}/decision', [PriceAdjustmentRequestController::class, 'decide'])->name('decision');
     });
 
+    Route::get('price-adjustment-monitoring', [PriceAdjustmentRequestController::class, 'monitoring'])->name('price-adjustment-monitoring.index');
+
     // Placeholder "Coming Soon" buat sisa menu Development — ganti satu-satu
     // dengan route/controller khusus begitu fiturnya beneran dibangun
     // (taruh route spesifiknya SEBELUM baris {page} ini biar gak ketiban

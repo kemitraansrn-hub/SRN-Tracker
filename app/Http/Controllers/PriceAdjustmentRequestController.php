@@ -49,6 +49,36 @@ class PriceAdjustmentRequestController extends Controller
         return view('price-adjustment.form', $this->formOptions());
     }
 
+    /**
+     * Halaman monitoring buat Compliance (dan role company-wide lain) —
+     * murni buat pantau (gak ada aksi Ajukan/Edit/Approve/Hapus di sini,
+     * itu semua tetap di halaman "Price Adjustment" punya Sales/KAE).
+     * Sengaja gak di-scope ke pengajuan sendiri kayak index() — monitoring
+     * ini emang buat lihat SEMUA data, makanya dikunci ke role yang
+     * canViewAll() aja.
+     */
+    public function monitoring(Request $request): View
+    {
+        abort_unless($request->user()->canViewAll(), 403);
+
+        $query = PriceAdjustmentRequest::with(['mitra', 'pengaju', 'penyetuju'])
+            ->when($request->filled('q'), fn ($q) => $q->where(function ($qq) use ($request) {
+                $qq->where('toko', 'like', '%'.$request->input('q').'%')
+                    ->orWhereHas('mitra', fn ($m) => $m->where('nama', 'like', '%'.$request->input('q').'%'));
+            }))
+            ->when($request->filled('status_approval'), fn ($q) => $q->where('status_approval', $request->input('status_approval')))
+            ->when($request->boolean('sudah_diputuskan'), fn ($q) => $q->whereIn('status_approval', ['Approved', 'Rejected']))
+            ->latest('tanggal_mulai');
+
+        return view('price-adjustment.monitoring', [
+            'requests' => $query->paginate(20)->withQueryString(),
+            'statusOptions' => self::STATUS_OPTIONS,
+            'pendingCount' => PriceAdjustmentRequest::where('status_approval', 'Pending')->count(),
+            'approvedCount' => PriceAdjustmentRequest::where('status_approval', 'Approved')->count(),
+            'rejectedCount' => PriceAdjustmentRequest::where('status_approval', 'Rejected')->count(),
+        ]);
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validated($request);
