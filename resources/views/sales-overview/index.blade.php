@@ -32,34 +32,64 @@
     @endphp
     <section style="display:grid; grid-template-columns:repeat(5, 1fr); gap:12px; margin-bottom:14px;">
         <div class="card" style="padding:13px 15px;">
-            <div class="info-label" style="margin-bottom:7px; font-size:11px;">Total Omset</div>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px; margin-bottom:7px;">
+                <div class="info-label" style="margin-bottom:0; font-size:11px;">Total Omset</div>
+                <div style="width:26px; height:26px; border-radius:8px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent-ink)" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01" stroke-linecap="round"/></svg>
+                </div>
+            </div>
             <div style="font-size:18px; font-weight:700;" class="tnum">{{ $rp($totalOmset) }}</div>
             <div style="margin-top:6px;">{!! $growthBadge($totalOmsetGrowth) !!}</div>
         </div>
         <div class="card" style="padding:13px 15px;">
-            <div class="info-label" style="margin-bottom:7px; font-size:11px;">Jumlah Order</div>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px; margin-bottom:7px;">
+                <div class="info-label" style="margin-bottom:0; font-size:11px;">Jumlah Order</div>
+                <div style="width:26px; height:26px; border-radius:8px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent-ink)" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
             <div style="font-size:18px; font-weight:700;" class="tnum">{{ $jumlahOrder }}</div>
             <div style="margin-top:6px;">{!! $growthBadge($jumlahOrderGrowth) !!}</div>
         </div>
         <div class="card" style="padding:13px 15px;">
-            <div class="info-label" style="margin-bottom:7px; font-size:11px;">Mitra Aktif</div>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px; margin-bottom:7px;">
+                <div class="info-label" style="margin-bottom:0; font-size:11px;">Mitra Aktif</div>
+                <div style="width:26px; height:26px; border-radius:8px; background:var(--good-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--good)" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87" stroke-linecap="round"/><path d="M16 3.13a4 4 0 0 1 0 7.75" stroke-linecap="round"/></svg>
+                </div>
+            </div>
             <div style="font-size:18px; font-weight:700;" class="tnum">{{ $mitraAktif }}</div>
             <div style="margin-top:6px;">{!! $growthBadge($mitraAktifGrowth) !!}</div>
         </div>
         <div class="card" style="padding:13px 15px;">
-            <div class="info-label" style="margin-bottom:7px; font-size:11px;">Rata-rata Order</div>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px; margin-bottom:7px;">
+                <div class="info-label" style="margin-bottom:0; font-size:11px;">Rata-rata Order</div>
+                <div style="width:26px; height:26px; border-radius:8px; background:var(--surface-alt); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
+                </div>
+            </div>
             <div style="font-size:18px; font-weight:700;" class="tnum">{{ $rp($rataRataOrder) }}</div>
             <div style="margin-top:6px;">{!! $growthBadge($rataRataOrderGrowth) !!}</div>
         </div>
         <div class="card" style="padding:13px 15px;">
-            <div class="info-label" style="margin-bottom:7px; font-size:11px;">Buy Back Pending</div>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px; margin-bottom:7px;">
+                <div class="info-label" style="margin-bottom:0; font-size:11px;">Buy Back Pending</div>
+                <div style="width:26px; height:26px; border-radius:8px; background:var(--warn-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 3v5h5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+            </div>
             <div style="font-size:18px; font-weight:700;" class="tnum">{{ $buybackPending }}</div>
         </div>
     </section>
 
     <section class="reveal-on-scroll" style="display:grid; grid-template-columns:repeat(12, 1fr); gap:14px; margin-bottom:14px; align-items:stretch;">
         <div class="card" style="grid-column:span 4; padding:14px 16px; display:flex; flex-direction:column;">
-            <div class="card-title" style="font-size:13px; margin-bottom:2px;">Sales Funnel</div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
+                <div style="width:26px; height:26px; border-radius:8px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent-ink)" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <div class="card-title" style="font-size:13px; margin-bottom:0;">Sales Funnel</div>
+            </div>
             <div class="card-hint" style="margin-bottom:12px;">Follow-up &rarr; Belanja, {{ $periodeLabel }}</div>
             <div style="flex:1; display:flex; flex-direction:column; justify-content:space-between; gap:10px;">
                 @foreach ($funnel as $s)
@@ -80,7 +110,12 @@
         </div>
 
         <div class="card" style="grid-column:span 8; padding:14px 16px; display:flex; flex-direction:column;">
-            <div class="card-title" style="font-size:13px; margin-bottom:2px;">Pencapaian KAE</div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
+                <div style="width:26px; height:26px; border-radius:8px; background:var(--highlight-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--highlight)" stroke-width="2"><path d="M8 21h8M12 17v4" stroke-linecap="round"/><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 5h2a2 2 0 0 1 0 4h-1M7 5H5a2 2 0 0 0 0 4h1" stroke-linecap="round"/></svg>
+                </div>
+                <div class="card-title" style="font-size:13px; margin-bottom:0;">Pencapaian KAE</div>
+            </div>
             <div class="card-hint" style="margin-bottom:12px;">Omset &amp; mitra aktif vs target, reactivation &amp; new mitra &mdash; {{ $periodeLabel }}</div>
             <div style="flex:1; display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
                 @forelse ($kaeAchievements as $k)
@@ -132,15 +167,30 @@
 
     <section class="reveal-on-scroll" style="display:grid; grid-template-columns:repeat(12, 1fr); gap:14px; margin-bottom:14px; align-items:stretch;">
         <div class="card" style="grid-column:span 4; padding:14px 16px;">
-            <div class="card-title" style="font-size:13px; margin-bottom:10px;">Omset per Brand</div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+                <div style="width:26px; height:26px; border-radius:8px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent-ink)" stroke-width="2"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82Z" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="7" r="1"/></svg>
+                </div>
+                <div class="card-title" style="font-size:13px; margin-bottom:0;">Omset per Brand</div>
+            </div>
             @include('partials.doughnut-chart', ['segments' => $brandSegments, 'size' => 120, 'strokeWidth' => 16])
         </div>
         <div class="card" style="grid-column:span 4; padding:14px 16px;">
-            <div class="card-title" style="font-size:13px; margin-bottom:10px;">Mitra per Segmentasi</div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+                <div style="width:26px; height:26px; border-radius:8px; background:var(--good-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--good)" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83" stroke-linecap="round"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                </div>
+                <div class="card-title" style="font-size:13px; margin-bottom:0;">Mitra per Segmentasi</div>
+            </div>
             @include('partials.doughnut-chart', ['segments' => $segmenSegments, 'size' => 120, 'strokeWidth' => 16])
         </div>
         <div class="card" style="grid-column:span 4; padding:14px 16px;">
-            <div class="card-title" style="font-size:13px; margin-bottom:2px;">Mitra per Bracket Omset</div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
+                <div style="width:26px; height:26px; border-radius:8px; background:var(--warn-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                </div>
+                <div class="card-title" style="font-size:13px; margin-bottom:0;">Mitra per Bracket Omset</div>
+            </div>
             <div class="card-hint" style="margin-bottom:10px;">{{ $periodeLabel }}</div>
             <div style="display:flex; align-items:flex-end; gap:10px; height:120px; padding:0 4px;">
                 @foreach ($bracketOmset as $b)
@@ -156,7 +206,12 @@
 
     <section class="reveal-on-scroll" style="display:grid; grid-template-columns:repeat(12, 1fr); gap:14px; align-items:stretch;">
         <div class="card" style="grid-column:span {{ $kaeContribSegments ? 6 : 12 }}; padding:14px 16px;">
-            <div class="card-title" style="font-size:13px; margin-bottom:2px;">Top 10 Mitra</div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
+                <div style="width:26px; height:26px; border-radius:8px; background:var(--highlight-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--highlight)" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" stroke-linejoin="round"/></svg>
+                </div>
+                <div class="card-title" style="font-size:13px; margin-bottom:0;">Top 10 Mitra</div>
+            </div>
             <div class="card-hint" style="margin-bottom:12px;">By omset {{ $periodeLabel }}</div>
             <div style="display:flex; flex-direction:column; gap:8px;">
                 @forelse ($top10Mitra as $m)
@@ -178,14 +233,24 @@
         @if ($kaeContribSegments)
             <div style="grid-column:span 6; display:flex; flex-direction:column; gap:14px;">
                 <div class="card" style="padding:14px 16px; flex:1; display:flex; flex-direction:column;">
-                    <div class="card-title" style="font-size:13px; margin-bottom:2px;">Contribute KAE</div>
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
+                        <div style="width:26px; height:26px; border-radius:8px; background:var(--good-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--good)" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87" stroke-linecap="round"/><path d="M16 3.13a4 4 0 0 1 0 7.75" stroke-linecap="round"/></svg>
+                        </div>
+                        <div class="card-title" style="font-size:13px; margin-bottom:0;">Contribute KAE</div>
+                    </div>
                     <div class="card-hint" style="margin-bottom:8px;">Kontribusi omset per KAE, {{ $periodeLabel }}</div>
                     <div style="flex:1; display:flex; align-items:center;">
                         @include('partials.doughnut-chart', ['segments' => $kaeContribSegments, 'size' => 100, 'strokeWidth' => 14])
                     </div>
                 </div>
                 <div class="card" style="padding:14px 16px; flex:1; display:flex; flex-direction:column;">
-                    <div class="card-title" style="font-size:13px; margin-bottom:2px;">Contribute per Segmen Mitra</div>
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
+                        <div style="width:26px; height:26px; border-radius:8px; background:var(--good-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--good)" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83" stroke-linecap="round"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                        </div>
+                        <div class="card-title" style="font-size:13px; margin-bottom:0;">Contribute per Segmen Mitra</div>
+                    </div>
                     <div class="card-hint" style="margin-bottom:8px;">Kontribusi omset per segmen, {{ $periodeLabel }}</div>
                     <div style="flex:1; display:flex; align-items:center;">
                         @include('partials.doughnut-chart', ['segments' => $segmenContribSegments, 'size' => 100, 'strokeWidth' => 14])
@@ -197,7 +262,12 @@
 
     <section class="reveal-on-scroll" style="margin-top:14px;">
         <div class="card" style="padding:14px 16px;">
-            <div class="card-title" style="font-size:13px; margin-bottom:2px;">Korelasi Mitra Aktif Berbelanja vs Omset</div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px;">
+                <div style="width:26px; height:26px; border-radius:8px; background:var(--surface-alt); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2"><path d="M3 21h18" stroke-linecap="round"/><path d="M3 21V3" stroke-linecap="round"/><circle cx="6" cy="18" r="1.4"/><circle cx="11" cy="10" r="1.4"/><circle cx="16" cy="14" r="1.4"/><circle cx="19" cy="6" r="1.4"/></svg>
+                </div>
+                <div class="card-title" style="font-size:13px; margin-bottom:0;">Korelasi Mitra Aktif Berbelanja vs Omset</div>
+            </div>
             <div class="card-hint" style="margin-bottom:10px;">
                 Tiap titik = 1 bulan, 6 bulan terakhir sampai {{ $periodeLabel }}{{ $isKae ? ' (mitra kamu)' : '' }}. Garis putus-putus = tren umum (regresi linear).
             </div>
