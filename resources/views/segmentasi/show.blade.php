@@ -3,6 +3,10 @@
 @php
     $rp = fn ($v) => 'Rp'.number_format((float) $v, 0, ',', '.');
     $segTabAktif = request('tab') === 'portfolio' ? 'portfolio' : 'segmentasi';
+    // Scrollbar vertikal tabel cuma muncul kalau datanya beneran banyak
+    // (>20 baris) — di bawah itu tabel tampil penuh apa adanya, gak perlu
+    // scroll buat lihat belasan baris doang.
+    $tableScrollStyle = $mitraList->count() > 20 ? '' : 'max-height:none; overflow-y:visible;';
 @endphp
 
 @section('content')
@@ -56,7 +60,7 @@
             <div class="card-title">Daftar Mitra &mdash; {{ $segmen }}</div>
             <div class="card-hint">{{ $mitraList->count() }} mitra</div>
         </div>
-        <div class="table-scroll">
+        <div class="table-scroll" style="{{ $tableScrollStyle }}">
             <table>
                 <thead><tr><th>Mitra</th><th>KAE</th><th>Omset</th><th>Target</th><th>% vs Target</th><th>Status</th><th></th></tr></thead>
                 <tbody>
@@ -233,7 +237,7 @@
             </div>
         </div>
 
-        <div class="table-scroll">
+        <div class="table-scroll" style="{{ $tableScrollStyle }}">
             <table>
                 <thead>
                     <tr>
