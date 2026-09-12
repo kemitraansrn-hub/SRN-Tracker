@@ -517,22 +517,42 @@
 
             <section style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:16px;">
                 <a href="{{ route('tracking-cp.index', ['dari' => $awalBulanCp, 'sampai' => $akhirBulanCp]) }}" class="card" style="min-width:0; text-decoration:none; color:inherit; display:block;" title="Lihat semua kasus {{ $periodeLabel }} di Tracking CP">
-                    <div class="info-label" style="margin-bottom:8px;">Total Kasus Cutting Price</div>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:8px;">
+                        <div class="info-label" style="margin-bottom:0;">Total Kasus Cutting Price</div>
+                        <div style="width:34px; height:34px; border-radius:10px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-ink)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke-linecap="round"/></svg>
+                        </div>
+                    </div>
                     <div class="tnum" style="font-size:25px; font-weight:700;">{{ $totalKasusCp }}</div>
                     <div style="font-size:11.5px; color:var(--ink-muted); margin-top:4px;">{{ $periodeLabel }}</div>
                 </a>
                 <div class="card" style="min-width:0;">
-                    <div class="info-label" style="margin-bottom:8px;">Kasus Toko Besar</div>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:8px;">
+                        <div class="info-label" style="margin-bottom:0;">Kasus Toko Besar</div>
+                        <div style="width:34px; height:34px; border-radius:10px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-ink)" stroke-width="2"><path d="M3 21h18" stroke-linecap="round"/><path d="M5 21V9l7-5 7 5v12" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 21v-6h6v6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                    </div>
                     <div class="tnum" style="font-size:25px; font-weight:700; color:var(--accent-ink);">{{ $kasusTokoBesarCount }}</div>
                     <div style="margin-top:8px;"><span class="chip chip-accent">{{ $pctTokoBesar !== null ? $pctTokoBesar.'%' : '—' }} dari total</span></div>
                 </div>
                 <div class="card" style="min-width:0;">
-                    <div class="info-label" style="margin-bottom:8px;">Kasus Toko Kecil</div>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:8px;">
+                        <div class="info-label" style="margin-bottom:0;">Kasus Toko Kecil</div>
+                        <div style="width:34px; height:34px; border-radius:10px; background:var(--good-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--good)" stroke-width="2"><path d="M3 21h18" stroke-linecap="round"/><path d="M5 21V9l7-5 7 5v12" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 21v-6h6v6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                    </div>
                     <div class="tnum" style="font-size:25px; font-weight:700; color:var(--good);">{{ $kasusTokoKecilCount }}</div>
                     <div style="margin-top:8px;"><span class="chip chip-good">{{ $pctTokoKecil !== null ? $pctTokoKecil.'%' : '—' }} dari total</span></div>
                 </div>
                 <a href="{{ $topPlatformCp ? route('tracking-cp.index', ['platform' => $topPlatformCp, 'dari' => $awalBulanCp, 'sampai' => $akhirBulanCp]) : '#' }}" class="card" style="min-width:0; text-decoration:none; color:inherit; display:block;" title="{{ $topPlatformCp ? 'Lihat kasus platform '.$topPlatformCp : '' }}">
-                    <div class="info-label" style="margin-bottom:8px;">Top Platform CP</div>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:8px;">
+                        <div class="info-label" style="margin-bottom:0;">Top Platform CP</div>
+                        <div style="width:34px; height:34px; border-radius:10px; background:var(--highlight-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--highlight)" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                        </div>
+                    </div>
                     <div style="font-size:18px; font-weight:700; margin-top:3px;">{{ $topPlatformCp ?? '—' }}</div>
                     @if ($topPlatformCp)
                         <div style="font-size:11.5px; color:var(--ink-muted); margin-top:4px;">{{ $platformBreakdownCp->first()->jumlah }} kasus</div>
