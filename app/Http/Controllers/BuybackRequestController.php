@@ -30,7 +30,7 @@ class BuybackRequestController extends Controller
         $user = $request->user();
 
         $requests = BuybackRequest::with(['mitra:id,nama,kode_mitra', 'items', 'creator:id,name', 'headApprover:id,name', 'financeApprover:id,name'])
-            ->when(! $user->isAdmin() && ! $user->isHead() && ! $user->isFinance(), fn ($q) => $q->where('created_by', $user->id))
+            ->when(! $user->isAdmin() && ! $user->canActAsHead() && ! $user->isFinance(), fn ($q) => $q->where('created_by', $user->id))
             ->latest()
             ->get();
 
@@ -140,7 +140,7 @@ class BuybackRequestController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->isAdmin() && ! $user->isHead() && ! $user->isFinance()) {
+        if (! $user->isAdmin() && ! $user->canActAsHead() && ! $user->isFinance()) {
             throw new HttpException(403, 'Kamu tidak punya akses untuk approve pengajuan ini.');
         }
 
@@ -152,7 +152,7 @@ class BuybackRequestController extends Controller
             return back()->withErrors(['status' => 'Pengajuan ini harus di-approve Head of SRN dulu sebelum Finance bisa approve.']);
         }
 
-        if ($user->isHead() && $buybackRequest->isHeadApproved()) {
+        if ($user->canActAsHead() && $buybackRequest->isHeadApproved()) {
             return back()->withErrors(['status' => 'Pengajuan ini sudah di-approve Head of SRN.']);
         }
 
@@ -162,7 +162,7 @@ class BuybackRequestController extends Controller
 
         $update = [];
 
-        if ($user->isAdmin() || $user->isHead()) {
+        if ($user->isAdmin() || $user->canActAsHead()) {
             $update['approved_by_head_id'] = $buybackRequest->approved_by_head_id ?? $user->id;
             $update['approved_by_head_at'] = $buybackRequest->approved_by_head_at ?? now();
         }

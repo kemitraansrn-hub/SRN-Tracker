@@ -211,7 +211,7 @@ class PoinRedemptionController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->isAdmin() && ! $user->isHead()) {
+        if (! $user->isAdmin() && ! $user->canActAsHead()) {
             throw new HttpException(403, 'Kamu tidak punya akses untuk approve pengajuan ini.');
         }
 

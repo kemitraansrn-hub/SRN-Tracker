@@ -58,6 +58,8 @@
                 <select name="role" id="roleSelect" onchange="toggleKaeCode()">
                     <option value="kae" {{ old('role', $targetUser->role ?? 'kae') === 'kae' ? 'selected' : '' }}>KAE</option>
                     <option value="admin" {{ old('role', $targetUser->role) === 'admin' ? 'selected' : '' }}>Admin</option>
+                    <option value="manager" {{ old('role', $targetUser->role) === 'manager' ? 'selected' : '' }}>Manager</option>
+                    <option value="supervisor" {{ old('role', $targetUser->role) === 'supervisor' ? 'selected' : '' }}>Supervisor</option>
                     <option value="head" {{ old('role', $targetUser->role) === 'head' ? 'selected' : '' }}>Head of SRN</option>
                     <option value="finance" {{ old('role', $targetUser->role) === 'finance' ? 'selected' : '' }}>Finance</option>
                     <option value="compliance" {{ old('role', $targetUser->role) === 'compliance' ? 'selected' : '' }}>Compliance</option>

@@ -50,16 +50,54 @@ class User extends Authenticatable
         return $this->role === 'compliance';
     }
 
-    /** Role dengan visibilitas company-wide (bukan cuma data KAE sendiri): admin, head, finance, compliance. */
-    public function canViewAll(): bool
+    public function isSupervisor(): bool
     {
-        return $this->isAdmin() || $this->isHead() || $this->isFinance() || $this->isCompliance();
+        return $this->role === 'supervisor';
     }
 
-    /** Head of SRN setara Admin penuh — dipakai buat gerbang akses/UI yang sebelumnya admin-only. */
+    public function isManager(): bool
+    {
+        return $this->role === 'manager';
+    }
+
+    /** Role dengan visibilitas company-wide (bukan cuma data KAE sendiri). */
+    public function canViewAll(): bool
+    {
+        return $this->isAdmin() || $this->isHead() || $this->isFinance() || $this->isCompliance()
+            || $this->isSupervisor() || $this->isManager();
+    }
+
+    /**
+     * Head of SRN & Manager setara Admin penuh; Supervisor dapat akses
+     * admin-only yang sama KECUALI grup menu Admin (lihat
+     * canAccessAdminGroup()) — dipakai buat gerbang akses/UI admin-only
+     * yang ada di luar grup Admin (Mitra, Order, AR, Special Deal, dst).
+     */
     public function hasAdminAccess(): bool
     {
-        return $this->isAdmin() || $this->isHead();
+        return $this->isAdmin() || $this->isHead() || $this->isManager() || $this->isSupervisor();
+    }
+
+    /**
+     * Khusus grup menu "Admin" di sidebar (Master Produk, Reward, Import,
+     * Pengaturan, Backup, Data Health, NPD, Users) — Supervisor sengaja
+     * TIDAK termasuk di sini sesuai instruksi "akses semua kecuali grup
+     * admin".
+     */
+    public function canAccessAdminGroup(): bool
+    {
+        return $this->isAdmin() || $this->isHead() || $this->isManager();
+    }
+
+    /**
+     * Keputusan yang sebelumnya "Head of SRN doang" (approve/reject
+     * takedown, approve Buyback/Poin Redemption): Manager dianggap setara
+     * Head sepenuhnya, dan Supervisor ikut kebagian karena bukan bagian
+     * dari grup Admin yang dikecualikan.
+     */
+    public function canActAsHead(): bool
+    {
+        return $this->isHead() || $this->isManager() || $this->isSupervisor();
     }
 
     public function photoUrl(): ?string

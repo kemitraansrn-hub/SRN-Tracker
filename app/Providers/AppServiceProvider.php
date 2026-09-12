@@ -30,15 +30,16 @@ class AppServiceProvider extends ServiceProvider
         // harian, belum di-review) — dipasang di layout utama biar
         // kelihatan di semua halaman, admin doang yang urus Master Produk.
         View::composer('layouts.app', function ($view) {
-            $view->with('produkBaruCount', Auth::check() && Auth::user()->hasAdminAccess()
+            $view->with('produkBaruCount', Auth::check() && Auth::user()->canAccessAdminGroup()
                 ? Produk::pendingReview()->count()
                 : 0);
 
-            // Badge notifikasi "pengajuan takedown menunggu approval" — cuma
-            // Head of SRN yang boleh approve/reject, jadi cuma dia yang perlu
-            // lihat badge-nya (Admin sengaja gak ikut, approval-nya harus
-            // jelas tanggung jawab Head).
-            $view->with('takedownApprovalCount', Auth::check() && Auth::user()->isHead()
+            // Badge notifikasi "pengajuan takedown menunggu approval" — Head
+            // of SRN, Manager (setara Head), dan Supervisor (bukan bagian
+            // grup Admin yang dikecualikan) yang boleh approve/reject (Admin
+            // sengaja gak ikut, approval-nya harus jelas tanggung jawab
+            // Head/setaranya, bukan sekadar wewenang admin).
+            $view->with('takedownApprovalCount', Auth::check() && Auth::user()->canActAsHead()
                 ? CpCase::where('status_takedown', 'Menunggu Approval')->count()
                 : 0);
 

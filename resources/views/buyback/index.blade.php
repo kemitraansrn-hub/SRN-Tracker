@@ -61,7 +61,7 @@
                                 @if ($r->isHeadApproved())
                                     <span class="chip chip-good">{{ $r->headApprover->name ?? '✓' }}</span>
                                     <div style="font-size:11px; color:var(--ink-muted); margin-top:3px;">{{ $r->approved_by_head_at?->format('d/m/Y') }}</div>
-                                @elseif (auth()->user()->isAdmin() || auth()->user()->isHead())
+                                @elseif (auth()->user()->isAdmin() || auth()->user()->canActAsHead())
                                     <form method="POST" action="{{ route('buyback.approve', $r) }}" onsubmit="return confirm('Approve (sebagai Head of SRN) pengajuan buy back untuk {{ $r->mitra->nama ?? 'mitra ini' }}?');">
                                         @csrf
                                         <button type="submit" class="btn btn-primary" style="width:auto; font-size:11.5px; padding:5px 10px;">Approve</button>

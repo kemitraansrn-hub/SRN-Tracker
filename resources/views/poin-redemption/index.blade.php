@@ -63,7 +63,7 @@
                             <td>{{ $r->approver->name ?? '—' }}</td>
                             <td>
                                 <div style="display:flex; gap:6px;">
-                                    @if (! $r->isApproved() && (auth()->user()->isAdmin() || auth()->user()->isHead()))
+                                    @if (! $r->isApproved() && (auth()->user()->isAdmin() || auth()->user()->canActAsHead()))
                                         <form method="POST" action="{{ route('poin-redemption.approve', $r) }}" onsubmit="return confirm('Approve penukaran poin untuk {{ $r->mitra->nama ?? 'mitra ini' }}?');">
                                             @csrf
                                             <button type="submit" class="btn btn-primary" style="width:auto; font-size:11.5px; padding:5px 10px;">Approve</button>

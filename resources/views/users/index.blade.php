@@ -47,6 +47,10 @@
                                     <span class="chip" style="background:var(--accent-soft); color:var(--accent-ink);">Admin</span>
                                 @elseif ($u->role === 'head')
                                     <span class="chip chip-highlight">Head of SRN</span>
+                                @elseif ($u->role === 'manager')
+                                    <span class="chip chip-highlight">Manager</span>
+                                @elseif ($u->role === 'supervisor')
+                                    <span class="chip chip-neutral">Supervisor</span>
                                 @elseif ($u->role === 'finance')
                                     <span class="chip chip-good">Finance</span>
                                 @elseif ($u->role === 'compliance')
