@@ -569,7 +569,15 @@
                     $belumLen = ($kasusTokoBelumDiketahuiCount / $totalKasusCp) * $cpDonutCirc;
                 @endphp
                 <div class="card" style="min-width:0;">
-                    <div class="card-head"><div class="card-title">Distribusi Ukuran Toko</div><div class="card-hint">{{ $periodeLabel }}</div></div>
+                    <div class="card-head">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div style="width:28px; height:28px; border-radius:8px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-ink)" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83" stroke-linecap="round"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                            </div>
+                            <div class="card-title">Distribusi Ukuran Toko</div>
+                        </div>
+                        <div class="card-hint">{{ $periodeLabel }}</div>
+                    </div>
                     <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
                         <svg width="104" height="104" viewBox="0 0 100 100" style="flex-shrink:0;">
                             <circle cx="50" cy="50" r="{{ $cpDonutR }}" fill="none" stroke="var(--line)" stroke-width="12"/>
@@ -607,7 +615,15 @@
                 </div>
 
                 <div class="card" style="min-width:0;">
-                    <div class="card-head"><div class="card-title">Kasus per Platform</div><div class="card-hint">{{ $periodeLabel }}</div></div>
+                    <div class="card-head">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div style="width:28px; height:28px; border-radius:8px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-ink)" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                            </div>
+                            <div class="card-title">Kasus per Platform</div>
+                        </div>
+                        <div class="card-hint">{{ $periodeLabel }}</div>
+                    </div>
                     @php $maxPlatformCount = $platformBreakdownCp->max('jumlah') ?: 1; $platformBarMaxH = 130; @endphp
                     <div style="display:flex; align-items:flex-end; justify-content:{{ $platformBreakdownCp->count() <= 3 ? 'center' : 'space-between' }}; gap:18px; height:{{ $platformBarMaxH + 46 }}px; padding:0 4px;">
                         @foreach ($platformBreakdownCp as $p)
@@ -624,7 +640,15 @@
 
             <section style="display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; margin-bottom:16px; align-items:stretch;">
                 <div class="card" style="min-width:0;">
-                    <div class="card-head"><div class="card-title">AVG %CP &amp; Harga Pelanggaran</div><div class="card-hint">Toko Besar vs Toko Kecil</div></div>
+                    <div class="card-head">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div style="width:28px; height:28px; border-radius:8px; background:var(--surface-alt); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2"><path d="M12 3v18" stroke-linecap="round"/><path d="M5 7h14" stroke-linecap="round"/><path d="M9 21h6" stroke-linecap="round"/><path d="M5 7l-3 7a3 3 0 0 0 6 0z" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 7l-3 7a3 3 0 0 0 6 0z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </div>
+                            <div class="card-title">AVG %CP &amp; Harga Pelanggaran</div>
+                        </div>
+                        <div class="card-hint">Toko Besar vs Toko Kecil</div>
+                    </div>
 
                     <div style="margin-bottom:20px;">
                         <div class="info-label" style="margin-bottom:9px;">AVG % CP</div>
@@ -658,7 +682,15 @@
                 </div>
 
                 <div class="card" style="min-width:0;">
-                    <div class="card-head"><div class="card-title">Top SKU Cutting Price</div><div class="card-hint">{{ $periodeLabel }}</div></div>
+                    <div class="card-head">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div style="width:28px; height:28px; border-radius:8px; background:var(--highlight-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--highlight)" stroke-width="2"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" stroke-linejoin="round"/><path d="M3.3 7 12 12l8.7-5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 22V12" stroke-linecap="round"/></svg>
+                            </div>
+                            <div class="card-title">Top SKU Cutting Price</div>
+                        </div>
+                        <div class="card-hint">{{ $periodeLabel }}</div>
+                    </div>
                     @if ($topSkuCp->isEmpty())
                         <div style="color:var(--ink-faint); font-size:12.5px; text-align:center; padding:20px 0;">Belum ada produk tercatat.</div>
                     @else
