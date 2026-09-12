@@ -13,6 +13,7 @@ use App\Http\Controllers\DevelopmentModuleController;
 use App\Http\Controllers\FollowupLogController;
 use App\Http\Controllers\ForecastController;
 use App\Http\Controllers\ImportController;
+use App\Http\Controllers\KpiPartnershipComplianceController;
 use App\Http\Controllers\MitraController;
 use App\Http\Controllers\NpdProductController;
 use App\Http\Controllers\OrderController;
@@ -258,6 +259,8 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
     });
 
     Route::get('price-adjustment-monitoring', [PriceAdjustmentRequestController::class, 'monitoring'])->name('price-adjustment-monitoring.index');
+
+    Route::get('kpi-partnership-compliance', [KpiPartnershipComplianceController::class, 'index'])->name('kpi-partnership-compliance.index');
 
     // Placeholder "Coming Soon" buat sisa menu Development — ganti satu-satu
     // dengan route/controller khusus begitu fiturnya beneran dibangun

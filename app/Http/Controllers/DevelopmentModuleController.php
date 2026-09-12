@@ -15,7 +15,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class DevelopmentModuleController extends Controller
 {
     private const PAGES = [
-        'kpi-partnership-compliance' => 'KPI Partnership Compliance',
+        //
     ];
 
     public function show(string $page): View

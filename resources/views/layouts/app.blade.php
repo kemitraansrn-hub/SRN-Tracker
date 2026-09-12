@@ -176,7 +176,7 @@
                         <span class="nav-label">Pengajuan Buy Back</span>
                     </a>
                 @elseif (auth()->user()->isCompliance())
-                    @php $developmentActive = request()->routeIs('development.*', 'data-development.*', 'tracking-cp.*', 'takedown-banding.*', 'price-adjustment-monitoring.*'); @endphp
+                    @php $developmentActive = request()->routeIs('development.*', 'data-development.*', 'tracking-cp.*', 'takedown-banding.*', 'price-adjustment-monitoring.*', 'kpi-partnership-compliance.*'); @endphp
                     <a href="{{ route('dashboard') }}" class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" title="Dashboard">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
                         <span class="nav-label">Dashboard</span>
@@ -201,7 +201,7 @@
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" stroke-linecap="round" stroke-linejoin="round"/><line x1="4" y1="22" x2="4" y2="15" stroke-linecap="round"/></svg>
                             <span class="nav-label">Take Down &amp; Banding</span>
                         </a>
-                        <a href="{{ route('development.show', 'kpi-partnership-compliance') }}" class="nav-item {{ request()->routeIs('development.*') && request()->route('page') === 'kpi-partnership-compliance' ? 'active' : '' }}" title="KPI Partnership Compliance">
+                        <a href="{{ route('kpi-partnership-compliance.index') }}" class="nav-item {{ request()->routeIs('kpi-partnership-compliance.*') ? 'active' : '' }}" title="KPI Partnership Compliance">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             <span class="nav-label">KPI Partnership Compliance</span>
                         </a>
@@ -225,7 +225,7 @@
                     $salesRoutes = ['sales-overview.*', 'segmentasi.*', 'trend.*', 'omset-bulanan.*', 'weekly-plan.*', 'forecast.*', 'action-plan.*', 'mitra.*', 'order.*', 'followup.*', 'special-deal.*', 'ar.*', 'sales-draft.*', 'buyback.*', 'poin.*', 'poin-redemption.*', 'price-adjustment.*'];
                     $adminRoutes = ['reward.*', 'produk.*', 'import.*', 'data-health.*', 'pengaturan.*', 'run-rate-target.*', 'tier-target.*', 'buyback-setting.*', 'npd.*', 'users.*', 'backup.*'];
                     $salesActive = request()->routeIs(...$salesRoutes);
-                    $developmentActive = request()->routeIs('development.*', 'data-development.*', 'tracking-cp.*', 'takedown-banding.*', 'price-adjustment-monitoring.*');
+                    $developmentActive = request()->routeIs('development.*', 'data-development.*', 'tracking-cp.*', 'takedown-banding.*', 'price-adjustment-monitoring.*', 'kpi-partnership-compliance.*');
                     $adminActive = request()->routeIs(...$adminRoutes);
                 @endphp
 
@@ -339,7 +339,7 @@
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" stroke-linecap="round" stroke-linejoin="round"/><line x1="4" y1="22" x2="4" y2="15" stroke-linecap="round"/></svg>
                         <span class="nav-label">Take Down &amp; Banding</span>
                     </a>
-                    <a href="{{ route('development.show', 'kpi-partnership-compliance') }}" class="nav-item {{ request()->routeIs('development.*') && request()->route('page') === 'kpi-partnership-compliance' ? 'active' : '' }}" title="KPI Partnership Compliance">
+                    <a href="{{ route('kpi-partnership-compliance.index') }}" class="nav-item {{ request()->routeIs('kpi-partnership-compliance.*') ? 'active' : '' }}" title="KPI Partnership Compliance">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         <span class="nav-label">KPI Partnership Compliance</span>
                     </a>
