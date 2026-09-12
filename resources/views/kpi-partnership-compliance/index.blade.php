@@ -50,4 +50,36 @@
             </table>
         </div>
     </section>
+
+    <div style="margin:28px 0 14px;">
+        <h2 style="font-size:16px; font-weight:700; margin:0;">Contoh Perhitungan</h2>
+        <div style="color:var(--ink-muted); font-size:12.5px; margin-top:4px;">
+            Angka nyata dari data {{ $bulanNama }} {{ $tahun }}, biar tim ngerti asal Realisasi di atas dihitung dari mana.
+        </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:12px;">
+        @foreach ($kpis as $kpi)
+            <div class="card">
+                <div style="display:flex; align-items:baseline; gap:8px; margin-bottom:6px;">
+                    <span style="font-weight:700; font-size:13.5px;">{{ $kpi['no'] }}. {{ $kpi['nama'] }}</span>
+                    <span style="font-size:11px; color:var(--ink-muted);">(bobot {{ $kpi['bobot'] }}%, target {{ $kpi['target_label'] }})</span>
+                </div>
+                <div style="font-size:12.5px; color:var(--ink-muted); margin-bottom:10px;">Rumus: {{ $kpi['rumus'] }}</div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:13.5px;">
+                    <span class="tnum" style="font-weight:700;">{{ $kpi['numerator'] }}</span>
+                    <span style="color:var(--ink-muted); font-size:12.5px;">{{ $kpi['numerator_label'] }}</span>
+                    <span style="color:var(--ink-faint);">&divide;</span>
+                    <span class="tnum" style="font-weight:700;">{{ $kpi['denominator'] }}</span>
+                    <span style="color:var(--ink-muted); font-size:12.5px;">{{ $kpi['denominator_label'] }}</span>
+                    <span style="color:var(--ink-faint);">=</span>
+                    @if ($kpi['realisasi'] === null)
+                        <span style="color:var(--ink-faint); font-size:12.5px;">— (belum ada data buat dibagi)</span>
+                    @else
+                        <span class="chip {{ $kpi['tercapai'] ? 'chip-good' : 'chip-critical' }}">{{ $kpi['realisasi'] }}%</span>
+                    @endif
+                </div>
+            </div>
+        @endforeach
+    </div>
 @endsection

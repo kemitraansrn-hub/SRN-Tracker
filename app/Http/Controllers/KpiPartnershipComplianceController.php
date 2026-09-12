@@ -55,6 +55,11 @@ class KpiPartnershipComplianceController extends Controller
                 'target_op' => '>',
                 'realisasi' => $pct($mitraTeridentifikasi, $totalKasus),
                 'keterangan' => 'Mengukur kemampuan tim menemukan identitas mitra dari link pelanggaran yang ditemukan.',
+                'rumus' => 'Jumlah kasus dengan Mitra teridentifikasi ÷ Total kasus bulan ini',
+                'numerator' => $mitraTeridentifikasi,
+                'denominator' => $totalKasus,
+                'numerator_label' => 'kasus mitra teridentifikasi',
+                'denominator_label' => 'total kasus',
             ],
             [
                 'no' => 2,
@@ -65,6 +70,11 @@ class KpiPartnershipComplianceController extends Controller
                 'target_op' => '>',
                 'realisasi' => $pct($caseClosedCount, $caseClosedCount + $takenDownCount),
                 'keterangan' => 'Mengukur efektivitas follow up tim dalam membuat mitra menaikkan harga sesuai SOP tanpa perlu take down.',
+                'rumus' => 'Jumlah kasus Case Closed ÷ (Case Closed + Take Down) — kasus yang masih Progres/berjalan gak ikut dihitung',
+                'numerator' => $caseClosedCount,
+                'denominator' => $caseClosedCount + $takenDownCount,
+                'numerator_label' => 'kasus Case Closed',
+                'denominator_label' => 'kasus Case Closed + Take Down',
             ],
             [
                 'no' => 3,
@@ -75,6 +85,11 @@ class KpiPartnershipComplianceController extends Controller
                 'target_op' => '>',
                 'realisasi' => $pct($slaOnTimeCount, $totalKasus),
                 'keterangan' => 'Mengukur kecepatan tim dalam melakukan follow up terhadap pelanggaran yang ditemukan.',
+                'rumus' => 'Jumlah kasus dengan Follow Up 1 dilakukan maks H+1 dari Tanggal Temuan ÷ Total kasus bulan ini',
+                'numerator' => $slaOnTimeCount,
+                'denominator' => $totalKasus,
+                'numerator_label' => 'kasus FU 1 on-time (≤ H+1)',
+                'denominator_label' => 'total kasus',
             ],
             [
                 'no' => 4,
@@ -85,6 +100,11 @@ class KpiPartnershipComplianceController extends Controller
                 'target_op' => '>=',
                 'realisasi' => $pct($dokumentasiLengkapCount, $totalKasus),
                 'keterangan' => 'Mengukur kedisiplinan tim dalam melengkapi dokumentasi before-after setiap kasus.',
+                'rumus' => 'Jumlah kasus dengan Bukti Temuan (wajib selalu) & Bukti Case Close (wajib kalau udah Case Closed) lengkap ÷ Total kasus bulan ini',
+                'numerator' => $dokumentasiLengkapCount,
+                'denominator' => $totalKasus,
+                'numerator_label' => 'kasus dokumentasi lengkap',
+                'denominator_label' => 'total kasus',
             ],
         ];
 
