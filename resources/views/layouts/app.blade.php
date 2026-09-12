@@ -201,13 +201,13 @@
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" stroke-linecap="round" stroke-linejoin="round"/><line x1="4" y1="22" x2="4" y2="15" stroke-linecap="round"/></svg>
                             <span class="nav-label">Take Down &amp; Banding</span>
                         </a>
-                        <a href="{{ route('kpi-partnership-compliance.index') }}" class="nav-item {{ request()->routeIs('kpi-partnership-compliance.*') ? 'active' : '' }}" title="KPI Partnership Compliance">
-                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            <span class="nav-label">KPI Partnership Compliance</span>
-                        </a>
                         <a href="{{ route('price-adjustment-monitoring.index') }}" class="nav-item {{ request()->routeIs('price-adjustment-monitoring.*') ? 'active' : '' }}" title="Price Adjustment Monitoring">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
                             <span class="nav-label">Price Adjustment Monitoring</span>
+                        </a>
+                        <a href="{{ route('kpi-partnership-compliance.index') }}" class="nav-item {{ request()->routeIs('kpi-partnership-compliance.*') ? 'active' : '' }}" title="KPI Partnership Compliance">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span class="nav-label">KPI Partnership Compliance</span>
                         </a>
                     </div>
                 @else
@@ -339,16 +339,16 @@
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" stroke-linecap="round" stroke-linejoin="round"/><line x1="4" y1="22" x2="4" y2="15" stroke-linecap="round"/></svg>
                         <span class="nav-label">Take Down &amp; Banding</span>
                     </a>
-                    <a href="{{ route('kpi-partnership-compliance.index') }}" class="nav-item {{ request()->routeIs('kpi-partnership-compliance.*') ? 'active' : '' }}" title="KPI Partnership Compliance">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        <span class="nav-label">KPI Partnership Compliance</span>
-                    </a>
                     @if (auth()->user()->canViewAll())
                         <a href="{{ route('price-adjustment-monitoring.index') }}" class="nav-item {{ request()->routeIs('price-adjustment-monitoring.*') ? 'active' : '' }}" title="Price Adjustment Monitoring">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
                             <span class="nav-label">Price Adjustment Monitoring</span>
                         </a>
                     @endif
+                    <a href="{{ route('kpi-partnership-compliance.index') }}" class="nav-item {{ request()->routeIs('kpi-partnership-compliance.*') ? 'active' : '' }}" title="KPI Partnership Compliance">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span class="nav-label">KPI Partnership Compliance</span>
+                    </a>
                 </div>
 
                 @if (auth()->user()->canAccessAdminGroup())
