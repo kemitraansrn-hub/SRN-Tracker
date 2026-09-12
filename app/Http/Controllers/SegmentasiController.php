@@ -7,6 +7,7 @@ use App\Services\AchievementStatus;
 use App\Services\MitraHealthService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -55,9 +56,24 @@ class SegmentasiController extends Controller
         $mitraIds = $rows->pluck('id')->all();
         $kesehatanMitra = MitraHealthService::bulkForYtd($mitraIds, $ytdReference);
 
+        // Ringkasan segmen (tier, white space, dll di atas) tetap dihitung
+        // dari SEMUA mitra di segmen ($rows) — cuma tabelnya yang dipaginasi
+        // 20 baris, biar gak usah scroll vertikal buat scroll data yang
+        // banyak, tinggal pindah halaman.
+        $perPage = 20;
+        $page = (int) $request->input('page', 1);
+        $mitraListPage = new LengthAwarePaginator(
+            $rows->forPage($page, $perPage)->values(),
+            $rows->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
         return view('segmentasi.show', [
             'segmen' => $segmen,
             'mitraList' => $rows,
+            'mitraListPage' => $mitraListPage,
             'totalOmset' => $rows->sum('omset'),
             'totalTarget' => $rows->sum('target'),
             'periodeLabel' => $periode->translatedFormat('F Y'),

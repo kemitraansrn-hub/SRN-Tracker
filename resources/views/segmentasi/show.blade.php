@@ -3,10 +3,6 @@
 @php
     $rp = fn ($v) => 'Rp'.number_format((float) $v, 0, ',', '.');
     $segTabAktif = request('tab') === 'portfolio' ? 'portfolio' : 'segmentasi';
-    // Scrollbar vertikal tabel cuma muncul kalau datanya beneran banyak
-    // (>20 baris) — di bawah itu tabel tampil penuh apa adanya, gak perlu
-    // scroll buat lihat belasan baris doang.
-    $tableScrollStyle = $mitraList->count() > 20 ? '' : 'max-height:none; overflow-y:visible;';
 @endphp
 
 @section('content')
@@ -60,11 +56,11 @@
             <div class="card-title">Daftar Mitra &mdash; {{ $segmen }}</div>
             <div class="card-hint">{{ $mitraList->count() }} mitra</div>
         </div>
-        <div class="table-scroll" style="{{ $tableScrollStyle }}">
+        <div class="table-scroll" style="max-height:none; overflow-y:visible;">
             <table>
                 <thead><tr><th>Mitra</th><th>KAE</th><th>Omset</th><th>Target</th><th>% vs Target</th><th>Status</th><th></th></tr></thead>
                 <tbody>
-                    @forelse ($mitraList as $m)
+                    @forelse ($mitraListPage as $m)
                         <tr>
                             <td>
                                 <div style="font-weight:600;">{{ $m->nama }}</div>
@@ -94,6 +90,7 @@
             </table>
         </div>
     </section>
+    <div style="margin-top:16px;">{{ $mitraListPage->appends(['tab' => 'segmentasi'])->links() }}</div>
     </div>
 
     <div id="segtab-portfolio" style="display:{{ $segTabAktif === 'portfolio' ? '' : 'none' }};">
@@ -237,7 +234,7 @@
             </div>
         </div>
 
-        <div class="table-scroll" style="{{ $tableScrollStyle }}">
+        <div class="table-scroll" style="max-height:none; overflow-y:visible;">
             <table>
                 <thead>
                     <tr>
@@ -247,7 +244,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse ($mitraList as $m)
+                    @forelse ($mitraListPage as $m)
                         @php $h = $kesehatanMitra[$m->id] ?? null; @endphp
                         <tr>
                             <td>
@@ -392,6 +389,7 @@
             </table>
         </div>
     </section>
+    <div style="margin-top:16px;">{{ $mitraListPage->appends(['tab' => 'portfolio'])->links() }}</div>
     </div>
 
     <script>
