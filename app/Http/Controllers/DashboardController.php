@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CpCase;
 use App\Models\Mitra;
 use App\Models\NewMitraFlag;
 use App\Models\Order;
@@ -155,6 +156,51 @@ class DashboardController extends Controller
             ];
         }
 
+        // Dashboard Development, tim Partnership Compliance — ringkasan kasus
+        // Cutting Price bulan yang sama dengan filter Bulan/Tahun di atas.
+        // Toko Besar/Kecil ngikutin ambang batas yang sama kayak
+        // CpCase::statusToko() (terlaris >= 1000), kasus yang terlaris-nya
+        // belum keisi gak masuk ke Besar maupun Kecil.
+        $cpBaseQuery = fn () => CpCase::whereYear('tanggal_temuan', $now->year)->whereMonth('tanggal_temuan', $now->month);
+
+        $totalKasusCp = $cpBaseQuery()->count();
+        $kasusTokoBesarCount = $cpBaseQuery()->where('terlaris', '>=', 1000)->count();
+        $kasusTokoKecilCount = $cpBaseQuery()->whereNotNull('terlaris')->where('terlaris', '<', 1000)->count();
+        $kasusTokoBelumDiketahuiCount = $totalKasusCp - $kasusTokoBesarCount - $kasusTokoKecilCount;
+
+        $pctTokoBesar = $totalKasusCp > 0 ? round($kasusTokoBesarCount / $totalKasusCp * 100, 2) : null;
+        $pctTokoKecil = $totalKasusCp > 0 ? round($kasusTokoKecilCount / $totalKasusCp * 100, 2) : null;
+
+        $avgPctCpTokoBesar = $kasusTokoBesarCount > 0
+            ? round((float) $cpBaseQuery()->where('terlaris', '>=', 1000)->selectRaw('AVG((harga_sop - harga_pelanggaran) / harga_sop * 100) as v')->value('v'), 2)
+            : null;
+        $avgPctCpTokoKecil = $kasusTokoKecilCount > 0
+            ? round((float) $cpBaseQuery()->whereNotNull('terlaris')->where('terlaris', '<', 1000)->selectRaw('AVG((harga_sop - harga_pelanggaran) / harga_sop * 100) as v')->value('v'), 2)
+            : null;
+
+        $avgHargaPelanggaranTokoBesar = $kasusTokoBesarCount > 0
+            ? round($cpBaseQuery()->where('terlaris', '>=', 1000)->avg('harga_pelanggaran'))
+            : null;
+        $avgHargaPelanggaranTokoKecil = $kasusTokoKecilCount > 0
+            ? round($cpBaseQuery()->whereNotNull('terlaris')->where('terlaris', '<', 1000)->avg('harga_pelanggaran'))
+            : null;
+
+        $platformBreakdownCp = $cpBaseQuery()
+            ->select('platform', DB::raw('COUNT(*) as jumlah'))
+            ->groupBy('platform')
+            ->orderByDesc('jumlah')
+            ->get();
+        $topPlatformCp = $platformBreakdownCp->first()?->platform;
+
+        $topSkuCp = $cpBaseQuery()
+            ->whereNotNull('produk_id')
+            ->join('produk', 'produk.id', '=', 'cp_cases.produk_id')
+            ->select('produk.nama as nama_produk', DB::raw('COUNT(*) as jumlah'))
+            ->groupBy('produk.id', 'produk.nama')
+            ->orderByDesc('jumlah')
+            ->limit(5)
+            ->get();
+
         return view('dashboard', [
             'trendCard' => $trendCard,
             'companyTarget' => $companyTarget,
@@ -179,6 +225,19 @@ class DashboardController extends Controller
             'orderTerbaru' => $orderTerbaru,
             'runRate' => $runRate,
             'periodeLabel' => $now->translatedFormat('F Y'),
+            'totalKasusCp' => $totalKasusCp,
+            'kasusTokoBesarCount' => $kasusTokoBesarCount,
+            'kasusTokoKecilCount' => $kasusTokoKecilCount,
+            'kasusTokoBelumDiketahuiCount' => $kasusTokoBelumDiketahuiCount,
+            'pctTokoBesar' => $pctTokoBesar,
+            'pctTokoKecil' => $pctTokoKecil,
+            'avgPctCpTokoBesar' => $avgPctCpTokoBesar,
+            'avgPctCpTokoKecil' => $avgPctCpTokoKecil,
+            'avgHargaPelanggaranTokoBesar' => $avgHargaPelanggaranTokoBesar,
+            'avgHargaPelanggaranTokoKecil' => $avgHargaPelanggaranTokoKecil,
+            'platformBreakdownCp' => $platformBreakdownCp,
+            'topPlatformCp' => $topPlatformCp,
+            'topSkuCp' => $topSkuCp,
         ]);
     }
 

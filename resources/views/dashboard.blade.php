@@ -502,10 +502,176 @@
             </div>
             @include('partials.bulan-tahun-filter', ['action' => route('dashboard'), 'bulan' => $bulanIni, 'tahun' => $tahunIni, 'isBulanIni' => $isBulanIni, 'extraHidden' => ['tab' => 'development'], 'resetAction' => route('dashboard', ['tab' => 'development'])])
         </div>
+
+        <h2 style="font-size:16px; font-weight:700; margin:0 0 14px;">Partnership Compliance</h2>
+
+        @if ($totalKasusCp === 0)
+            <div class="card" style="text-align:center; padding:40px 20px; color:var(--ink-muted); margin-bottom:28px;">
+                Belum ada kasus Cutting Price tercatat di {{ $periodeLabel }}.
+            </div>
+        @else
+            @php
+                $awalBulanCp = \Carbon\Carbon::create($tahunIni, $bulanIni, 1)->startOfMonth()->toDateString();
+                $akhirBulanCp = \Carbon\Carbon::create($tahunIni, $bulanIni, 1)->endOfMonth()->toDateString();
+            @endphp
+
+            <section style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:16px;">
+                <a href="{{ route('tracking-cp.index', ['dari' => $awalBulanCp, 'sampai' => $akhirBulanCp]) }}" class="card" style="min-width:0; text-decoration:none; color:inherit; display:block;" title="Lihat semua kasus {{ $periodeLabel }} di Tracking CP">
+                    <div class="info-label" style="margin-bottom:8px;">Total Kasus Cutting Price</div>
+                    <div class="tnum" style="font-size:25px; font-weight:700;">{{ $totalKasusCp }}</div>
+                    <div style="font-size:11.5px; color:var(--ink-muted); margin-top:4px;">{{ $periodeLabel }}</div>
+                </a>
+                <div class="card" style="min-width:0;">
+                    <div class="info-label" style="margin-bottom:8px;">Kasus Toko Besar</div>
+                    <div class="tnum" style="font-size:25px; font-weight:700; color:var(--accent-ink);">{{ $kasusTokoBesarCount }}</div>
+                    <div style="margin-top:8px;"><span class="chip chip-accent">{{ $pctTokoBesar !== null ? $pctTokoBesar.'%' : '—' }} dari total</span></div>
+                </div>
+                <div class="card" style="min-width:0;">
+                    <div class="info-label" style="margin-bottom:8px;">Kasus Toko Kecil</div>
+                    <div class="tnum" style="font-size:25px; font-weight:700; color:var(--good);">{{ $kasusTokoKecilCount }}</div>
+                    <div style="margin-top:8px;"><span class="chip chip-good">{{ $pctTokoKecil !== null ? $pctTokoKecil.'%' : '—' }} dari total</span></div>
+                </div>
+                <a href="{{ $topPlatformCp ? route('tracking-cp.index', ['platform' => $topPlatformCp, 'dari' => $awalBulanCp, 'sampai' => $akhirBulanCp]) : '#' }}" class="card" style="min-width:0; text-decoration:none; color:inherit; display:block;" title="{{ $topPlatformCp ? 'Lihat kasus platform '.$topPlatformCp : '' }}">
+                    <div class="info-label" style="margin-bottom:8px;">Top Platform CP</div>
+                    <div style="font-size:18px; font-weight:700; margin-top:3px;">{{ $topPlatformCp ?? '—' }}</div>
+                    @if ($topPlatformCp)
+                        <div style="font-size:11.5px; color:var(--ink-muted); margin-top:4px;">{{ $platformBreakdownCp->first()->jumlah }} kasus</div>
+                    @endif
+                </a>
+            </section>
+
+            <section style="display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; margin-bottom:16px; align-items:stretch;">
+                @php
+                    $cpDonutR = 42;
+                    $cpDonutCirc = 2 * M_PI * $cpDonutR;
+                    $besarLen = ($kasusTokoBesarCount / $totalKasusCp) * $cpDonutCirc;
+                    $kecilLen = ($kasusTokoKecilCount / $totalKasusCp) * $cpDonutCirc;
+                    $belumLen = ($kasusTokoBelumDiketahuiCount / $totalKasusCp) * $cpDonutCirc;
+                @endphp
+                <div class="card" style="min-width:0;">
+                    <div class="card-head"><div class="card-title">Distribusi Ukuran Toko</div><div class="card-hint">{{ $periodeLabel }}</div></div>
+                    <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+                        <svg width="104" height="104" viewBox="0 0 100 100" style="flex-shrink:0;">
+                            <circle cx="50" cy="50" r="{{ $cpDonutR }}" fill="none" stroke="var(--line)" stroke-width="12"/>
+                            @if ($kasusTokoBesarCount > 0)
+                                <circle cx="50" cy="50" r="{{ $cpDonutR }}" fill="none" stroke="var(--accent)" stroke-width="12" stroke-dasharray="{{ $besarLen }} {{ $cpDonutCirc }}" stroke-dashoffset="0" transform="rotate(-90 50 50)"><title>Toko Besar: {{ $kasusTokoBesarCount }} kasus ({{ $pctTokoBesar }}%)</title></circle>
+                            @endif
+                            @if ($kasusTokoKecilCount > 0)
+                                <circle cx="50" cy="50" r="{{ $cpDonutR }}" fill="none" stroke="var(--good)" stroke-width="12" stroke-dasharray="{{ $kecilLen }} {{ $cpDonutCirc }}" stroke-dashoffset="{{ -$besarLen }}" transform="rotate(-90 50 50)"><title>Toko Kecil: {{ $kasusTokoKecilCount }} kasus ({{ $pctTokoKecil }}%)</title></circle>
+                            @endif
+                            @if ($kasusTokoBelumDiketahuiCount > 0)
+                                <circle cx="50" cy="50" r="{{ $cpDonutR }}" fill="none" stroke="var(--ink-faint)" stroke-width="12" stroke-dasharray="{{ $belumLen }} {{ $cpDonutCirc }}" stroke-dashoffset="{{ -($besarLen + $kecilLen) }}" transform="rotate(-90 50 50)"><title>Belum Diketahui: {{ $kasusTokoBelumDiketahuiCount }} kasus</title></circle>
+                            @endif
+                            <text x="50" y="50" text-anchor="middle" dominant-baseline="central" class="tnum" style="font-size:18px; font-weight:700; fill:var(--ink);">{{ $totalKasusCp }}</text>
+                        </svg>
+                        <div style="flex:1; min-width:140px;">
+                            <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+                                <span style="width:8px; height:8px; border-radius:50%; background:var(--accent); flex-shrink:0;"></span>
+                                <span style="font-size:12px; color:var(--ink-muted); flex:1;">Toko Besar</span>
+                                <span class="tnum" style="font-size:12.5px; font-weight:700;">{{ $kasusTokoBesarCount }}</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+                                <span style="width:8px; height:8px; border-radius:50%; background:var(--good); flex-shrink:0;"></span>
+                                <span style="font-size:12px; color:var(--ink-muted); flex:1;">Toko Kecil</span>
+                                <span class="tnum" style="font-size:12.5px; font-weight:700;">{{ $kasusTokoKecilCount }}</span>
+                            </div>
+                            @if ($kasusTokoBelumDiketahuiCount > 0)
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <span style="width:8px; height:8px; border-radius:50%; background:var(--ink-faint); flex-shrink:0;"></span>
+                                    <span style="font-size:12px; color:var(--ink-muted); flex:1;">Belum Diketahui</span>
+                                    <span class="tnum" style="font-size:12.5px; font-weight:700;">{{ $kasusTokoBelumDiketahuiCount }}</span>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="min-width:0;">
+                    <div class="card-head"><div class="card-title">Kasus per Platform</div><div class="card-hint">{{ $periodeLabel }}</div></div>
+                    @php $maxPlatformCount = $platformBreakdownCp->max('jumlah') ?: 1; @endphp
+                    <div style="display:flex; flex-direction:column; gap:11px;">
+                        @foreach ($platformBreakdownCp as $p)
+                            <a href="{{ route('tracking-cp.index', ['platform' => $p->platform, 'dari' => $awalBulanCp, 'sampai' => $akhirBulanCp]) }}" style="text-decoration:none; color:inherit; display:block;" title="Lihat {{ $p->jumlah }} kasus {{ $p->platform }} di Tracking CP">
+                                <div style="display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:4px;">
+                                    <span style="font-weight:600;">{{ $p->platform }}</span>
+                                    <span class="tnum" style="color:var(--ink-muted);">{{ $p->jumlah }} kasus</span>
+                                </div>
+                                <div style="height:8px; border-radius:4px; background:var(--line); overflow:hidden;">
+                                    <div style="height:100%; border-radius:4px; background:var(--accent); width:{{ round($p->jumlah / $maxPlatformCount * 100, 1) }}%; transition:width .3s ease;"></div>
+                                </div>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            </section>
+
+            <section style="display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; margin-bottom:16px; align-items:stretch;">
+                <div class="card" style="min-width:0;">
+                    <div class="card-head"><div class="card-title">AVG %CP &amp; Harga Pelanggaran</div><div class="card-hint">Toko Besar vs Toko Kecil</div></div>
+
+                    <div style="margin-bottom:20px;">
+                        <div class="info-label" style="margin-bottom:9px;">AVG % CP</div>
+                        @php $maxPct = max($avgPctCpTokoBesar ?? 0, $avgPctCpTokoKecil ?? 0) ?: 1; @endphp
+                        <div style="display:flex; flex-direction:column; gap:9px;">
+                            <div>
+                                <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px;"><span style="color:var(--ink-muted);">Toko Besar</span><span class="tnum" style="font-weight:700;">{{ $avgPctCpTokoBesar !== null ? $avgPctCpTokoBesar.'%' : '—' }}</span></div>
+                                <div style="height:7px; border-radius:4px; background:var(--line); overflow:hidden;"><div style="height:100%; background:var(--accent); width:{{ $avgPctCpTokoBesar !== null ? min($avgPctCpTokoBesar / $maxPct * 100, 100) : 0 }}%;"></div></div>
+                            </div>
+                            <div>
+                                <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px;"><span style="color:var(--ink-muted);">Toko Kecil</span><span class="tnum" style="font-weight:700;">{{ $avgPctCpTokoKecil !== null ? $avgPctCpTokoKecil.'%' : '—' }}</span></div>
+                                <div style="height:7px; border-radius:4px; background:var(--line); overflow:hidden;"><div style="height:100%; background:var(--good); width:{{ $avgPctCpTokoKecil !== null ? min($avgPctCpTokoKecil / $maxPct * 100, 100) : 0 }}%;"></div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="info-label" style="margin-bottom:9px;">AVG Harga Pelanggaran</div>
+                        @php $maxHarga = max($avgHargaPelanggaranTokoBesar ?? 0, $avgHargaPelanggaranTokoKecil ?? 0) ?: 1; @endphp
+                        <div style="display:flex; flex-direction:column; gap:9px;">
+                            <div>
+                                <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px;"><span style="color:var(--ink-muted);">Toko Besar</span><span class="tnum" style="font-weight:700;">{{ $avgHargaPelanggaranTokoBesar !== null ? $rp($avgHargaPelanggaranTokoBesar) : '—' }}</span></div>
+                                <div style="height:7px; border-radius:4px; background:var(--line); overflow:hidden;"><div style="height:100%; background:var(--accent); width:{{ $avgHargaPelanggaranTokoBesar !== null ? min($avgHargaPelanggaranTokoBesar / $maxHarga * 100, 100) : 0 }}%;"></div></div>
+                            </div>
+                            <div>
+                                <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px;"><span style="color:var(--ink-muted);">Toko Kecil</span><span class="tnum" style="font-weight:700;">{{ $avgHargaPelanggaranTokoKecil !== null ? $rp($avgHargaPelanggaranTokoKecil) : '—' }}</span></div>
+                                <div style="height:7px; border-radius:4px; background:var(--line); overflow:hidden;"><div style="height:100%; background:var(--good); width:{{ $avgHargaPelanggaranTokoKecil !== null ? min($avgHargaPelanggaranTokoKecil / $maxHarga * 100, 100) : 0 }}%;"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="min-width:0;">
+                    <div class="card-head"><div class="card-title">Top SKU Cutting Price</div><div class="card-hint">{{ $periodeLabel }}</div></div>
+                    @if ($topSkuCp->isEmpty())
+                        <div style="color:var(--ink-faint); font-size:12.5px; text-align:center; padding:20px 0;">Belum ada produk tercatat.</div>
+                    @else
+                        @php $maxSku = $topSkuCp->max('jumlah') ?: 1; @endphp
+                        <div style="display:flex; flex-direction:column; gap:13px;">
+                            @foreach ($topSkuCp as $i => $sku)
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <div style="width:22px; height:22px; border-radius:6px; background:var(--surface-alt); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:var(--ink-muted); flex-shrink:0;">{{ $i + 1 }}</div>
+                                    <div style="flex:1; min-width:0;">
+                                        <div style="display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:4px; gap:8px;">
+                                            <span style="font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ $sku->nama_produk }}">{{ $sku->nama_produk }}</span>
+                                            <span class="tnum" style="color:var(--ink-muted); flex-shrink:0;">{{ $sku->jumlah }} kasus</span>
+                                        </div>
+                                        <div style="height:6px; border-radius:4px; background:var(--line); overflow:hidden;">
+                                            <div style="height:100%; border-radius:4px; background:var(--highlight); width:{{ round($sku->jumlah / $maxSku * 100, 1) }}%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </section>
+        @endif
+
+        <h2 style="font-size:16px; font-weight:700; margin:28px 0 14px;">Growth Specialist</h2>
         <div class="card" style="text-align:center; padding:60px 20px; color:var(--ink-muted);">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="margin:0 auto 16px; opacity:0.5;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <div style="font-size:15px; font-weight:600; color:var(--ink); margin-bottom:6px;">Segera Hadir</div>
-            <div style="font-size:13px;">Dashboard Development masih dalam tahap perencanaan.</div>
+            <div style="font-size:13px;">Dashboard Growth Specialist masih dalam tahap perencanaan.</div>
         </div>
     </div>
 
