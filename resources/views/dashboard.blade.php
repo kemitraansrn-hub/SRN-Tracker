@@ -588,17 +588,14 @@
 
                 <div class="card" style="min-width:0;">
                     <div class="card-head"><div class="card-title">Kasus per Platform</div><div class="card-hint">{{ $periodeLabel }}</div></div>
-                    @php $maxPlatformCount = $platformBreakdownCp->max('jumlah') ?: 1; @endphp
-                    <div style="display:flex; flex-direction:column; gap:11px;">
+                    @php $maxPlatformCount = $platformBreakdownCp->max('jumlah') ?: 1; $platformBarMaxH = 130; @endphp
+                    <div style="display:flex; align-items:flex-end; justify-content:{{ $platformBreakdownCp->count() <= 3 ? 'center' : 'space-between' }}; gap:18px; height:{{ $platformBarMaxH + 46 }}px; padding:0 4px;">
                         @foreach ($platformBreakdownCp as $p)
-                            <a href="{{ route('tracking-cp.index', ['platform' => $p->platform, 'dari' => $awalBulanCp, 'sampai' => $akhirBulanCp]) }}" style="text-decoration:none; color:inherit; display:block;" title="Lihat {{ $p->jumlah }} kasus {{ $p->platform }} di Tracking CP">
-                                <div style="display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:4px;">
-                                    <span style="font-weight:600;">{{ $p->platform }}</span>
-                                    <span class="tnum" style="color:var(--ink-muted);">{{ $p->jumlah }} kasus</span>
-                                </div>
-                                <div style="height:8px; border-radius:4px; background:var(--line); overflow:hidden;">
-                                    <div style="height:100%; border-radius:4px; background:var(--accent); width:{{ round($p->jumlah / $maxPlatformCount * 100, 1) }}%; transition:width .3s ease;"></div>
-                                </div>
+                            @php $barH = max(6, round($p->jumlah / $maxPlatformCount * $platformBarMaxH)); @endphp
+                            <a href="{{ route('tracking-cp.index', ['platform' => $p->platform, 'dari' => $awalBulanCp, 'sampai' => $akhirBulanCp]) }}" style="display:flex; flex-direction:column; align-items:center; text-decoration:none; color:inherit; min-width:0; {{ $platformBreakdownCp->count() <= 3 ? 'width:70px;' : 'flex:1;' }}" title="Lihat {{ $p->jumlah }} kasus {{ $p->platform }} di Tracking CP">
+                                <span class="tnum" style="font-size:12.5px; font-weight:700; margin-bottom:6px;">{{ $p->jumlah }}</span>
+                                <div style="width:100%; max-width:48px; height:{{ $barH }}px; border-radius:7px 7px 3px 3px; background:var(--accent); transition:height .3s ease;"></div>
+                                <span style="font-size:11px; color:var(--ink-muted); margin-top:9px; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%;">{{ $p->platform }}</span>
                             </a>
                         @endforeach
                     </div>
