@@ -210,7 +210,7 @@
                     <div class="card-title">Special Deal Performance</div>
                     <div class="card-hint">{{ $periodeLabel }}</div>
                 </div>
-                <div class="table-scroll">
+                <div class="table-scroll" style="max-height:none; overflow-y:visible;">
                     <table>
                         <thead>
                             <tr>
