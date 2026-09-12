@@ -6,7 +6,6 @@ use App\Models\CpCase;
 use App\Models\CpTakedownBanding;
 use App\Models\KotaKabupaten;
 use App\Models\Mitra;
-use App\Models\PriceAdjustmentRequest;
 use App\Models\Produk;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -138,12 +137,6 @@ class CpCaseController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validated($request);
-
-        if ($data['mitra_id'] && PriceAdjustmentRequest::adaIzinAktif($data['mitra_id'], $data['tanggal_temuan'])) {
-            return back()->withInput()->withErrors([
-                'mitra_id' => 'Mitra ini punya izin Price Adjustment yang aktif & disetujui buat tanggal ini — penurunan harganya sah, jangan dicatat sebagai pelanggaran.',
-            ]);
-        }
 
         CpCase::create([
             ...$data,

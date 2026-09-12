@@ -4,17 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Models\Mitra;
 use App\Models\PriceAdjustmentRequest;
+use App\Models\Produk;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
- * "Price Adjustment Monitoring" — izin resmi dari Head buat mitra
- * menurunkan harga di marketplace, periode tanggal-mulai s/d tanggal-
- * selesai. Kalau lagi Approved & tanggalnya kena, Tracking CP otomatis
- * nolak dicatat kasus buat mitra itu (lihat
- * PriceAdjustmentRequest::adaIzinAktif(), dipanggil dari
- * CpCaseController::store()).
+ * "Price Adjustment" — izin resmi dari Head/Manager buat mitra
+ * menurunkan harga SKU tertentu di marketplace, periode tanggal-mulai
+ * s/d tanggal-selesai. 1 pengajuan = 1 mitra/toko, tapi bisa berisi
+ * banyak SKU (masing-masing punya HET, harga diskon yang diajukan, dan
+ * link etalase Shopee-nya sendiri) — lihat PriceAdjustmentItem.
+ *
+ * Sengaja TIDAK ada blokir otomatis ke Tracking CP: keputusan final soal
+ * "ini pelanggaran atau bukan" tetap di tangan Compliance secara manual,
+ * cuma dibantu visibility data dari halaman Price Adjustment Monitoring.
  */
 class PriceAdjustmentRequestController extends Controller
 {
@@ -28,7 +33,7 @@ class PriceAdjustmentRequestController extends Controller
     {
         $user = $request->user();
 
-        $query = PriceAdjustmentRequest::with(['mitra', 'pengaju', 'penyetuju'])
+        $query = PriceAdjustmentRequest::with(['mitra', 'pengaju', 'penyetuju', 'items.produk'])
             ->when(! $user->canViewAll(), fn ($q) => $q->where('diajukan_oleh', $user->id))
             ->when($request->filled('q'), fn ($q) => $q->where(function ($qq) use ($request) {
                 $qq->where('toko', 'like', '%'.$request->input('q').'%')
@@ -72,7 +77,7 @@ class PriceAdjustmentRequestController extends Controller
                 ->update(['dilihat_compliance_at' => now()]);
         }
 
-        $query = PriceAdjustmentRequest::with(['mitra', 'pengaju', 'penyetuju'])
+        $query = PriceAdjustmentRequest::with(['mitra', 'pengaju', 'penyetuju', 'items.produk'])
             ->when($request->filled('q'), fn ($q) => $q->where(function ($qq) use ($request) {
                 $qq->where('toko', 'like', '%'.$request->input('q').'%')
                     ->orWhereHas('mitra', fn ($m) => $m->where('nama', 'like', '%'.$request->input('q').'%'));
@@ -92,13 +97,17 @@ class PriceAdjustmentRequestController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $data = $this->validated($request);
+        [$data, $items] = $this->validated($request);
 
-        PriceAdjustmentRequest::create([
-            ...$data,
-            'status_approval' => 'Pending',
-            'diajukan_oleh' => $request->user()->id,
-        ]);
+        DB::transaction(function () use ($data, $items, $request) {
+            $priceAdjustmentRequest = PriceAdjustmentRequest::create([
+                ...$data,
+                'status_approval' => 'Pending',
+                'diajukan_oleh' => $request->user()->id,
+            ]);
+
+            $priceAdjustmentRequest->items()->createMany($items);
+        });
 
         return redirect()->route('price-adjustment.index')->with('status', 'Pengajuan penyesuaian harga berhasil dicatat.');
     }
@@ -107,14 +116,25 @@ class PriceAdjustmentRequestController extends Controller
     {
         abort_unless($priceAdjustmentRequest->status_approval === 'Pending', 403, 'Pengajuan yang sudah diputuskan tidak bisa diubah.');
 
-        return view('price-adjustment.form', [...$this->formOptions(), 'priceAdjustmentRequest' => $priceAdjustmentRequest]);
+        return view('price-adjustment.form', [
+            ...$this->formOptions(),
+            'priceAdjustmentRequest' => $priceAdjustmentRequest->load('items'),
+        ]);
     }
 
     public function update(Request $request, PriceAdjustmentRequest $priceAdjustmentRequest): RedirectResponse
     {
         abort_unless($priceAdjustmentRequest->status_approval === 'Pending', 403, 'Pengajuan yang sudah diputuskan tidak bisa diubah.');
 
-        $priceAdjustmentRequest->update($this->validated($request));
+        [$data, $items] = $this->validated($request);
+
+        DB::transaction(function () use ($priceAdjustmentRequest, $data, $items) {
+            $priceAdjustmentRequest->update($data);
+            // Simpel: buang semua item lama, catat ulang dari yang disubmit —
+            // gak perlu diff satu-satu soalnya jumlah SKU per pengajuan kecil.
+            $priceAdjustmentRequest->items()->delete();
+            $priceAdjustmentRequest->items()->createMany($items);
+        });
 
         return redirect()->route('price-adjustment.index')->with('status', 'Pengajuan berhasil diperbarui.');
     }
@@ -154,12 +174,16 @@ class PriceAdjustmentRequestController extends Controller
         return [
             'mitraOptions' => Mitra::where('status', 'aktif')->orderBy('nama')->get(['id', 'nama', 'kode_mitra']),
             'marketplaceOptions' => self::MARKETPLACE_OPTIONS,
+            'produkOptions' => Produk::where('status', 'aktif')->orderBy('nama')->get(['id', 'nama', 'brand', 'harga_het']),
         ];
     }
 
+    /**
+     * @return array{0: array<string, mixed>, 1: array<int, array<string, mixed>>}
+     */
     private function validated(Request $request): array
     {
-        $data = $request->validate([
+        $validated = $request->validate([
             'mitra_id' => ['required', 'exists:mitra,id'],
             'toko' => ['required', 'string', 'max:255'],
             'marketplace' => ['required', 'string', 'in:'.implode(',', self::MARKETPLACE_OPTIONS)],
@@ -167,8 +191,16 @@ class PriceAdjustmentRequestController extends Controller
             'tanggal_mulai' => ['required', 'date'],
             'tanggal_selesai' => ['required', 'date', 'after_or_equal:tanggal_mulai'],
             'catatan' => ['nullable', 'string'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.produk_id' => ['required', 'exists:produk,id'],
+            'items.*.harga_het' => ['required', 'numeric', 'min:0'],
+            'items.*.harga_diskon' => ['required', 'numeric', 'min:0'],
+            'items.*.link_etalase' => ['required', 'url', 'max:500'],
         ]);
 
-        return $data;
+        $items = array_values($validated['items']);
+        unset($validated['items']);
+
+        return [$validated, $items];
     }
 }

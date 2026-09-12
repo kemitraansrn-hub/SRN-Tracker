@@ -35,17 +35,8 @@ class PriceAdjustmentRequest extends Model
         return $this->belongsTo(User::class, 'disetujui_oleh');
     }
 
-    /**
-     * True kalau mitra ini punya izin price adjustment yang Approved dan
-     * tanggal-nya mencakup $tanggal — dipakai buat blokir input Tracking CP
-     * pas penurunan harganya memang sah/diizinkan.
-     */
-    public static function adaIzinAktif(int $mitraId, \DateTimeInterface|string $tanggal): bool
+    public function items()
     {
-        return static::where('mitra_id', $mitraId)
-            ->where('status_approval', 'Approved')
-            ->whereDate('tanggal_mulai', '<=', $tanggal)
-            ->whereDate('tanggal_selesai', '>=', $tanggal)
-            ->exists();
+        return $this->hasMany(PriceAdjustmentItem::class);
     }
 }
