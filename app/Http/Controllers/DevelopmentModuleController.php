@@ -15,7 +15,6 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class DevelopmentModuleController extends Controller
 {
     private const PAGES = [
-        'price-adjustment-monitoring' => 'Price Adjustment Monitoring',
         'kpi-partnership-compliance' => 'KPI Partnership Compliance',
     ];
 

@@ -18,6 +18,7 @@ use App\Http\Controllers\NpdProductController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PoinController;
 use App\Http\Controllers\PoinRedemptionController;
+use App\Http\Controllers\PriceAdjustmentRequestController;
 use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\RewardCatalogController;
 use App\Http\Controllers\RunRateTargetController;
@@ -244,6 +245,16 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
     Route::prefix('take-down-banding')->name('takedown-banding.')->group(function () {
         Route::get('/', [TakedownBandingController::class, 'index'])->name('index');
         Route::patch('/{cpTakedownBanding}', [TakedownBandingController::class, 'update'])->name('update');
+    });
+
+    Route::prefix('price-adjustment')->name('price-adjustment.')->group(function () {
+        Route::get('/', [PriceAdjustmentRequestController::class, 'index'])->name('index');
+        Route::get('/create', [PriceAdjustmentRequestController::class, 'create'])->name('create');
+        Route::post('/', [PriceAdjustmentRequestController::class, 'store'])->name('store');
+        Route::get('/{priceAdjustmentRequest}/edit', [PriceAdjustmentRequestController::class, 'edit'])->name('edit');
+        Route::put('/{priceAdjustmentRequest}', [PriceAdjustmentRequestController::class, 'update'])->name('update');
+        Route::delete('/{priceAdjustmentRequest}', [PriceAdjustmentRequestController::class, 'destroy'])->name('destroy');
+        Route::patch('/{priceAdjustmentRequest}/decision', [PriceAdjustmentRequestController::class, 'decide'])->name('decision');
     });
 
     // Placeholder "Coming Soon" buat sisa menu Development — ganti satu-satu
