@@ -8,9 +8,14 @@ use App\Models\KotaKabupaten;
 use App\Models\Mitra;
 use App\Models\PriceAdjustmentRequest;
 use App\Models\Produk;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * "Tracking CP" — log kasus pelanggaran cutting price yang ditemukan tim
@@ -41,7 +46,18 @@ class CpCaseController extends Controller
 
     public function index(Request $request): View
     {
-        $query = CpCase::with(['mitra', 'kotaKabupaten', 'produk', 'takedownBanding'])
+        $query = $this->filteredQuery($request);
+
+        return view('cp-case.index', [
+            'cases' => $query->paginate(20)->withQueryString(),
+            'statusOptions' => self::STATUS_KASUS_OPTIONS,
+            'platformOptions' => self::PLATFORM_OPTIONS,
+        ]);
+    }
+
+    private function filteredQuery(Request $request): Builder
+    {
+        return CpCase::with(['mitra', 'kotaKabupaten', 'produk', 'takedownBanding'])
             ->when($request->filled('q'), fn ($q) => $q->where(function ($qq) use ($request) {
                 $qq->where('nama_toko', 'like', '%'.$request->input('q').'%')
                     ->orWhere('kode', 'like', '%'.$request->input('q').'%')
@@ -55,11 +71,63 @@ class CpCaseController extends Controller
             ->when($request->filled('dari'), fn ($q) => $q->whereDate('tanggal_temuan', '>=', $request->input('dari')))
             ->when($request->filled('sampai'), fn ($q) => $q->whereDate('tanggal_temuan', '<=', $request->input('sampai')))
             ->latest('tanggal_temuan');
+    }
 
-        return view('cp-case.index', [
-            'cases' => $query->paginate(20)->withQueryString(),
-            'statusOptions' => self::STATUS_KASUS_OPTIONS,
-            'platformOptions' => self::PLATFORM_OPTIONS,
+    public function export(Request $request): StreamedResponse
+    {
+        $cases = $this->filteredQuery($request)->get();
+
+        $headers = [
+            'Kode', 'Tanggal Temuan', 'Mitra', 'Nama Toko', 'Platform', 'Kota',
+            'Terjual', 'Terlaris', 'Status Toko', 'Produk', 'Harga SOP', 'Harga Pelanggaran',
+            'Selisih %', 'Status Kasus', 'Keterangan',
+        ];
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Tracking CP');
+        $sheet->fromArray($headers, null, 'A1');
+        $sheet->getStyle('A1:O1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:O1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F2F5F9');
+        foreach ([10, 14, 20, 22, 14, 20, 10, 10, 12, 28, 14, 16, 10, 16, 26] as $col => $width) {
+            $sheet->getColumnDimensionByColumn($col + 1)->setWidth($width);
+        }
+
+        $row = 2;
+        foreach ($cases as $c) {
+            $keterangan = match (true) {
+                $c->status_kasus === 'Case Closed' => 'Mitra menaikan harga',
+                (bool) $c->takedownBanding => 'Take Down'.($c->takedownBanding->status_banding ? ' — Banding: '.$c->takedownBanding->status_banding : ''),
+                (bool) $c->status_takedown => $c->status_takedown,
+                default => '—',
+            };
+
+            $sheet->fromArray([
+                $c->kode,
+                $c->tanggal_temuan->format('d/m/Y'),
+                $c->namaMitraTampil(),
+                $c->nama_toko,
+                $c->platform,
+                $c->kotaKabupaten->nama ?? '—',
+                $c->terjual,
+                $c->terlaris,
+                $c->statusToko() ?? '—',
+                $c->produk->nama ?? '—',
+                (float) $c->harga_sop,
+                (float) $c->harga_pelanggaran,
+                $c->persentaseSelisih(),
+                $c->status_kasus,
+                $keterangan,
+            ], null, 'A'.$row);
+            $row++;
+        }
+
+        $filename = 'tracking-cp_'.now()->format('Y-m-d').'.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
     }
 

@@ -226,6 +226,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
 
     Route::prefix('tracking-cp')->name('tracking-cp.')->group(function () {
         Route::get('/', [CpCaseController::class, 'index'])->name('index');
+        Route::get('/export', [CpCaseController::class, 'export'])->name('export');
         Route::get('/create', [CpCaseController::class, 'create'])->name('create');
         Route::post('/', [CpCaseController::class, 'store'])->name('store');
         Route::get('/{cpCase}/edit', [CpCaseController::class, 'edit'])->name('edit');
