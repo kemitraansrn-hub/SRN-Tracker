@@ -50,7 +50,8 @@
             &larr; Kembali ke Form
         </a>
         <div style="display:flex; gap:8px;">
-            <a href="{{ route('growth-specialist.profiling-mitra.kartu-member', $mitra) }}" class="btn" style="width:auto; font-size:12.5px; padding:7px 14px; text-decoration:none; display:inline-block;" target="_blank">Cetak Kartu Member</a>
+            <a href="{{ route('growth-specialist.profiling-mitra.kartu-member', $mitra) }}" class="btn" style="width:auto; font-size:12.5px; padding:7px 14px; text-decoration:none; display:inline-block;" target="_blank">Lihat Kartu Member</a>
+            <a href="{{ route('growth-specialist.profiling-mitra.kartu-member.pdf', $mitra) }}" class="btn" style="width:auto; font-size:12.5px; padding:7px 14px; text-decoration:none; display:inline-block;">Download PDF Kartu Member</a>
             <button type="button" onclick="window.print()" class="btn btn-primary" style="width:auto; padding:8px 18px;">Cetak / Simpan PDF</button>
         </div>
     </div>
