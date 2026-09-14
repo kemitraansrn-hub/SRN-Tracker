@@ -156,11 +156,5 @@
 
         <div class="kartu-section-title">Catatan &amp; Tindak Lanjut KAE</div>
         <div class="kartu-box" style="padding:12px 14px; font-size:13px; min-height:60px; white-space:pre-line;">{{ $profil->catatan ?? '—' }}</div>
-
-        <div style="display:flex; justify-content:space-between; gap:16px; margin-top:32px; padding-top:16px; border-top:1px solid var(--line); font-size:12px; color:var(--ink-muted);">
-            <div>Dibuat oleh: {{ $kaeNama ?? auth()->user()->name }}</div>
-            <div>Tanggal: {{ now()->format('d/m/Y') }}</div>
-            <div>Disetujui oleh: ________________</div>
-        </div>
     </div>
 @endsection
