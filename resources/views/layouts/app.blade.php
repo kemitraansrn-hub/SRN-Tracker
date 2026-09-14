@@ -408,46 +408,30 @@
             </nav>
 
             <div class="sidebar-foot">
-                @if (auth()->user()->canAccessAdminGroup())
-                    <a href="{{ route('produk.notifications') }}" title="Notifikasi produk baru" aria-label="Notifikasi produk baru" style="position:relative; display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; color:var(--ink-muted); flex-shrink:0;">
+                <div class="notif-bell-wrap" style="position:relative; flex-shrink:0;">
+                    <button type="button" onclick="toggleNotifDropdown(event)" title="Notifikasi" aria-label="Notifikasi" style="position:relative; display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; color:var(--ink-muted); flex-shrink:0; background:none; border:none; cursor:pointer; font-family:inherit;">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.73 21a2 2 0 0 1-3.46 0" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        @if ($produkBaruCount > 0)
-                            <span style="position:absolute; top:2px; right:2px; min-width:16px; height:16px; padding:0 3px; border-radius:8px; background:#E0483C; color:#fff; font-size:10px; font-weight:700; line-height:16px; text-align:center;">{{ $produkBaruCount > 99 ? '99+' : $produkBaruCount }}</span>
+                        @if ($notifikasiUnreadCount > 0)
+                            <span style="position:absolute; top:2px; right:2px; min-width:16px; height:16px; padding:0 3px; border-radius:8px; background:#E0483C; color:#fff; font-size:10px; font-weight:700; line-height:16px; text-align:center;">{{ $notifikasiUnreadCount > 99 ? '99+' : $notifikasiUnreadCount }}</span>
                         @endif
-                    </a>
-                @endif
-                @if (auth()->user()->canActAsHead())
-                    <a href="{{ route('tracking-cp.index', ['menunggu_approval' => 1]) }}" title="Pengajuan takedown menunggu approval" aria-label="Pengajuan takedown menunggu approval" style="position:relative; display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; color:var(--ink-muted); flex-shrink:0;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 7v5l3 3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        @if ($takedownApprovalCount > 0)
-                            <span style="position:absolute; top:2px; right:2px; min-width:16px; height:16px; padding:0 3px; border-radius:8px; background:#E0483C; color:#fff; font-size:10px; font-weight:700; line-height:16px; text-align:center;">{{ $takedownApprovalCount > 99 ? '99+' : $takedownApprovalCount }}</span>
-                        @endif
-                    </a>
-                @endif
-                @if (auth()->user()->isCompliance())
-                    <a href="{{ route('tracking-cp.index', ['keputusan_head' => 1]) }}" title="Kasus yang keputusan Head-nya udah keluar" aria-label="Kasus yang keputusan Head-nya udah keluar" style="position:relative; display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; color:var(--ink-muted); flex-shrink:0;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.73 21a2 2 0 0 1-3.46 0" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        @if ($takedownKeputusanCount > 0)
-                            <span style="position:absolute; top:2px; right:2px; min-width:16px; height:16px; padding:0 3px; border-radius:8px; background:#E0483C; color:#fff; font-size:10px; font-weight:700; line-height:16px; text-align:center;">{{ $takedownKeputusanCount > 99 ? '99+' : $takedownKeputusanCount }}</span>
-                        @endif
-                    </a>
-                @endif
-                @if (auth()->user()->isHeadOrManager())
-                    <a href="{{ route('price-adjustment.index', ['status_approval' => 'Pending']) }}" title="Pengajuan Price Adjustment menunggu approval" aria-label="Pengajuan Price Adjustment menunggu approval" style="position:relative; display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; color:var(--ink-muted); flex-shrink:0;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
-                        @if ($priceAdjustmentApprovalCount > 0)
-                            <span style="position:absolute; top:2px; right:2px; min-width:16px; height:16px; padding:0 3px; border-radius:8px; background:#E0483C; color:#fff; font-size:10px; font-weight:700; line-height:16px; text-align:center;">{{ $priceAdjustmentApprovalCount > 99 ? '99+' : $priceAdjustmentApprovalCount }}</span>
-                        @endif
-                    </a>
-                @endif
-                @if (auth()->user()->isCompliance())
-                    <a href="{{ route('price-adjustment-monitoring.index', ['sudah_diputuskan' => 1]) }}" title="Hasil keputusan Price Adjustment" aria-label="Hasil keputusan Price Adjustment" style="position:relative; display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; color:var(--ink-muted); flex-shrink:0;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
-                        @if ($priceAdjustmentKeputusanCount > 0)
-                            <span style="position:absolute; top:2px; right:2px; min-width:16px; height:16px; padding:0 3px; border-radius:8px; background:#E0483C; color:#fff; font-size:10px; font-weight:700; line-height:16px; text-align:center;">{{ $priceAdjustmentKeputusanCount > 99 ? '99+' : $priceAdjustmentKeputusanCount }}</span>
-                        @endif
-                    </a>
-                @endif
+                    </button>
+                    <div id="notifDropdown" style="display:none; position:absolute; bottom:42px; left:0; width:300px; max-height:380px; overflow-y:auto; background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:60;">
+                        <div style="padding:12px 14px; border-bottom:1px solid var(--line); font-size:12.5px; font-weight:700; color:var(--ink);">Notifikasi</div>
+                        @forelse ($notifikasiList as $n)
+                            <a href="{{ $n['href'] }}" style="display:block; padding:12px 14px; border-bottom:1px solid var(--line); text-decoration:none; color:inherit; {{ $n['unread'] ? 'background:var(--accent-soft);' : '' }}">
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                                    <span style="font-size:12.5px; font-weight:{{ $n['unread'] ? '700' : '500' }}; color:var(--ink); line-height:1.4;">{{ $n['label'] }}</span>
+                                    @if ($n['unread'])
+                                        <span style="width:8px; height:8px; border-radius:50%; background:#E0483C; flex-shrink:0; margin-top:3px;"></span>
+                                    @endif
+                                </div>
+                                <div class="tnum" style="font-size:11px; color:var(--ink-muted); margin-top:4px;">{{ $n['count'] }} item</div>
+                            </a>
+                        @empty
+                            <div style="padding:24px 14px; text-align:center; color:var(--ink-faint); font-size:12px;">Gak ada notifikasi.</div>
+                        @endforelse
+                    </div>
+                </div>
                 <div class="avatar" title="{{ auth()->user()->name }}">{{ collect(explode(' ', auth()->user()->name))->map(fn($w) => mb_substr($w, 0, 1))->take(2)->implode('') }}</div>
                 <div class="who-info" style="flex:1; min-width:0; overflow:hidden;">
                     <div class="who-name" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ auth()->user()->name }}</div>
@@ -498,6 +482,20 @@
             const collapsed = document.documentElement.classList.toggle('sidebar-collapsed');
             localStorage.setItem('srn-sidebar-collapsed', collapsed ? '1' : '0');
         }
+
+        function toggleNotifDropdown(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('notifDropdown');
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+
+        document.addEventListener('click', function (event) {
+            const wrap = document.querySelector('.notif-bell-wrap');
+            const dropdown = document.getElementById('notifDropdown');
+            if (wrap && dropdown && dropdown.style.display !== 'none' && !wrap.contains(event.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>

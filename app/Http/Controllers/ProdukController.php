@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Produk;
+use App\Services\NotificationCenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -73,8 +74,10 @@ class ProdukController extends Controller
      * harian, jadi otomatis ke-create di Master Produk — perlu di-review
      * manual (cek typo/duplikat) baru ditandai sudah dibaca.
      */
-    public function notifications(): View
+    public function notifications(Request $request): View
     {
+        NotificationCenter::dismiss($request->user(), 'produk_baru');
+
         return view('produk.notifications', [
             'pending' => Produk::pendingReview()->latest()->get(),
             'recentlyReviewed' => Produk::where('auto_created', true)->whereNotNull('reviewed_at')

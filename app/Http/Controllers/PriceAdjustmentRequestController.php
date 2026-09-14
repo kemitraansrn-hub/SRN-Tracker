@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Mitra;
 use App\Models\PriceAdjustmentRequest;
 use App\Models\Produk;
+use App\Services\NotificationCenter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +33,10 @@ class PriceAdjustmentRequestController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
+
+        if ($user->isHeadOrManager()) {
+            NotificationCenter::dismiss($user, 'price_adjustment_approval');
+        }
 
         $query = PriceAdjustmentRequest::with(['mitra', 'pengaju', 'penyetuju', 'items.produk'])
             ->when(! $user->canViewAll(), fn ($q) => $q->where('diajukan_oleh', $user->id))
@@ -66,15 +71,13 @@ class PriceAdjustmentRequestController extends Controller
     {
         abort_unless($request->user()->canViewAll(), 403);
 
-        // Matikan badge notifikasi keputusan buat Compliance begitu halaman
-        // ini dibuka — sengaja dikunci ke isCompliance() spesifik (bukan
-        // canViewAll() umum) soalnya badge-nya juga cuma buat Compliance,
-        // jangan sampai kebuka sama Admin/Head terus notifnya ikut hilang
-        // padahal Compliance-nya sendiri belum lihat.
+        // Tandai notifikasi "keputusan Price Adjustment" sudah dibaca buat
+        // user ini — sengaja dikunci ke isCompliance() spesifik (bukan
+        // canViewAll() umum) soalnya notifikasi ini emang cuma buat
+        // Compliance, jangan sampai kebuka sama Admin/Head terus notifnya
+        // ikut ke-dismiss padahal Compliance-nya sendiri belum lihat.
         if ($request->user()->isCompliance()) {
-            PriceAdjustmentRequest::whereIn('status_approval', ['Approved', 'Rejected'])
-                ->whereNull('dilihat_compliance_at')
-                ->update(['dilihat_compliance_at' => now()]);
+            NotificationCenter::dismiss($request->user(), 'price_adjustment_keputusan');
         }
 
         $query = PriceAdjustmentRequest::with(['mitra', 'pengaju', 'penyetuju', 'items.produk'])

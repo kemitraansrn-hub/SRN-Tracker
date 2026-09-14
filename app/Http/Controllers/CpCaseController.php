@@ -7,6 +7,7 @@ use App\Models\CpTakedownBanding;
 use App\Models\KotaKabupaten;
 use App\Models\Mitra;
 use App\Models\Produk;
+use App\Services\NotificationCenter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -45,6 +46,14 @@ class CpCaseController extends Controller
 
     public function index(Request $request): View
     {
+        $user = $request->user();
+        if ($user->canActAsHead()) {
+            NotificationCenter::dismiss($user, 'takedown_approval');
+        }
+        if ($user->isCompliance()) {
+            NotificationCenter::dismiss($user, 'takedown_keputusan');
+        }
+
         $query = $this->filteredQuery($request);
 
         return view('cp-case.index', [
