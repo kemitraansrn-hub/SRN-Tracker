@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'SRN' }}</title>
     <script>
         if (localStorage.getItem('srn-sidebar-collapsed') === '1') {
@@ -412,24 +413,32 @@
                     <button type="button" onclick="toggleNotifDropdown(event)" title="Notifikasi" aria-label="Notifikasi" style="position:relative; display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; color:var(--ink-muted); flex-shrink:0; background:none; border:none; cursor:pointer; font-family:inherit;">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.73 21a2 2 0 0 1-3.46 0" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         @if ($notifikasiUnreadCount > 0)
-                            <span style="position:absolute; top:2px; right:2px; min-width:16px; height:16px; padding:0 3px; border-radius:8px; background:#E0483C; color:#fff; font-size:10px; font-weight:700; line-height:16px; text-align:center;">{{ $notifikasiUnreadCount > 99 ? '99+' : $notifikasiUnreadCount }}</span>
+                            <span id="notifBadge" style="position:absolute; top:2px; right:2px; min-width:16px; height:16px; padding:0 3px; border-radius:8px; background:#E0483C; color:#fff; font-size:10px; font-weight:700; line-height:16px; text-align:center;">{{ $notifikasiUnreadCount > 99 ? '99+' : $notifikasiUnreadCount }}</span>
                         @endif
                     </button>
                     <div id="notifDropdown" style="display:none; position:absolute; bottom:42px; left:0; width:300px; max-height:380px; overflow-y:auto; background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); z-index:60;">
-                        <div style="padding:12px 14px; border-bottom:1px solid var(--line); font-size:12.5px; font-weight:700; color:var(--ink);">Notifikasi</div>
-                        @forelse ($notifikasiList as $n)
-                            <a href="{{ $n['href'] }}" style="display:block; padding:12px 14px; border-bottom:1px solid var(--line); text-decoration:none; color:inherit; {{ $n['unread'] ? 'background:var(--accent-soft);' : '' }}">
-                                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-                                    <span style="font-size:12.5px; font-weight:{{ $n['unread'] ? '700' : '500' }}; color:var(--ink); line-height:1.4;">{{ $n['label'] }}</span>
-                                    @if ($n['unread'])
-                                        <span style="width:8px; height:8px; border-radius:50%; background:#E0483C; flex-shrink:0; margin-top:3px;"></span>
-                                    @endif
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border-bottom:1px solid var(--line);">
+                            <span style="font-size:12.5px; font-weight:700; color:var(--ink);">Notifikasi</span>
+                            @if (count($notifikasiList) > 0)
+                                <button type="button" id="hapusSemuaBtn" onclick="hapusSemuaNotifikasi(event)" style="background:none; border:none; color:var(--ink-muted); font-size:11px; cursor:pointer; font-family:inherit; padding:2px;">Hapus Semua</button>
+                            @endif
+                        </div>
+                        <div id="notifItemsWrap">
+                            @forelse ($notifikasiList as $n)
+                                <div class="notif-item" data-kategori="{{ $n['kategori'] }}" style="display:flex; align-items:stretch; border-bottom:1px solid var(--line); background:var(--accent-soft);">
+                                    <a href="{{ $n['href'] }}" style="flex:1; min-width:0; display:block; padding:12px 14px; text-decoration:none; color:inherit;">
+                                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                                            <span style="font-size:12.5px; font-weight:700; color:var(--ink); line-height:1.4;">{{ $n['label'] }}</span>
+                                            <span style="width:8px; height:8px; border-radius:50%; background:#E0483C; flex-shrink:0; margin-top:3px;"></span>
+                                        </div>
+                                        <div class="tnum" style="font-size:11px; color:var(--ink-muted); margin-top:4px;">{{ $n['count'] }} item</div>
+                                    </a>
+                                    <button type="button" onclick="hapusNotifikasi(event, '{{ $n['kategori'] }}')" title="Hapus notifikasi ini" aria-label="Hapus notifikasi ini" style="background:none; border:none; color:var(--ink-faint); cursor:pointer; padding:0 12px; font-size:17px; line-height:1; flex-shrink:0; font-family:inherit;">&times;</button>
                                 </div>
-                                <div class="tnum" style="font-size:11px; color:var(--ink-muted); margin-top:4px;">{{ $n['count'] }} item</div>
-                            </a>
-                        @empty
-                            <div style="padding:24px 14px; text-align:center; color:var(--ink-faint); font-size:12px;">Gak ada notifikasi.</div>
-                        @endforelse
+                            @empty
+                                <div id="notifEmptyState" style="padding:24px 14px; text-align:center; color:var(--ink-faint); font-size:12px;">Gak ada notifikasi.</div>
+                            @endforelse
+                        </div>
                     </div>
                 </div>
                 <div class="avatar" title="{{ auth()->user()->name }}">{{ collect(explode(' ', auth()->user()->name))->map(fn($w) => mb_substr($w, 0, 1))->take(2)->implode('') }}</div>
@@ -496,6 +505,59 @@
                 dropdown.style.display = 'none';
             }
         });
+
+        function notifCsrfToken() {
+            return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        }
+
+        function refreshNotifBadgeAndEmptyState() {
+            const remaining = document.querySelectorAll('#notifItemsWrap .notif-item').length;
+            const badge = document.getElementById('notifBadge');
+            if (badge) {
+                if (remaining > 0) {
+                    badge.textContent = remaining > 99 ? '99+' : remaining;
+                } else {
+                    badge.remove();
+                }
+            }
+            const wrap = document.getElementById('notifItemsWrap');
+            if (remaining === 0 && wrap && !document.getElementById('notifEmptyState')) {
+                const empty = document.createElement('div');
+                empty.id = 'notifEmptyState';
+                empty.style.cssText = 'padding:24px 14px; text-align:center; color:var(--ink-faint); font-size:12px;';
+                empty.textContent = 'Gak ada notifikasi.';
+                wrap.appendChild(empty);
+            }
+            if (remaining === 0) {
+                const hapusSemuaBtn = document.getElementById('hapusSemuaBtn');
+                if (hapusSemuaBtn) hapusSemuaBtn.remove();
+            }
+        }
+
+        function hapusNotifikasi(event, kategori) {
+            event.preventDefault();
+            event.stopPropagation();
+            fetch('{{ url("notifications") }}/' + kategori + '/dismiss', {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': notifCsrfToken(), 'Accept': 'application/json' },
+            }).then(function () {
+                const item = document.querySelector('.notif-item[data-kategori="' + kategori + '"]');
+                if (item) item.remove();
+                refreshNotifBadgeAndEmptyState();
+            });
+        }
+
+        function hapusSemuaNotifikasi(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            fetch('{{ route("notifications.dismiss-all") }}', {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': notifCsrfToken(), 'Accept': 'application/json' },
+            }).then(function () {
+                document.querySelectorAll('#notifItemsWrap .notif-item').forEach(function (el) { el.remove(); });
+                refreshNotifBadgeAndEmptyState();
+            });
+        }
     </script>
 </body>
 </html>

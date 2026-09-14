@@ -90,12 +90,17 @@ class NotificationCenter
             );
         }
 
-        return array_values(array_filter($items, fn ($item) => $item['count'] > 0));
+        // Cuma kategori yang lagi unread yang ditampilin di dropdown — begitu
+        // di-dismiss (baik lewat kunjungan halaman ataupun tombol "Hapus"),
+        // item-nya ilang dari list sampai ada data baru lagi yang bikin
+        // kategori itu unread lagi.
+        return array_values(array_filter($items, fn ($item) => $item['unread']));
     }
 
     public static function unreadCount(User $user): int
     {
-        return collect(self::forUser($user))->where('unread', true)->count();
+        // forUser() udah cuma balikin item yang unread, jadi tinggal hitung.
+        return count(self::forUser($user));
     }
 
     /**

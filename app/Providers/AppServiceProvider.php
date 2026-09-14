@@ -33,7 +33,7 @@ class AppServiceProvider extends ServiceProvider
             $notifikasiList = Auth::check() ? NotificationCenter::forUser(Auth::user()) : [];
 
             $view->with('notifikasiList', $notifikasiList);
-            $view->with('notifikasiUnreadCount', collect($notifikasiList)->where('unread', true)->count());
+            $view->with('notifikasiUnreadCount', count($notifikasiList));
         });
     }
 }

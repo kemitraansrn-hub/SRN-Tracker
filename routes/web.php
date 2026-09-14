@@ -262,6 +262,11 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
 
     Route::get('kpi-partnership-compliance', [KpiPartnershipComplianceController::class, 'index'])->name('kpi-partnership-compliance.index');
 
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::post('/{kategori}/dismiss', [\App\Http\Controllers\NotificationController::class, 'dismiss'])->name('dismiss');
+        Route::post('/dismiss-all', [\App\Http\Controllers\NotificationController::class, 'dismissAll'])->name('dismiss-all');
+    });
+
     // Placeholder "Coming Soon" buat sisa menu Development — ganti satu-satu
     // dengan route/controller khusus begitu fiturnya beneran dibangun
     // (taruh route spesifiknya SEBELUM baris {page} ini biar gak ketiban
