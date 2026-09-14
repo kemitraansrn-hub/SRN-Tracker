@@ -281,7 +281,7 @@
                                             <div class="info-label" style="margin-bottom:8px;">Mitra {{ $r->segmen }} yang belum belanja bulan ini ({{ $belumBelanja->count() }})</div>
                                             <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:6px 16px;">
                                                 @foreach ($belumBelanja as $bb)
-                                                    <div style="font-size:12px; color:var(--ink-muted); min-width:0; overflow-wrap:break-word;">{{ $bb['nama'] }} <span style="color:var(--ink-faint);">({{ $bb['kode_mitra'] }})</span></div>
+                                                    <div style="font-size:12px; color:var(--ink-muted); min-width:0; white-space:normal; overflow-wrap:break-word;">{{ $bb['nama'] }} <span style="color:var(--ink-faint);">({{ $bb['kode_mitra'] }})</span></div>
                                                 @endforeach
                                             </div>
                                         </td>
@@ -293,7 +293,7 @@
                                             <div class="info-label" style="margin-bottom:8px;">Mitra {{ $r->segmen }} yang sudah belanja full bulan ini ({{ $belanjaFullList->count() }})</div>
                                             <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:6px 16px;">
                                                 @foreach ($belanjaFullList as $bf)
-                                                    <div style="font-size:12px; color:var(--ink-muted); min-width:0; overflow-wrap:break-word;">{{ $bf['nama'] }} <span style="color:var(--ink-faint);">({{ $bf['kode_mitra'] }}, {{ $bf['pct'] }}%)</span></div>
+                                                    <div style="font-size:12px; color:var(--ink-muted); min-width:0; white-space:normal; overflow-wrap:break-word;">{{ $bf['nama'] }} <span style="color:var(--ink-faint);">({{ $bf['kode_mitra'] }}, {{ $bf['pct'] }}%)</span></div>
                                                 @endforeach
                                             </div>
                                         </td>
