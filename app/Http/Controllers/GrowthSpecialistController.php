@@ -166,6 +166,21 @@ class GrowthSpecialistController extends Controller
             'catatan' => ['nullable', 'string'],
         ]);
 
+        // Field teks bebas sering di-copy-paste langsung dari Google Sheets —
+        // spasi/tab nyangkut di awal/akhir kalau user select cell-nya rada
+        // kelebihan. trim() di tiap baris (bukan cuma ujung-ujung string
+        // penuh) biar "Fokus A \nFokus B " juga bersih per barisnya, lalu
+        // string kosong dianggap "belum diisi" (null), bukan string kosong.
+        foreach (['no_wa', 'domisili_kota', 'tim_sendiri', 'jam_aktif', 'pengalaman_jualan', 'catatan'] as $field) {
+            if (! array_key_exists($field, $data) || $data[$field] === null) {
+                continue;
+            }
+
+            $trimmed = implode("\n", array_map('trim', explode("\n", $data[$field])));
+            $trimmed = trim($trimmed);
+            $data[$field] = $trimmed === '' ? null : $trimmed;
+        }
+
         MitraProfilGrowth::updateOrCreate(['mitra_id' => $mitra->id], $data);
 
         return redirect()->route('growth-specialist.profiling-mitra')
