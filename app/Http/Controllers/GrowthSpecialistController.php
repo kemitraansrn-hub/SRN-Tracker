@@ -7,8 +7,10 @@ use App\Models\Mitra;
 use App\Models\MitraProfilGrowth;
 use App\Models\TargetBulanan;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -158,6 +160,27 @@ class GrowthSpecialistController extends Controller
             'profil' => $profil,
             'provinsi' => $this->provinsiDariKota($profil->domisili_kota),
         ]);
+    }
+
+    /**
+     * Preview browser buat print custom @page size CR80 (85.6x53.98mm) gak
+     * konsisten antar printer/driver (sering kecetak kosong/kekecilan di
+     * kertas ukuran biasa). Download PDF di-generate server-side pakai
+     * DomPDF biar ukuran fisik kartunya presisi terjamin, gak tergantung
+     * setting printer — file mentahnya juga bisa langsung dikirim ke mitra
+     * buat dicetak sendiri.
+     */
+    public function kartuMemberPdf(Mitra $mitra): Response
+    {
+        $profil = $mitra->profilGrowth ?? new MitraProfilGrowth(['mitra_id' => $mitra->id]);
+
+        $pdf = Pdf::loadView('growth-specialist.profiling-mitra-kartu-member-pdf', [
+            'mitra' => $mitra,
+            'profil' => $profil,
+            'provinsi' => $this->provinsiDariKota($profil->domisili_kota),
+        ])->setPaper([0, 0, 242.65, 153.02]);
+
+        return $pdf->download('kartu-member-'.$mitra->kode_mitra.'.pdf');
     }
 
     /**

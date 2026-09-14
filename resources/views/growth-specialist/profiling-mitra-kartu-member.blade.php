@@ -45,8 +45,12 @@
         <a href="{{ route('growth-specialist.profiling-mitra.edit', $mitra) }}" style="display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-muted); text-decoration:none;">
             &larr; Kembali ke Form
         </a>
-        <button type="button" onclick="window.print()" class="btn btn-primary" style="width:auto; padding:8px 18px;">Cetak Kartu Member</button>
+        <div style="display:flex; gap:8px;">
+            <a href="{{ route('growth-specialist.profiling-mitra.kartu-member.pdf', $mitra) }}" class="btn btn-primary" style="width:auto; padding:8px 18px; text-decoration:none; display:inline-block;">Download PDF</a>
+            <button type="button" onclick="window.print()" class="btn" style="width:auto; padding:8px 18px;">Cetak Langsung</button>
+        </div>
     </div>
+    <div class="kartu-no-print card-hint" style="text-align:center; margin-bottom:16px;">Kalau tombol "Cetak Langsung" hasilnya kecil/kosong (tergantung printer), pakai "Download PDF" — ukurannya presisi kartu ID dan bisa langsung dikirim ke mitra.</div>
 
     <div class="card kartu-no-print" style="max-width:500px; margin:0 auto 24px; text-align:center; padding:24px; background:var(--surface-alt);">
         <div class="member-card">
