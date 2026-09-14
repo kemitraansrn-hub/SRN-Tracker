@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * biar gak ada nilai basi kalau salah satu kolom sumber diubah belakangan.
  */
 #[Fillable([
-    'mitra_id', 'status', 'no_wa', 'domisili_kota', 'tanggal_onboarding', 'modal_bisnis', 'modal_srn', 'cost',
+    'mitra_id', 'status', 'no_wa', 'domisili_kota', 'foto', 'tanggal_onboarding', 'modal_bisnis', 'modal_srn', 'cost',
     'tim_sendiri', 'platform_jualan', 'jam_aktif', 'pengalaman_jualan', 'tipe_channel',
     'channel_fokus_1', 'channel_fokus_2', 'motivasi', 'kemampuan', 'keaktifan',
     'deadline_setup_channel', 'target_traffic', 'target_leads', 'lms_status', 'catatan',
@@ -37,6 +37,11 @@ class MitraProfilGrowth extends Model
     public function mitra()
     {
         return $this->belongsTo(Mitra::class);
+    }
+
+    public function fotoUrl(): ?string
+    {
+        return $this->foto ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->foto) : null;
     }
 
     /**

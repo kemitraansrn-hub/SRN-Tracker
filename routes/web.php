@@ -268,6 +268,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::get('profiling-mitra/{mitra}', [\App\Http\Controllers\GrowthSpecialistController::class, 'edit'])->name('profiling-mitra.edit');
         Route::put('profiling-mitra/{mitra}', [\App\Http\Controllers\GrowthSpecialistController::class, 'update'])->name('profiling-mitra.update');
         Route::get('profiling-mitra/{mitra}/kartu', [\App\Http\Controllers\GrowthSpecialistController::class, 'kartu'])->name('profiling-mitra.kartu');
+        Route::get('profiling-mitra/{mitra}/kartu-member', [\App\Http\Controllers\GrowthSpecialistController::class, 'kartuMember'])->name('profiling-mitra.kartu-member');
         Route::get('kartu-profil-mitra', [\App\Http\Controllers\GrowthSpecialistController::class, 'kartuPicker'])->name('kartu-profil-mitra');
     });
 

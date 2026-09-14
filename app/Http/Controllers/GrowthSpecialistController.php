@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 /**
@@ -147,12 +148,24 @@ class GrowthSpecialistController extends Controller
         ]);
     }
 
+    public function kartuMember(Mitra $mitra): View
+    {
+        $profil = $mitra->profilGrowth ?? new MitraProfilGrowth(['mitra_id' => $mitra->id]);
+
+        return view('growth-specialist.profiling-mitra-kartu-member', [
+            'mitra' => $mitra,
+            'profil' => $profil,
+        ]);
+    }
+
     public function update(Request $request, Mitra $mitra): RedirectResponse
     {
         $data = $request->validate([
             'status' => ['nullable', 'in:Existing,New Distri'],
             'no_wa' => ['nullable', 'string', 'max:30'],
             'domisili_kota' => ['nullable', 'string', 'max:255'],
+            'foto' => ['nullable', 'image', 'max:2048'],
+            'hapus_foto' => ['nullable', 'boolean'],
             'tanggal_onboarding' => ['nullable', 'date'],
             'modal_bisnis' => ['nullable', 'numeric', 'min:0'],
             'modal_srn' => ['nullable', 'numeric', 'min:0'],
@@ -190,6 +203,21 @@ class GrowthSpecialistController extends Controller
             $trimmed = implode("\n", array_map('trim', explode("\n", $data[$field])));
             $trimmed = trim($trimmed);
             $data[$field] = $trimmed === '' ? null : $trimmed;
+        }
+
+        $existingProfil = $mitra->profilGrowth;
+        unset($data['hapus_foto']);
+
+        if ($request->hasFile('foto')) {
+            if ($existingProfil?->foto) {
+                Storage::disk('public')->delete($existingProfil->foto);
+            }
+            $data['foto'] = $request->file('foto')->store('mitra-profil-growth-photos', 'public');
+        } elseif ($request->boolean('hapus_foto') && $existingProfil?->foto) {
+            Storage::disk('public')->delete($existingProfil->foto);
+            $data['foto'] = null;
+        } else {
+            unset($data['foto']);
         }
 
         MitraProfilGrowth::updateOrCreate(['mitra_id' => $mitra->id], $data);

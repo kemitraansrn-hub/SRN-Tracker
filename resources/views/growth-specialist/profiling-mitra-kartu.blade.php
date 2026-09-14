@@ -59,6 +59,11 @@
         </div>
 
         <div class="kartu-section-title">Identitas Mitra</div>
+        @if ($profil->fotoUrl())
+            <div style="text-align:center; margin-bottom:10px;">
+                <img src="{{ $profil->fotoUrl() }}" alt="Foto {{ $mitra->nama }}" style="width:96px; height:96px; border-radius:12px; object-fit:cover; border:1px solid var(--line);">
+            </div>
+        @endif
         <div class="kartu-box">
             <div class="kartu-row"><div class="kartu-label">ID Mitra</div><div class="kartu-value">{{ $mitra->kode_mitra }}</div></div>
             <div class="kartu-row"><div class="kartu-label">Nama Mitra</div><div class="kartu-value">{{ $mitra->nama }}</div></div>

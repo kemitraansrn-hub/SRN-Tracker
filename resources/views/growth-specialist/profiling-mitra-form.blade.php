@@ -14,7 +14,10 @@
         <a href="{{ route('growth-specialist.profiling-mitra') }}" style="display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-muted); text-decoration:none;">
             &larr; Kembali ke Tabel
         </a>
-        <a href="{{ route('growth-specialist.profiling-mitra.kartu', $mitra) }}" class="btn" style="width:auto; font-size:12.5px; padding:7px 14px; text-decoration:none; display:inline-block;" target="_blank">Lihat Kartu Profil</a>
+        <div style="display:flex; gap:8px;">
+            <a href="{{ route('growth-specialist.profiling-mitra.kartu', $mitra) }}" class="btn" style="width:auto; font-size:12.5px; padding:7px 14px; text-decoration:none; display:inline-block;" target="_blank">Lihat Kartu Profil</a>
+            <a href="{{ route('growth-specialist.profiling-mitra.kartu-member', $mitra) }}" class="btn" style="width:auto; font-size:12.5px; padding:7px 14px; text-decoration:none; display:inline-block;" target="_blank">Cetak Kartu Member</a>
+        </div>
     </div>
 
     <h1 class="display" style="font-size:22px; margin-bottom:4px;">Profiling Mitra &mdash; {{ $mitra->nama }}</h1>
@@ -27,13 +30,36 @@
         <div class="alert-error">{{ $errors->first() }}</div>
     @endif
 
-    <form method="POST" action="{{ route('growth-specialist.profiling-mitra.update', $mitra) }}" style="max-width:820px;">
+    <form method="POST" action="{{ route('growth-specialist.profiling-mitra.update', $mitra) }}" enctype="multipart/form-data" style="max-width:820px;">
         @csrf
         @method('PUT')
 
         {{-- 1. Identitas Mitra --}}
         <div class="card" style="margin-bottom:20px;">
             <div class="card-title" style="margin-bottom:16px;">1. Identitas Mitra</div>
+
+            <div class="field-row" style="align-items:flex-start;">
+                <div class="field" style="flex:none;">
+                    <label>Foto Mitra</label>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:64px; height:64px; border-radius:10px; background:var(--surface-alt); border:1px solid var(--line); overflow:hidden; display:flex; align-items:center; justify-content:center; flex:none;">
+                            @if ($profil->fotoUrl())
+                                <img src="{{ $profil->fotoUrl() }}" alt="Foto {{ $mitra->nama }}" style="width:100%; height:100%; object-fit:cover;">
+                            @else
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c1-4 4-6 8-6s7 2 8 6" stroke-linecap="round"/></svg>
+                            @endif
+                        </div>
+                        <div>
+                            <input type="file" name="foto" accept="image/*" style="font-size:12px;">
+                            @if ($profil->fotoUrl())
+                                <label style="font-size:11.5px; display:flex; align-items:center; gap:4px; margin-top:4px; font-weight:400; color:var(--ink-muted);">
+                                    <input type="checkbox" name="hapus_foto" value="1"> Hapus foto
+                                </label>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <div class="field-row">
                 <div class="field" style="flex:1;">
