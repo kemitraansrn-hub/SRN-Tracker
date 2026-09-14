@@ -55,6 +55,8 @@
                                     <span class="chip chip-good">Finance</span>
                                 @elseif ($u->role === 'compliance')
                                     <span class="chip chip-warn">Compliance</span>
+                                @elseif ($u->role === 'growth_specialist')
+                                    <span class="chip chip-accent">Growth Specialist</span>
                                 @else
                                     <span class="chip" style="background:var(--surface-alt); color:var(--ink-muted);">KAE</span>
                                 @endif

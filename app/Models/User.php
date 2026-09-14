@@ -50,6 +50,11 @@ class User extends Authenticatable
         return $this->role === 'compliance';
     }
 
+    public function isGrowthSpecialist(): bool
+    {
+        return $this->role === 'growth_specialist';
+    }
+
     public function isSupervisor(): bool
     {
         return $this->role === 'supervisor';

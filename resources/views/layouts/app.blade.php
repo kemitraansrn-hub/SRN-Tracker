@@ -212,6 +212,26 @@
                             <span class="nav-label">KPI Partnership Compliance</span>
                         </a>
                     </div>
+                @elseif (auth()->user()->isGrowthSpecialist())
+                    @php $developmentActive = request()->routeIs('development.*'); @endphp
+                    <a href="{{ route('dashboard') }}" class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" title="Dashboard">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                        <span class="nav-label">Dashboard</span>
+                    </a>
+                    <a class="nav-item nav-item-toggle" tabindex="0" onclick="toggleNavGroup('devSubmenu', 'devChevron')" title="Development">
+                        <span class="nav-item-toggle-label">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                            <span class="nav-label">Development</span>
+                        </span>
+                        <svg class="chevron" id="devChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="{{ $developmentActive ? 'transform:rotate(90deg);' : '' }}"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </a>
+                    <div class="nav-sub" id="devSubmenu" style="display:{{ $developmentActive ? 'flex' : 'none' }}; flex-direction:column; gap:2px;">
+                        <div class="nav-group-label">Growth Specialist</div>
+                        <a href="{{ route('development.show', 'kartu-profil-mitra') }}" class="nav-item {{ request()->routeIs('development.show') && request()->route('page') === 'kartu-profil-mitra' ? 'active' : '' }}" title="Kartu Profil Mitra">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M5 17c.5-2 2-3 4-3s3.5 1 4 3" stroke-linecap="round"/><line x1="14" y1="8" x2="18" y2="8" stroke-linecap="round"/><line x1="14" y1="12" x2="18" y2="12" stroke-linecap="round"/></svg>
+                            <span class="nav-label">Kartu Profil Mitra</span>
+                        </a>
+                    </div>
                 @else
                 <a href="{{ route('dashboard') }}" class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" title="Dashboard">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -351,6 +371,11 @@
                     <a href="{{ route('kpi-partnership-compliance.index') }}" class="nav-item {{ request()->routeIs('kpi-partnership-compliance.*') ? 'active' : '' }}" title="KPI Partnership Compliance">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         <span class="nav-label">KPI Partnership Compliance</span>
+                    </a>
+                    <div class="nav-group-label">Growth Specialist</div>
+                    <a href="{{ route('development.show', 'kartu-profil-mitra') }}" class="nav-item {{ request()->routeIs('development.show') && request()->route('page') === 'kartu-profil-mitra' ? 'active' : '' }}" title="Kartu Profil Mitra">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M5 17c.5-2 2-3 4-3s3.5 1 4 3" stroke-linecap="round"/><line x1="14" y1="8" x2="18" y2="8" stroke-linecap="round"/><line x1="14" y1="12" x2="18" y2="12" stroke-linecap="round"/></svg>
+                        <span class="nav-label">Kartu Profil Mitra</span>
                     </a>
                 </div>
 
