@@ -34,10 +34,11 @@ class GrowthSpecialistController extends Controller
         $kaeMap = User::kaeNameMap();
 
         $rows = Mitra::with('profilGrowth')
+            ->whereHas('profilGrowth')
             ->orderBy('nama')
             ->get()
             ->map(function (Mitra $m) use ($segmenMap, $kaeMap) {
-                $p = $m->profilGrowth ?? new MitraProfilGrowth(['mitra_id' => $m->id]);
+                $p = $m->profilGrowth;
 
                 return [
                     'mitra' => $m,
@@ -81,7 +82,7 @@ class GrowthSpecialistController extends Controller
 
         return view('growth-specialist.profiling-mitra-index', [
             'rowsPage' => $rowsPage,
-            'totalMitra' => Mitra::count(),
+            'totalMitra' => MitraProfilGrowth::count(),
             'kaeOptions' => $kaeMap,
             'filters' => $request->only(['cari', 'tipe_mitra', 'kae_code', 'lms_status']),
         ]);
