@@ -63,17 +63,36 @@
             <div class="card-title">Master Database</div>
             <div class="card-hint">{{ $rowsPage->total() }} mitra cocok dengan pencarian</div>
         </div>
+        <style>
+            .gs-master-table thead tr:first-child th {
+                border-right: 2px solid var(--ink-faint);
+            }
+            .gs-master-table thead tr:first-child th:last-child { border-right: none; }
+            .gs-master-table :is(th, td):nth-child(5),
+            .gs-master-table :is(th, td):nth-child(13),
+            .gs-master-table :is(th, td):nth-child(16),
+            .gs-master-table :is(th, td):nth-child(21),
+            .gs-master-table :is(th, td):nth-child(24),
+            .gs-master-table :is(th, td):nth-child(25),
+            .gs-master-table :is(th, td):nth-child(26) {
+                border-right: 2px solid var(--ink-faint);
+            }
+            .gs-sect-a { background: var(--accent-soft); }
+            .gs-sect-b { background: var(--good-soft); }
+            .gs-sect-c { background: var(--warn-soft); }
+            .gs-sect-d { background: var(--highlight-soft); }
+        </style>
         <div class="table-scroll" style="max-height:none; overflow-y:visible;">
-            <table>
+            <table class="gs-master-table">
                 <thead>
                     <tr>
-                        <th colspan="5" style="text-align:center;">Identitas Mitra</th>
-                        <th colspan="8" style="text-align:center;">Kekuatan Finansial &amp; Operasional</th>
-                        <th colspan="3" style="text-align:center;">Channel Fokus</th>
-                        <th colspan="5" style="text-align:center;">Klasifikasi Mitra</th>
-                        <th colspan="3" style="text-align:center;">KPI Awal</th>
-                        <th style="text-align:center;">Integrasi LMS</th>
-                        <th style="text-align:center;">Status</th>
+                        <th colspan="5" class="gs-sect-a" style="text-align:center;">Identitas Mitra</th>
+                        <th colspan="8" class="gs-sect-b" style="text-align:center;">Kekuatan Finansial &amp; Operasional</th>
+                        <th colspan="3" class="gs-sect-c" style="text-align:center;">Channel Fokus</th>
+                        <th colspan="5" class="gs-sect-d" style="text-align:center;">Klasifikasi Mitra</th>
+                        <th colspan="3" class="gs-sect-a" style="text-align:center;">KPI Awal</th>
+                        <th class="gs-sect-b" style="text-align:center;">Integrasi LMS</th>
+                        <th class="gs-sect-c" style="text-align:center;">Status</th>
                         <th></th>
                     </tr>
                     <tr>
