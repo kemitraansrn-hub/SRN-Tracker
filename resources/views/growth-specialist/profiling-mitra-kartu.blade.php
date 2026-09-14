@@ -59,20 +59,18 @@
         </div>
 
         <div class="kartu-section-title">Identitas Mitra</div>
-        <div style="display:flex; gap:14px; align-items:flex-start;">
+        <div class="kartu-box" style="overflow:hidden;">
             @if ($profil->fotoUrl())
-                <img src="{{ $profil->fotoUrl() }}" alt="Foto {{ $mitra->nama }}" style="width:96px; height:96px; border-radius:12px; object-fit:cover; border:1px solid var(--line); flex:none;">
+                <img src="{{ $profil->fotoUrl() }}" alt="Foto {{ $mitra->nama }}" style="float:left; width:96px; height:96px; border-radius:8px; object-fit:cover; margin:10px 0 10px 10px;">
             @endif
-            <div class="kartu-box" style="flex:1; min-width:0;">
-                <div class="kartu-row"><div class="kartu-label">ID Mitra</div><div class="kartu-value">{{ $mitra->kode_mitra }}</div></div>
-                <div class="kartu-row"><div class="kartu-label">Nama Mitra</div><div class="kartu-value">{{ $mitra->nama }}</div></div>
-                <div class="kartu-row"><div class="kartu-label">KAE PJ</div><div class="kartu-value">{{ $kaeNama ?? '—' }}</div></div>
-                <div class="kartu-row"><div class="kartu-label">No. WA</div><div class="kartu-value">{{ $profil->no_wa ?? '—' }}</div></div>
-                <div class="kartu-row"><div class="kartu-label">Domisili / Kota</div><div class="kartu-value">{{ $profil->domisili_kota ? $profil->domisili_kota.($provinsi ? ', '.$provinsi : '') : '—' }}</div></div>
-                <div class="kartu-row"><div class="kartu-label">Tanggal Onboarding</div><div class="kartu-value">{{ $profil->tanggal_onboarding?->format('d/m/Y') ?? '—' }}</div></div>
-                <div class="kartu-row"><div class="kartu-label">Channel</div><div class="kartu-value">{{ $channel ?? '—' }}</div></div>
-                <div class="kartu-row"><div class="kartu-label">Status</div><div class="kartu-value">{{ $profil->status ?? '—' }}</div></div>
-            </div>
+            <div class="kartu-row"><div class="kartu-label">ID Mitra</div><div class="kartu-value">{{ $mitra->kode_mitra }}</div></div>
+            <div class="kartu-row"><div class="kartu-label">Nama Mitra</div><div class="kartu-value">{{ $mitra->nama }}</div></div>
+            <div class="kartu-row"><div class="kartu-label">KAE PJ</div><div class="kartu-value">{{ $kaeNama ?? '—' }}</div></div>
+            <div class="kartu-row"><div class="kartu-label">No. WA</div><div class="kartu-value">{{ $profil->no_wa ?? '—' }}</div></div>
+            <div class="kartu-row"><div class="kartu-label">Domisili / Kota</div><div class="kartu-value">{{ $profil->domisili_kota ? $profil->domisili_kota.($provinsi ? ', '.$provinsi : '') : '—' }}</div></div>
+            <div class="kartu-row"><div class="kartu-label">Tanggal Onboarding</div><div class="kartu-value">{{ $profil->tanggal_onboarding?->format('d/m/Y') ?? '—' }}</div></div>
+            <div class="kartu-row"><div class="kartu-label">Channel</div><div class="kartu-value">{{ $channel ?? '—' }}</div></div>
+            <div class="kartu-row"><div class="kartu-label">Status</div><div class="kartu-value">{{ $profil->status ?? '—' }}</div></div>
         </div>
 
         <div class="kartu-section-title">Analisis Kebutuhan Mitra</div>
