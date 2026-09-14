@@ -33,7 +33,7 @@
 <body>
     <table class="header-table">
         <tr>
-            <td style="width:60%;"><img class="logo-img" src="{{ public_path('images/srn-logo-full.png') }}"></td>
+            <td style="width:60%;"><img class="logo-img" src="{{ public_path('images/srn-logo-full-white-text.png') }}"></td>
             <td class="badge" style="width:40%;">MEMBER</td>
         </tr>
     </table>

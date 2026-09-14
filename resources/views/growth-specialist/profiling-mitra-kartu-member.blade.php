@@ -52,7 +52,7 @@
     <div class="card kartu-no-print" style="max-width:500px; margin:0 auto 24px; text-align:center; padding:24px; background:var(--surface-alt);">
         <div class="member-card">
             <div class="member-card-header">
-                <img src="{{ asset('images/srn-logo-full.png') }}" alt="SRN Sinergi Retail Network" class="member-card-logo-img">
+                <img src="{{ asset('images/srn-logo-full-white-text.png') }}" alt="SRN Sinergi Retail Network" class="member-card-logo-img">
                 <div class="member-card-badge">MEMBER</div>
             </div>
             <div class="member-card-body">
