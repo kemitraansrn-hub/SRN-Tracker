@@ -65,9 +65,10 @@
         </div>
         <style>
             .gs-master-table thead tr:first-child th {
-                border-right: 2px solid var(--ink-faint);
+                border-right: 1px solid rgba(0,0,0,0.18);
+                box-shadow: inset -2px 0 2px -1px rgba(0,0,0,0.15), inset 1px 0 0 rgba(255,255,255,0.5);
             }
-            .gs-master-table thead tr:first-child th:last-child { border-right: none; }
+            .gs-master-table thead tr:first-child th:last-child { border-right: none; box-shadow: none; }
             .gs-master-table :is(th, td):nth-child(5),
             .gs-master-table :is(th, td):nth-child(13),
             .gs-master-table :is(th, td):nth-child(16),
@@ -75,7 +76,8 @@
             .gs-master-table :is(th, td):nth-child(24),
             .gs-master-table :is(th, td):nth-child(25),
             .gs-master-table :is(th, td):nth-child(26) {
-                border-right: 2px solid var(--ink-faint);
+                border-right: 1px solid rgba(0,0,0,0.18);
+                box-shadow: inset -2px 0 2px -1px rgba(0,0,0,0.15), inset 1px 0 0 rgba(255,255,255,0.5);
             }
             .gs-sect-a { background: var(--accent-soft); }
             .gs-sect-b { background: var(--good-soft); }
