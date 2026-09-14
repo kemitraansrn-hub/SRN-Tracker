@@ -60,7 +60,7 @@
 
         <div class="kartu-section-title">Identitas Mitra</div>
         @if ($profil->fotoUrl())
-            <div style="text-align:center; margin-bottom:10px;">
+            <div style="margin-bottom:10px;">
                 <img src="{{ $profil->fotoUrl() }}" alt="Foto {{ $mitra->nama }}" style="width:96px; height:96px; border-radius:12px; object-fit:cover; border:1px solid var(--line);">
             </div>
         @endif
