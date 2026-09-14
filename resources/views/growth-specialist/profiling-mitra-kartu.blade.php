@@ -49,7 +49,10 @@
         <a href="{{ route('growth-specialist.profiling-mitra.edit', $mitra) }}" style="display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-muted); text-decoration:none;">
             &larr; Kembali ke Form
         </a>
-        <button type="button" onclick="window.print()" class="btn btn-primary" style="width:auto; padding:8px 18px;">Cetak / Simpan PDF</button>
+        <div style="display:flex; gap:8px;">
+            <a href="{{ route('growth-specialist.profiling-mitra.kartu-member', $mitra) }}" class="btn" style="width:auto; font-size:12.5px; padding:7px 14px; text-decoration:none; display:inline-block;" target="_blank">Cetak Kartu Member</a>
+            <button type="button" onclick="window.print()" class="btn btn-primary" style="width:auto; padding:8px 18px;">Cetak / Simpan PDF</button>
+        </div>
     </div>
 
     <div class="kartu-wrap">
