@@ -69,13 +69,13 @@
                 box-shadow: inset -2px 0 2px -1px rgba(0,0,0,0.15), inset 1px 0 0 rgba(255,255,255,0.5);
             }
             .gs-master-table thead tr:first-child th:last-child { border-right: none; box-shadow: none; }
-            .gs-master-table :is(th, td):nth-child(5),
-            .gs-master-table :is(th, td):nth-child(13),
+            .gs-master-table :is(th, td):nth-child(7),
             .gs-master-table :is(th, td):nth-child(16),
-            .gs-master-table :is(th, td):nth-child(21),
+            .gs-master-table :is(th, td):nth-child(19),
             .gs-master-table :is(th, td):nth-child(24),
-            .gs-master-table :is(th, td):nth-child(25),
-            .gs-master-table :is(th, td):nth-child(26) {
+            .gs-master-table :is(th, td):nth-child(27),
+            .gs-master-table :is(th, td):nth-child(28),
+            .gs-master-table :is(th, td):nth-child(29) {
                 border-right: 1px solid rgba(0,0,0,0.18);
                 box-shadow: inset -2px 0 2px -1px rgba(0,0,0,0.15), inset 1px 0 0 rgba(255,255,255,0.5);
             }
@@ -88,8 +88,8 @@
             <table class="gs-master-table">
                 <thead>
                     <tr>
-                        <th colspan="5" class="gs-sect-a" style="text-align:center;">Identitas Mitra</th>
-                        <th colspan="8" class="gs-sect-b" style="text-align:center;">Kekuatan Finansial &amp; Operasional</th>
+                        <th colspan="7" class="gs-sect-a" style="text-align:center;">Identitas Mitra</th>
+                        <th colspan="9" class="gs-sect-b" style="text-align:center;">Kekuatan Finansial &amp; Operasional</th>
                         <th colspan="3" class="gs-sect-c" style="text-align:center;">Channel Fokus</th>
                         <th colspan="5" class="gs-sect-d" style="text-align:center;">Klasifikasi Mitra</th>
                         <th colspan="3" class="gs-sect-a" style="text-align:center;">KPI Awal</th>
@@ -98,8 +98,8 @@
                         <th></th>
                     </tr>
                     <tr>
-                        <th>Nama Mitra</th><th>KAE RO</th><th>Channel</th><th>Status</th><th>Tgl Onboarding</th>
-                        <th>Modal Bisnis</th><th>Modal SRN</th><th>Cost</th><th>% Op. Cost</th><th>Toleransi Cashflow</th><th>Tim/Sendiri</th><th>Platform Jualan</th><th>Jam Aktif</th>
+                        <th>Nama Mitra</th><th>KAE RO</th><th>Channel</th><th>Status</th><th>No. WA</th><th>Domisili/Kota</th><th>Tgl Onboarding</th>
+                        <th>Modal Bisnis</th><th>Modal SRN</th><th>Cost</th><th>% Op. Cost</th><th>Toleransi Cashflow</th><th>Tim/Sendiri</th><th>Pengalaman Jualan</th><th>Platform Jualan</th><th>Jam Aktif</th>
                         <th>Tipe Channel</th><th>Channel Fokus 1</th><th>Channel Fokus 2</th>
                         <th>Motivasi</th><th>Kemampuan</th><th>Keaktifan</th><th>Tipe Mitra</th><th>Deadline Setup Channel</th>
                         <th>Target Traffic</th><th>Target Leads</th><th>Deadline Closing</th>
@@ -116,6 +116,8 @@
                             <td>{{ $r['kae_nama'] ?? '—' }}</td>
                             <td>@if($r['channel'])<span class="chip chip-neutral">{{ $r['channel'] }}</span>@else — @endif</td>
                             <td>@if($p->status)<span class="chip chip-accent">{{ $p->status }}</span>@else — @endif</td>
+                            <td>{{ $p->no_wa ?? '—' }}</td>
+                            <td>{{ $p->domisili_kota ?? '—' }}</td>
                             <td>{{ $p->tanggal_onboarding?->format('d/m/Y') ?? '—' }}</td>
                             <td class="tnum">{{ $p->modal_bisnis !== null ? 'Rp'.number_format((float) $p->modal_bisnis, 0, ',', '.') : '—' }}</td>
                             <td class="tnum">{{ $p->modal_srn !== null ? 'Rp'.number_format((float) $p->modal_srn, 0, ',', '.') : '—' }}</td>
@@ -123,6 +125,7 @@
                             <td class="tnum">{{ $r['pct'] !== null ? $r['pct'].'%' : '—' }}</td>
                             <td>@if($r['toleransi_cashflow'])<span class="chip chip-neutral">{{ $r['toleransi_cashflow'] }}</span>@else — @endif</td>
                             <td>{{ $p->tim_sendiri ?? '—' }}</td>
+                            <td>{{ $p->pengalaman_jualan ?? '—' }}</td>
                             <td>{{ $p->platform_jualan ? implode(', ', $p->platform_jualan) : '—' }}</td>
                             <td>{{ $p->jam_aktif ?? '—' }}</td>
                             <td>@if($p->tipe_channel)<span class="chip chip-neutral">{{ $p->tipe_channel }}</span>@else — @endif</td>
@@ -138,10 +141,13 @@
                             <td>{{ $r['deadline_closing']?->format('d/m/Y') ?? '—' }}</td>
                             <td>@if($p->lms_status)<span class="chip {{ $p->lms_status === 'Done' ? 'chip-good' : 'chip-warn' }}">{{ $p->lms_status }}</span>@else — @endif</td>
                             <td style="max-width:200px; white-space:normal;">{{ $p->catatan ?? '—' }}</td>
-                            <td><a href="{{ route('growth-specialist.profiling-mitra.edit', $m) }}" class="btn" style="width:auto; font-size:11.5px; padding:5px 9px; text-decoration:none; display:inline-block;">Edit</a></td>
+                            <td style="white-space:nowrap;">
+                                <a href="{{ route('growth-specialist.profiling-mitra.edit', $m) }}" class="btn" style="width:auto; font-size:11.5px; padding:5px 9px; text-decoration:none; display:inline-block;">Edit</a>
+                                <a href="{{ route('growth-specialist.profiling-mitra.kartu', $m) }}" class="btn" style="width:auto; font-size:11.5px; padding:5px 9px; text-decoration:none; display:inline-block;" target="_blank">Kartu</a>
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="27" style="text-align:center; color:var(--ink-muted); padding:24px;">Gak ada mitra yang cocok.</td></tr>
+                        <tr><td colspan="30" style="text-align:center; color:var(--ink-muted); padding:24px;">Gak ada mitra yang cocok.</td></tr>
                     @endforelse
                 </tbody>
             </table>

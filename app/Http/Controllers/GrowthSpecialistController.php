@@ -117,10 +117,31 @@ class GrowthSpecialistController extends Controller
         ]);
     }
 
+    public function kartu(Mitra $mitra): View
+    {
+        $now = now();
+
+        $channel = TargetBulanan::where('mitra_id', $mitra->id)
+            ->where('bulan', $now->month)
+            ->where('tahun', $now->year)
+            ->value('segmen');
+
+        $profil = $mitra->profilGrowth ?? new MitraProfilGrowth(['mitra_id' => $mitra->id]);
+
+        return view('growth-specialist.profiling-mitra-kartu', [
+            'mitra' => $mitra,
+            'profil' => $profil,
+            'kaeNama' => $mitra->kae_code ? (User::kaeNameMap()[$mitra->kae_code] ?? $mitra->kae_code) : null,
+            'channel' => $channel,
+        ]);
+    }
+
     public function update(Request $request, Mitra $mitra): RedirectResponse
     {
         $data = $request->validate([
             'status' => ['nullable', 'in:Existing,New Distri'],
+            'no_wa' => ['nullable', 'string', 'max:30'],
+            'domisili_kota' => ['nullable', 'string', 'max:255'],
             'tanggal_onboarding' => ['nullable', 'date'],
             'modal_bisnis' => ['nullable', 'numeric', 'min:0'],
             'modal_srn' => ['nullable', 'numeric', 'min:0'],
@@ -129,6 +150,7 @@ class GrowthSpecialistController extends Controller
             'platform_jualan' => ['nullable', 'array'],
             'platform_jualan.*' => ['string', 'in:'.implode(',', self::PLATFORM_OPTIONS)],
             'jam_aktif' => ['nullable', 'string', 'max:255'],
+            'pengalaman_jualan' => ['nullable', 'string', 'max:255'],
             'tipe_channel' => ['nullable', 'in:Online,Offline'],
             'channel_fokus_1' => ['nullable', 'array'],
             'channel_fokus_1.*' => ['string', 'in:'.implode(',', self::PLATFORM_OPTIONS)],

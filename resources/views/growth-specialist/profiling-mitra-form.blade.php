@@ -10,9 +10,12 @@
 @endphp
 
 @section('content')
-    <a href="{{ route('growth-specialist.profiling-mitra') }}" style="display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-muted); text-decoration:none; margin-bottom:16px;">
-        &larr; Kembali ke Tabel
-    </a>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:16px;">
+        <a href="{{ route('growth-specialist.profiling-mitra') }}" style="display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-muted); text-decoration:none;">
+            &larr; Kembali ke Tabel
+        </a>
+        <a href="{{ route('growth-specialist.profiling-mitra.kartu', $mitra) }}" class="btn" style="width:auto; font-size:12.5px; padding:7px 14px; text-decoration:none; display:inline-block;" target="_blank">Lihat Kartu Profil</a>
+    </div>
 
     <h1 class="display" style="font-size:22px; margin-bottom:4px;">Profiling Mitra &mdash; {{ $mitra->nama }}</h1>
     <div class="card-hint" style="margin-bottom:20px;">{{ $mitra->kode_mitra }}</div>
@@ -61,6 +64,17 @@
                     <input type="date" name="tanggal_onboarding" value="{{ old('tanggal_onboarding', $profil->tanggal_onboarding?->format('Y-m-d')) }}">
                 </div>
             </div>
+
+            <div class="field-row">
+                <div class="field" style="flex:1;">
+                    <label>No. WA</label>
+                    <input type="text" name="no_wa" value="{{ old('no_wa', $profil->no_wa) }}" placeholder="mis. 628123456789">
+                </div>
+                <div class="field" style="flex:1;">
+                    <label>Domisili / Kota</label>
+                    <input type="text" name="domisili_kota" value="{{ old('domisili_kota', $profil->domisili_kota) }}" placeholder="mis. Jakarta Selatan">
+                </div>
+            </div>
         </div>
 
         {{-- 2. Kekuatan Finansial & Operasional --}}
@@ -102,6 +116,11 @@
                     <label>Jam Aktif</label>
                     <input type="text" name="jam_aktif" value="{{ old('jam_aktif', $profil->jam_aktif) }}" placeholder="mis. 8 jam">
                 </div>
+            </div>
+
+            <div class="field">
+                <label>Pengalaman Jualan Sebelumnya</label>
+                <input type="text" name="pengalaman_jualan" value="{{ old('pengalaman_jualan', $profil->pengalaman_jualan) }}" placeholder="mis. 1 tahun jualan skincare via Shopee">
             </div>
 
             <div class="field">
