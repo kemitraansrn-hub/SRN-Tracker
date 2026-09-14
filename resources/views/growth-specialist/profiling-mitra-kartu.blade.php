@@ -69,7 +69,7 @@
             <div class="kartu-row"><div class="kartu-label">Nama Mitra</div><div class="kartu-value">{{ $mitra->nama }}</div></div>
             <div class="kartu-row"><div class="kartu-label">KAE PJ</div><div class="kartu-value">{{ $kaeNama ?? '—' }}</div></div>
             <div class="kartu-row"><div class="kartu-label">No. WA</div><div class="kartu-value">{{ $profil->no_wa ?? '—' }}</div></div>
-            <div class="kartu-row"><div class="kartu-label">Domisili / Kota</div><div class="kartu-value">{{ $profil->domisili_kota ?? '—' }}</div></div>
+            <div class="kartu-row"><div class="kartu-label">Domisili / Kota</div><div class="kartu-value">{{ $profil->domisili_kota ? $profil->domisili_kota.($provinsi ? ', '.$provinsi : '') : '—' }}</div></div>
             <div class="kartu-row"><div class="kartu-label">Tanggal Onboarding</div><div class="kartu-value">{{ $profil->tanggal_onboarding?->format('d/m/Y') ?? '—' }}</div></div>
             <div class="kartu-row"><div class="kartu-label">Channel</div><div class="kartu-value">{{ $channel ?? '—' }}</div></div>
             <div class="kartu-row"><div class="kartu-label">Status</div><div class="kartu-value">{{ $profil->status ?? '—' }}</div></div>

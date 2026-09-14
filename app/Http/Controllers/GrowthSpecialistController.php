@@ -145,6 +145,7 @@ class GrowthSpecialistController extends Controller
             'profil' => $profil,
             'kaeNama' => $mitra->kae_code ? (User::kaeNameMap()[$mitra->kae_code] ?? $mitra->kae_code) : null,
             'channel' => $channel,
+            'provinsi' => $this->provinsiDariKota($profil->domisili_kota),
         ]);
     }
 
@@ -155,7 +156,23 @@ class GrowthSpecialistController extends Controller
         return view('growth-specialist.profiling-mitra-kartu-member', [
             'mitra' => $mitra,
             'profil' => $profil,
+            'provinsi' => $this->provinsiDariKota($profil->domisili_kota),
         ]);
+    }
+
+    /**
+     * Provinsi gak disimpan sebagai field sendiri — selalu dicari dari
+     * master kota_kabupatens pas nampilin kartu, biar Growth Specialist
+     * gak perlu isi 2x (kota + provinsi) padahal keduanya sudah nyambung
+     * di data master.
+     */
+    private function provinsiDariKota(?string $domisiliKota): ?string
+    {
+        if (! $domisiliKota) {
+            return null;
+        }
+
+        return KotaKabupaten::where('nama', $domisiliKota)->value('provinsi');
     }
 
     public function update(Request $request, Mitra $mitra): RedirectResponse

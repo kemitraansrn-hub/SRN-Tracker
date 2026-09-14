@@ -72,7 +72,7 @@
                     </div>
                     <div class="member-card-line">
                         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="2.2" style="flex:none; margin-top:0.3mm;"><path d="M12 21s-7-6.2-7-11.5C5 5.9 8.1 3 12 3s7 2.9 7 6.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg>
-                        <span>{{ $profil->domisili_kota ?? '—' }}</span>
+                        <span>{{ $profil->domisili_kota ? $profil->domisili_kota.($provinsi ? ', '.$provinsi : '') : '—' }}</span>
                     </div>
                 </div>
             </div>
