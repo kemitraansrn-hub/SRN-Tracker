@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\KotaKabupaten;
 use App\Models\Mitra;
 use App\Models\MitraProfilGrowth;
 use App\Models\TargetBulanan;
@@ -114,6 +115,16 @@ class GrowthSpecialistController extends Controller
             'kaeNama' => $mitra->kae_code ? (User::kaeNameMap()[$mitra->kae_code] ?? $mitra->kae_code) : null,
             'channel' => $channel,
             'platformOptions' => self::PLATFORM_OPTIONS,
+            'kotaOptions' => KotaKabupaten::orderBy('nama')->pluck('nama'),
+        ]);
+    }
+
+    public function kartuPicker(): View
+    {
+        $mitraOptions = Mitra::whereHas('profilGrowth')->orderBy('nama')->get(['id', 'nama', 'kode_mitra']);
+
+        return view('growth-specialist.kartu-profil-mitra-picker', [
+            'mitraOptions' => $mitraOptions,
         ]);
     }
 

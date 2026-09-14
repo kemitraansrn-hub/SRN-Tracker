@@ -140,7 +140,7 @@
                             <td class="tnum">{{ $p->target_leads ?? '—' }}</td>
                             <td>{{ $r['deadline_closing']?->format('d/m/Y') ?? '—' }}</td>
                             <td>@if($p->lms_status)<span class="chip {{ $p->lms_status === 'Done' ? 'chip-good' : 'chip-warn' }}">{{ $p->lms_status }}</span>@else — @endif</td>
-                            <td style="max-width:200px; white-space:normal;">{{ $p->catatan ?? '—' }}</td>
+                            <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ $p->catatan }}">{{ $p->catatan ? \Illuminate\Support\Str::of($p->catatan)->replace("\n", ' ')->limit(60) : '—' }}</td>
                             <td style="white-space:nowrap;">
                                 <a href="{{ route('growth-specialist.profiling-mitra.edit', $m) }}" class="btn" style="width:auto; font-size:11.5px; padding:5px 9px; text-decoration:none; display:inline-block;">Edit</a>
                                 <a href="{{ route('growth-specialist.profiling-mitra.kartu', $m) }}" class="btn" style="width:auto; font-size:11.5px; padding:5px 9px; text-decoration:none; display:inline-block;" target="_blank">Kartu</a>

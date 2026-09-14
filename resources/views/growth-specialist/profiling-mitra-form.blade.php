@@ -72,7 +72,12 @@
                 </div>
                 <div class="field" style="flex:1;">
                     <label>Domisili / Kota</label>
-                    <input type="text" name="domisili_kota" value="{{ old('domisili_kota', $profil->domisili_kota) }}" placeholder="mis. Jakarta Selatan">
+                    <input type="text" name="domisili_kota" value="{{ old('domisili_kota', $profil->domisili_kota) }}" list="kotaKabupatenList" placeholder="Ketik buat cari kota/kabupaten...">
+                    <datalist id="kotaKabupatenList">
+                        @foreach ($kotaOptions as $kota)
+                            <option value="{{ $kota }}"></option>
+                        @endforeach
+                    </datalist>
                 </div>
             </div>
         </div>
