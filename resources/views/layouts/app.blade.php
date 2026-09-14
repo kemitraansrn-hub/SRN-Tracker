@@ -213,7 +213,7 @@
                         </a>
                     </div>
                 @elseif (auth()->user()->isGrowthSpecialist())
-                    @php $developmentActive = request()->routeIs('development.*'); @endphp
+                    @php $developmentActive = request()->routeIs('growth-specialist.*'); @endphp
                     <a href="{{ route('dashboard') }}" class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" title="Dashboard">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
                         <span class="nav-label">Dashboard</span>
@@ -227,7 +227,7 @@
                     </a>
                     <div class="nav-sub" id="devSubmenu" style="display:{{ $developmentActive ? 'flex' : 'none' }}; flex-direction:column; gap:2px;">
                         <div class="nav-group-label">Growth Specialist</div>
-                        <a href="{{ route('development.show', 'kartu-profil-mitra') }}" class="nav-item {{ request()->routeIs('development.show') && request()->route('page') === 'kartu-profil-mitra' ? 'active' : '' }}" title="Kartu Profil Mitra">
+                        <a href="{{ route('growth-specialist.kartu-profil-mitra') }}" class="nav-item {{ request()->routeIs('growth-specialist.*') ? 'active' : '' }}" title="Kartu Profil Mitra">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M5 17c.5-2 2-3 4-3s3.5 1 4 3" stroke-linecap="round"/><line x1="14" y1="8" x2="18" y2="8" stroke-linecap="round"/><line x1="14" y1="12" x2="18" y2="12" stroke-linecap="round"/></svg>
                             <span class="nav-label">Kartu Profil Mitra</span>
                         </a>
@@ -247,7 +247,7 @@
                     $salesRoutes = ['sales-overview.*', 'segmentasi.*', 'trend.*', 'omset-bulanan.*', 'weekly-plan.*', 'forecast.*', 'action-plan.*', 'mitra.*', 'order.*', 'followup.*', 'special-deal.*', 'ar.*', 'sales-draft.*', 'buyback.*', 'poin.*', 'poin-redemption.*', 'price-adjustment.*'];
                     $adminRoutes = ['reward.*', 'produk.*', 'import.*', 'data-health.*', 'pengaturan.*', 'run-rate-target.*', 'tier-target.*', 'buyback-setting.*', 'npd.*', 'users.*', 'backup.*'];
                     $salesActive = request()->routeIs(...$salesRoutes);
-                    $developmentActive = request()->routeIs('development.*', 'data-development.*', 'tracking-cp.*', 'takedown-banding.*', 'price-adjustment-monitoring.*', 'kpi-partnership-compliance.*');
+                    $developmentActive = request()->routeIs('development.*', 'data-development.*', 'tracking-cp.*', 'takedown-banding.*', 'price-adjustment-monitoring.*', 'kpi-partnership-compliance.*', 'growth-specialist.*');
                     $adminActive = request()->routeIs(...$adminRoutes);
                 @endphp
 
@@ -373,7 +373,7 @@
                         <span class="nav-label">KPI Partnership Compliance</span>
                     </a>
                     <div class="nav-group-label">Growth Specialist</div>
-                    <a href="{{ route('development.show', 'kartu-profil-mitra') }}" class="nav-item {{ request()->routeIs('development.show') && request()->route('page') === 'kartu-profil-mitra' ? 'active' : '' }}" title="Kartu Profil Mitra">
+                    <a href="{{ route('growth-specialist.kartu-profil-mitra') }}" class="nav-item {{ request()->routeIs('growth-specialist.*') ? 'active' : '' }}" title="Kartu Profil Mitra">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M5 17c.5-2 2-3 4-3s3.5 1 4 3" stroke-linecap="round"/><line x1="14" y1="8" x2="18" y2="8" stroke-linecap="round"/><line x1="14" y1="12" x2="18" y2="12" stroke-linecap="round"/></svg>
                         <span class="nav-label">Kartu Profil Mitra</span>
                     </a>

@@ -15,7 +15,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class DevelopmentModuleController extends Controller
 {
     private const PAGES = [
-        'kartu-profil-mitra' => 'Kartu Profil Mitra',
+        //
     ];
 
     public function show(string $page): View

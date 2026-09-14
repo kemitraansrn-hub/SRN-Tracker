@@ -38,6 +38,11 @@ class Mitra extends Model
         return $this->hasMany(SpecialDeal::class);
     }
 
+    public function profilGrowth()
+    {
+        return $this->hasOne(MitraProfilGrowth::class);
+    }
+
     public function cpCases()
     {
         return $this->hasMany(CpCase::class);

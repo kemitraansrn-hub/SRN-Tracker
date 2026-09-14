@@ -262,6 +262,11 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
 
     Route::get('kpi-partnership-compliance', [KpiPartnershipComplianceController::class, 'index'])->name('kpi-partnership-compliance.index');
 
+    Route::prefix('growth-specialist')->name('growth-specialist.')->group(function () {
+        Route::get('kartu-profil-mitra', [\App\Http\Controllers\GrowthSpecialistController::class, 'index'])->name('kartu-profil-mitra');
+        Route::patch('kartu-profil-mitra/{mitra}', [\App\Http\Controllers\GrowthSpecialistController::class, 'update'])->name('kartu-profil-mitra.update');
+    });
+
     Route::prefix('notifications')->name('notifications.')->group(function () {
         Route::post('/{kategori}/dismiss', [\App\Http\Controllers\NotificationController::class, 'dismiss'])->name('dismiss');
         Route::post('/dismiss-all', [\App\Http\Controllers\NotificationController::class, 'dismissAll'])->name('dismiss-all');
