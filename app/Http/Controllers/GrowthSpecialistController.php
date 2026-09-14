@@ -6,15 +6,16 @@ use App\Models\Mitra;
 use App\Models\MitraProfilGrowth;
 use App\Models\TargetBulanan;
 use App\Models\User;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
- * Master Database — modul Growth Specialist (dari sheet "Kartu Profil
- * Mitra"). 1 baris = 1 mitra, kolom Nama/KAE RO/Channel otomatis dari
- * database (mitra + target_bulanan bulan berjalan), sisanya diisi manual
- * oleh Growth Specialist lewat edit inline per baris (lihat update()).
+ * Profiling Mitra — modul Growth Specialist (dari sheet "Kartu Profil
+ * Mitra" > Master Database). Alurnya form input per satu mitra: pilih
+ * mitra dulu (index), baru muncul form isi semua section buat mitra itu
+ * (edit/update). Tabel rekap semua mitra sekaligus ala sheet menyusul
+ * belakangan sebagai fitur terpisah.
  */
 class GrowthSpecialistController extends Controller
 {
@@ -22,32 +23,39 @@ class GrowthSpecialistController extends Controller
 
     public function index(): View
     {
+        $mitraOptions = Mitra::orderBy('nama')->get(['id', 'nama', 'kode_mitra']);
+
+        $sudahDiisi = MitraProfilGrowth::with('mitra:id,nama,kode_mitra')
+            ->latest('updated_at')
+            ->get();
+
+        return view('growth-specialist.profiling-mitra-index', [
+            'mitraOptions' => $mitraOptions,
+            'sudahDiisi' => $sudahDiisi,
+        ]);
+    }
+
+    public function edit(Mitra $mitra): View
+    {
         $now = now();
 
-        $segmenMap = TargetBulanan::where('bulan', $now->month)
+        $channel = TargetBulanan::where('mitra_id', $mitra->id)
+            ->where('bulan', $now->month)
             ->where('tahun', $now->year)
-            ->whereNotNull('segmen')
-            ->pluck('segmen', 'mitra_id');
+            ->value('segmen');
 
-        $mitraList = Mitra::with('profilGrowth')
-            ->orderBy('nama')
-            ->get()
-            ->map(function (Mitra $m) use ($segmenMap) {
-                return [
-                    'mitra' => $m,
-                    'kae_nama' => $m->kae_code ? (User::kaeNameMap()[$m->kae_code] ?? $m->kae_code) : null,
-                    'channel' => $segmenMap[$m->id] ?? null,
-                    'profil' => $m->profilGrowth ?? new MitraProfilGrowth(['mitra_id' => $m->id]),
-                ];
-            });
+        $profil = $mitra->profilGrowth ?? new MitraProfilGrowth(['mitra_id' => $mitra->id]);
 
-        return view('growth-specialist.profiling-mitra', [
-            'mitraList' => $mitraList,
+        return view('growth-specialist.profiling-mitra-form', [
+            'mitra' => $mitra,
+            'profil' => $profil,
+            'kaeNama' => $mitra->kae_code ? (User::kaeNameMap()[$mitra->kae_code] ?? $mitra->kae_code) : null,
+            'channel' => $channel,
             'platformOptions' => self::PLATFORM_OPTIONS,
         ]);
     }
 
-    public function update(Request $request, Mitra $mitra): JsonResponse
+    public function update(Request $request, Mitra $mitra): RedirectResponse
     {
         $data = $request->validate([
             'status' => ['nullable', 'in:Existing,New Distri'],
@@ -74,14 +82,9 @@ class GrowthSpecialistController extends Controller
             'catatan' => ['nullable', 'string'],
         ]);
 
-        $profil = MitraProfilGrowth::updateOrCreate(['mitra_id' => $mitra->id], $data);
+        MitraProfilGrowth::updateOrCreate(['mitra_id' => $mitra->id], $data);
 
-        return response()->json([
-            'ok' => true,
-            'persen_operational_cost' => $profil->persenOperationalCost(),
-            'toleransi_cashflow' => $profil->toleransiCashflow(),
-            'tipe_mitra' => $profil->tipeMitra(),
-            'deadline_closing_pertama' => $profil->deadlineClosingPertama()?->format('Y-m-d'),
-        ]);
+        return redirect()->route('growth-specialist.profiling-mitra.edit', $mitra)
+            ->with('status', 'Profil '.$mitra->nama.' berhasil disimpan.');
     }
 }
