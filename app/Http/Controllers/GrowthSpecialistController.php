@@ -12,7 +12,10 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 /**
@@ -178,7 +181,7 @@ class GrowthSpecialistController extends Controller
             'mitra' => $mitra,
             'profil' => $profil,
             'provinsi' => $this->provinsiDariKota($profil->domisili_kota),
-        ])->setPaper([0, 0, 242.65, 153.02]);
+        ])->setPaper([0, 0, 153.01, 242.65]);
 
         return $pdf->download('kartu-member-'.$mitra->kode_mitra.'.pdf');
     }
@@ -196,6 +199,45 @@ class GrowthSpecialistController extends Controller
         }
 
         return KotaKabupaten::where('nama', $domisiliKota)->value('provinsi');
+    }
+
+    /**
+     * Coba hapus background foto (efek "pop" di Kartu Member — foto
+     * langsung di atas bentuk organik, gak dikotakin) pakai script Python
+     * (scripts/remove-bg.py, GrabCut via OpenCV). Production cuma punya
+     * akses FTP, jadi gak ada jaminan Python/OpenCV tersedia di server
+     * itu — kalau proses ini gagal apapun sebabnya (Python gak ada,
+     * OpenCV gak ke-install, foto gagal disegmentasi, dst), diam-diam
+     * nyerah dan biarkan foto asli (background utuh) yang kepakai;
+     * update() akan fallback ke $storedPath kalau method ini balikin
+     * null. Gak pernah melempar exception ke pemanggil.
+     */
+    private function removeBackgroundIfPossible(string $storedPath): ?string
+    {
+        $inputPath = Storage::disk('public')->path($storedPath);
+        $outputRelativePath = 'mitra-profil-growth-photos/'.Str::uuid().'.png';
+        $outputPath = Storage::disk('public')->path($outputRelativePath);
+        $scriptPath = base_path('scripts/remove-bg.py');
+
+        foreach (['python3', 'python'] as $pythonBin) {
+            try {
+                $result = Process::timeout(20)->run([$pythonBin, $scriptPath, $inputPath, $outputPath]);
+            } catch (\Throwable $e) {
+                continue;
+            }
+
+            if ($result->successful() && is_file($outputPath) && filesize($outputPath) > 0) {
+                Storage::disk('public')->delete($storedPath);
+
+                return $outputRelativePath;
+            }
+        }
+
+        Log::info('Background removal foto mitra dilewati (Python/OpenCV kemungkinan gak tersedia), pakai foto asli.', [
+            'stored_path' => $storedPath,
+        ]);
+
+        return null;
     }
 
     public function update(Request $request, Mitra $mitra): RedirectResponse
@@ -252,7 +294,8 @@ class GrowthSpecialistController extends Controller
             if ($existingProfil?->foto) {
                 Storage::disk('public')->delete($existingProfil->foto);
             }
-            $data['foto'] = $request->file('foto')->store('mitra-profil-growth-photos', 'public');
+            $storedPath = $request->file('foto')->store('mitra-profil-growth-photos', 'public');
+            $data['foto'] = $this->removeBackgroundIfPossible($storedPath) ?? $storedPath;
         } elseif ($request->boolean('hapus_foto') && $existingProfil?->foto) {
             Storage::disk('public')->delete($existingProfil->foto);
             $data['foto'] = null;
