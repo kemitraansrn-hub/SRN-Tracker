@@ -1,7 +1,11 @@
 @php
     // Semua file gambar di public/images/mitra-wall otomatis kepakai di
     // wall foto login — tinggal taruh/hapus file, gak perlu ubah kode.
+    // Diurutkan berdasarkan nama file (bukan urutan acak dari sistem file) —
+    // biar bisa dipastikan foto mana yang tampil PERTAMA: kasih nama file
+    // yang urut alfabet paling awal (mis. "0-hero.jpg" atau "1-cover.jpg").
     $mitraWallPhotos = collect(glob(public_path('images/mitra-wall/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}'), GLOB_BRACE))
+        ->sort()
         ->map(fn ($p) => asset('images/mitra-wall/'.rawurlencode(basename($p))))
         ->values();
 @endphp
