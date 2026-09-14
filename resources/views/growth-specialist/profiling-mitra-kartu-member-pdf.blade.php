@@ -11,23 +11,23 @@
 
     p { line-height: 1; }
 
-    .header-table td { background-color: #0A1226; padding: 2mm 4mm; }
-    .logo-img { height: 5.6mm; }
-    .badge { color: #FFFFFF; font-weight: bold; font-size: 7.2pt; letter-spacing: 1px; text-align: right; }
+    .header-table td { background-color: #0A1226; padding: 2.8mm 4mm; }
+    .logo-img { height: 6.4mm; }
+    .badge { color: #FFFFFF; font-weight: bold; font-size: 8pt; letter-spacing: 1px; text-align: right; }
 
-    .body-table td { padding: 1.8mm 4mm; }
-    .photo-cell { width: 23mm; }
-    .photo-box { width: 19mm; height: 20mm; border: 0.5pt solid #D0D0D0; background-color: #EDEDED; }
-    .info-label { color: #999999; font-weight: bold; font-size: 5.2pt; letter-spacing: 0.5px; margin: 0; }
-    .info-nama { color: #1A1A1A; font-weight: bold; font-size: 10pt; margin: 0.5mm 0 1.5mm; }
-    .info-id { color: #333333; font-size: 7.3pt; margin: 0 0 1.8mm; }
-    .info-line { color: #333333; font-size: 6.8pt; margin: 0 0 1mm; }
-    .icon-inline { width: 2.6mm; height: 2.6mm; vertical-align: middle; margin-right: 1mm; }
+    .body-table td { padding: 2.6mm 4mm; }
+    .photo-cell { width: 24mm; }
+    .photo-box { width: 20mm; height: 22mm; border: 0.5pt solid #D0D0D0; background-color: #EDEDED; }
+    .info-label { color: #999999; font-weight: bold; font-size: 5.6pt; letter-spacing: 0.5px; margin: 0; }
+    .info-nama { color: #1A1A1A; font-weight: bold; font-size: 11pt; margin: 0.6mm 0 2mm; }
+    .info-id { color: #333333; font-size: 8pt; margin: 0 0 2.4mm; }
+    .info-line { color: #333333; font-size: 7.4pt; margin: 0 0 1.4mm; }
+    .icon-inline { width: 2.9mm; height: 2.9mm; vertical-align: middle; margin-right: 1.1mm; }
 
-    .brands-table td { background-color: #FFFFFF; border-top: 0.5pt solid #EAEAEA; border-bottom: 0.5pt solid #EAEAEA; padding: 1.1mm 2mm; text-align: center; width: 25%; }
-    .brands-table img { height: 3.5mm; }
+    .brands-table td { background-color: #FFFFFF; border-top: 0.5pt solid #EAEAEA; border-bottom: 0.5pt solid #EAEAEA; padding: 1.6mm 2mm; text-align: center; width: 25%; }
+    .brands-table img { height: 4mm; }
 
-    .footer-table td { background-color: #0A1226; color: #8FB4F5; font-size: 4.8pt; text-align: center; padding: 0.8mm 2mm; }
+    .footer-table td { background-color: #0A1226; color: #8FB4F5; font-size: 5.2pt; text-align: center; padding: 1.2mm 2mm; }
 </style>
 </head>
 <body>
@@ -43,7 +43,7 @@
             <td class="photo-cell">
                 <div class="photo-box">
                     @if ($profil->fotoUrl())
-                        <img src="{{ public_path('storage/'.$profil->foto) }}" style="width:19mm; height:20mm;">
+                        <img src="{{ public_path('storage/'.$profil->foto) }}" style="width:20mm; height:22mm;">
                     @endif
                 </div>
             </td>
