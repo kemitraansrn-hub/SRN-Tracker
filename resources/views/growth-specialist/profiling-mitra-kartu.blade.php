@@ -98,7 +98,9 @@
                         <td style="font-weight:600;">{{ $dimensi }}</td>
                         <td>{{ $teksIndikator }}</td>
                         <td style="text-align:center;">{{ $skorPerDimensi[$dimensi] ?? '—' }}</td>
-                        <td>{{ $profil->catatan ?? '—' }}</td>
+                        @if ($loop->first)
+                            <td rowspan="{{ count($indikator) }}" style="vertical-align:top; white-space:pre-line;">{{ $profil->catatan ?? '—' }}</td>
+                        @endif
                     </tr>
                 @endforeach
                 <tr style="background:var(--surface-alt); font-weight:700;">
