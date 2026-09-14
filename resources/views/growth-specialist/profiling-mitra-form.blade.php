@@ -11,7 +11,7 @@
 
 @section('content')
     <a href="{{ route('growth-specialist.profiling-mitra') }}" style="display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-muted); text-decoration:none; margin-bottom:16px;">
-        &larr; Ganti Mitra
+        &larr; Kembali ke Tabel
     </a>
 
     <h1 class="display" style="font-size:22px; margin-bottom:4px;">Profiling Mitra &mdash; {{ $mitra->nama }}</h1>
