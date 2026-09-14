@@ -15,25 +15,29 @@
             box-shadow: 0 4px 16px rgba(0,0,0,0.18); margin: 0 auto;
         }
         .member-card-header {
-            background: #0A1226; padding: 3mm 4mm 2mm;
+            background: #0A1226; padding: 2.2mm 4mm; display: flex; justify-content: space-between; align-items: center;
         }
-        .member-card-logo { color: #FFFFFF; font-weight: 700; font-size: 4.2mm; letter-spacing: 0.3px; }
-        .member-card-logo-sub { color: #8FB4F5; font-size: 2.1mm; margin-top: 0.3mm; }
-        .member-card-badge { color: #FFFFFF; font-weight: 700; font-size: 2.4mm; letter-spacing: 0.5px; }
-        .member-card-body { display: flex; gap: 3mm; padding: 3mm 4mm; }
+        .member-card-logo-img { height: 6.5mm; width: auto; display: block; }
+        .member-card-badge { color: #FFFFFF; font-weight: 700; font-size: 2.3mm; letter-spacing: 0.5px; }
+        .member-card-body { display: flex; gap: 3mm; padding: 2.2mm 4mm; }
         .member-card-photo {
-            width: 20mm; height: 24mm; border-radius: 2mm; background: #EDEDED; border: 1px solid #D0D0D0;
+            width: 19mm; height: 21mm; border-radius: 2mm; background: #EDEDED; border: 1px solid #D0D0D0;
             flex: none; overflow: hidden; display: flex; align-items: center; justify-content: center;
         }
         .member-card-photo img { width: 100%; height: 100%; object-fit: cover; }
         .member-card-info { min-width: 0; flex: 1; }
-        .member-card-info-label { font-size: 1.8mm; font-weight: 700; color: #999999; letter-spacing: 0.3px; margin-bottom: 0.3mm; }
-        .member-card-nama { font-size: 3.6mm; font-weight: 700; color: #1A1A1A; margin-bottom: 1.8mm; line-height: 1.15; }
-        .member-card-id { font-size: 2.6mm; color: #333333; margin-bottom: 2mm; }
-        .member-card-line { display: flex; align-items: flex-start; gap: 1.3mm; margin-bottom: 1.3mm; font-size: 2.3mm; color: #333333; line-height: 1.3; }
+        .member-card-info-label { font-size: 1.7mm; font-weight: 700; color: #999999; letter-spacing: 0.3px; margin-bottom: 0.3mm; }
+        .member-card-nama { font-size: 3.2mm; font-weight: 700; color: #1A1A1A; margin-bottom: 1.3mm; line-height: 1.15; }
+        .member-card-id { font-size: 2.3mm; color: #333333; margin-bottom: 1.5mm; }
+        .member-card-line { display: flex; align-items: flex-start; gap: 1.3mm; margin-bottom: 1mm; font-size: 2.1mm; color: #333333; line-height: 1.3; }
+        .member-card-brands {
+            display: flex; align-items: center; justify-content: space-evenly;
+            padding: 1mm 4mm; border-top: 1px solid #EAEAEA; border-bottom: 1px solid #EAEAEA;
+        }
+        .member-card-brands img { height: 4.2mm; width: auto; max-width: 15mm; object-fit: contain; }
         .member-card-footer {
             position: absolute; left: 0; right: 0; bottom: 0; background: #0A1226;
-            color: #8FB4F5; font-size: 1.7mm; text-align: center; padding: 1mm 2mm;
+            color: #8FB4F5; font-size: 1.6mm; text-align: center; padding: 0.8mm 2mm;
         }
     </style>
 
@@ -46,11 +50,8 @@
 
     <div class="card kartu-no-print" style="max-width:500px; margin:0 auto 24px; text-align:center; padding:24px; background:var(--surface-alt);">
         <div class="member-card">
-            <div class="member-card-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
-                <div>
-                    <div class="member-card-logo">SRN</div>
-                    <div class="member-card-logo-sub">Partner Network</div>
-                </div>
+            <div class="member-card-header">
+                <img src="{{ asset('images/srn-logo-full.png') }}" alt="SRN Sinergi Retail Network" class="member-card-logo-img">
                 <div class="member-card-badge">MEMBER</div>
             </div>
             <div class="member-card-body">
@@ -75,6 +76,12 @@
                         <span>{{ $profil->domisili_kota ? $profil->domisili_kota.($provinsi ? ', '.$provinsi : '') : '—' }}</span>
                     </div>
                 </div>
+            </div>
+            <div class="member-card-brands">
+                <img src="{{ asset('images/brands/reglow.png') }}" alt="Reglow">
+                <img src="{{ asset('images/brands/amura.png') }}" alt="Amura">
+                <img src="{{ asset('images/brands/but.png') }}" alt="B.U.T">
+                <img src="{{ asset('images/brands/purela.png') }}" alt="Purela">
             </div>
             <div class="member-card-footer">Kartu ini milik SRN Partner Network &mdash; hubungi KAE jika ditemukan</div>
         </div>
