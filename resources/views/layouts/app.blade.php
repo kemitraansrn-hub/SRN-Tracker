@@ -227,9 +227,9 @@
                     </a>
                     <div class="nav-sub" id="devSubmenu" style="display:{{ $developmentActive ? 'flex' : 'none' }}; flex-direction:column; gap:2px;">
                         <div class="nav-group-label">Growth Specialist</div>
-                        <a href="{{ route('growth-specialist.kartu-profil-mitra') }}" class="nav-item {{ request()->routeIs('growth-specialist.*') ? 'active' : '' }}" title="Kartu Profil Mitra">
+                        <a href="{{ route('growth-specialist.profiling-mitra') }}" class="nav-item {{ request()->routeIs('growth-specialist.*') ? 'active' : '' }}" title="Profiling Mitra">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M5 17c.5-2 2-3 4-3s3.5 1 4 3" stroke-linecap="round"/><line x1="14" y1="8" x2="18" y2="8" stroke-linecap="round"/><line x1="14" y1="12" x2="18" y2="12" stroke-linecap="round"/></svg>
-                            <span class="nav-label">Kartu Profil Mitra</span>
+                            <span class="nav-label">Profiling Mitra</span>
                         </a>
                     </div>
                 @else
@@ -373,9 +373,9 @@
                         <span class="nav-label">KPI Partnership Compliance</span>
                     </a>
                     <div class="nav-group-label">Growth Specialist</div>
-                    <a href="{{ route('growth-specialist.kartu-profil-mitra') }}" class="nav-item {{ request()->routeIs('growth-specialist.*') ? 'active' : '' }}" title="Kartu Profil Mitra">
+                    <a href="{{ route('growth-specialist.profiling-mitra') }}" class="nav-item {{ request()->routeIs('growth-specialist.*') ? 'active' : '' }}" title="Profiling Mitra">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M5 17c.5-2 2-3 4-3s3.5 1 4 3" stroke-linecap="round"/><line x1="14" y1="8" x2="18" y2="8" stroke-linecap="round"/><line x1="14" y1="12" x2="18" y2="12" stroke-linecap="round"/></svg>
-                        <span class="nav-label">Kartu Profil Mitra</span>
+                        <span class="nav-label">Profiling Mitra</span>
                     </a>
                 </div>
 

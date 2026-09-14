@@ -41,7 +41,7 @@ class GrowthSpecialistController extends Controller
                 ];
             });
 
-        return view('growth-specialist.kartu-profil-mitra', [
+        return view('growth-specialist.profiling-mitra', [
             'mitraList' => $mitraList,
             'platformOptions' => self::PLATFORM_OPTIONS,
         ]);

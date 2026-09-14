@@ -6,7 +6,7 @@
         $tipeMitraChip = fn (?string $t) => $t === 'Prioritas' ? 'chip-highlight' : ($t === 'Standar' ? 'chip-neutral' : 'chip-neutral');
     @endphp
 
-    <h1 class="display" style="font-size:24px; margin-bottom:4px;">Kartu Profil Mitra</h1>
+    <h1 class="display" style="font-size:24px; margin-bottom:4px;">Profiling Mitra</h1>
     <div class="card-hint" style="margin-bottom:20px;">Master Database &mdash; {{ $mitraList->count() }} mitra. Klik "Edit" di baris mana pun buat isi/ubah data.</div>
 
     {{-- 1. Identitas Mitra --}}
@@ -355,7 +355,7 @@
             btn.textContent = 'Menyimpan...';
 
             try {
-                const res = await fetch(`/growth-specialist/kartu-profil-mitra/${mitraId}`, {
+                const res = await fetch(`/growth-specialist/profiling-mitra/${mitraId}`, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
