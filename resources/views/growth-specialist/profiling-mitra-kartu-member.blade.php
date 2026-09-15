@@ -33,7 +33,7 @@
         .mc-sub { font-size: 6.2pt; color: #8A8A8A; margin-top: 1.1mm; }
         .mc-photo-pop {
             position: absolute; top: -13mm; left: 50%; transform: translateX(-50%);
-            width: 88%; z-index: 2; filter: drop-shadow(0 2mm 3mm rgba(0,0,0,0.4));
+            width: 70%; z-index: 2; filter: drop-shadow(0 2mm 3mm rgba(0,0,0,0.4));
         }
         .mc-quote {
             margin-top: 3.5mm; background: rgba(0,0,0,0.28); padding: 2.4mm 3mm;

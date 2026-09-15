@@ -26,7 +26,7 @@
     .idpill { display: inline-block; background-color: #0A1226; color: #FFFFFF; border-radius: 999px; padding: 0.8mm 2.6mm; font-size: 6.5pt; font-weight: bold; margin-top: 1.3mm; }
     .sub { font-size: 6.2pt; color: #8A8A8A; margin-top: 0.8mm; }
 
-    .photo-pop { position: absolute; top: 15.37mm; left: 16.05mm; width: 21.89mm; height: 30mm; z-index: 2; }
+    .photo-pop { position: absolute; top: 15.37mm; left: 16.05mm; width: 21.89mm; z-index: 2; }
 
     .quote { position: relative; margin-top: 3.5mm; background-color: rgba(0,0,0,0.28); padding: 2mm 3mm; text-align: center; font-style: italic; color: #FFFFFF; font-size: 6.6pt; }
 </style>
@@ -59,7 +59,16 @@
     </div>
 
     @if ($profil->fotoUrl())
-        <img class="photo-pop" src="{{ public_path('storage/'.$profil->foto) }}">
+        @php
+            $photoAbsPath = public_path('storage/'.$profil->foto);
+            $photoWidthMm = 21.89;
+            $photoHeightMm = 30;
+            $photoDims = @getimagesize($photoAbsPath);
+            if ($photoDims && $photoDims[0] > 0 && $photoDims[1] > 0) {
+                $photoHeightMm = round($photoWidthMm / ($photoDims[0] / $photoDims[1]), 2);
+            }
+        @endphp
+        <img class="photo-pop" style="height: {{ $photoHeightMm }}mm;" src="{{ $photoAbsPath }}">
     @endif
 
     <div class="quote">&ldquo;Tumbuh Bersama, Sukses Bersama&rdquo;</div>
