@@ -21,21 +21,21 @@
             display: inline-block; border: 0.25mm solid rgba(255,255,255,0.45); border-radius: 999px;
             padding: 0.9mm 3mm; font-size: 6.5pt; font-weight: 700; color: #FFFFFF; letter-spacing: 0.2px;
         }
-        .mc-frame-wrap { position: relative; margin: 8mm auto 0; width: 68%; }
+        .mc-frame-wrap { position: relative; margin: 2mm auto 0; width: 68%; }
         .mc-card { background: #FFFFFF; border-radius: 1.6mm; overflow: hidden; box-shadow: 0 3mm 6mm rgba(0,0,0,0.35); }
-        .mc-photo-box-wrap { padding-top: 3mm; text-align: center; }
+        .mc-photo-box-wrap { padding-top: 1mm; text-align: center; }
         .mc-photo-box { display: inline-block; background: #EDEDED; padding: 2mm; box-sizing: border-box; border-radius: 1mm; }
         .mc-photo-box img { display: block; }
-        .mc-info { padding: 2.2mm 2.6mm 2.6mm; }
-        .mc-nama { color: #1A1247; font-weight: 800; font-size: 11pt; line-height: 1.16; }
+        .mc-info { padding: 1.2mm 2.4mm 1.4mm; }
+        .mc-nama { color: #1A1247; font-weight: 800; font-size: 8.5pt; line-height: 1.14; }
         .mc-id {
             display: inline-flex; align-items: center; background: #0A1226; color: #FFFFFF;
-            border-radius: 999px; padding: 0.8mm 2.6mm; font-size: 6.5pt; font-weight: 700; margin-top: 1.3mm;
+            border-radius: 999px; padding: 0.5mm 2mm; font-size: 5.6pt; font-weight: 700; margin-top: 0.8mm;
         }
-        .mc-sub { font-size: 6.2pt; color: #8A8A8A; margin-top: 1.1mm; }
+        .mc-sub { font-size: 5.4pt; color: #8A8A8A; margin-top: 0.6mm; }
         .mc-quote {
-            margin-top: 3.5mm; background: rgba(0,0,0,0.28); padding: 2.4mm 3mm;
-            text-align: center; font-style: italic; color: #FFFFFF; font-size: 6.6pt;
+            margin-top: 2mm; background: rgba(0,0,0,0.28); padding: 1.8mm 3mm;
+            text-align: center; font-style: italic; color: #FFFFFF; font-size: 6.2pt;
         }
     </style>
 
@@ -66,7 +66,7 @@
                         <div class="mc-photo-box">
                             @if ($profil->fotoUrl())
                                 @php
-                                    $photoBoxHeightMm = 30;
+                                    $photoBoxHeightMm = 38;
                                     $photoPaddingMm = 2;
                                     $photoHeightMm = $photoBoxHeightMm - 2 * $photoPaddingMm;
                                     $photoWidthMm = $photoHeightMm;

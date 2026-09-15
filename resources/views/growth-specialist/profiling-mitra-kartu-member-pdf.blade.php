@@ -18,16 +18,16 @@
         padding: 0.9mm 3mm; font-size: 6.5pt; font-weight: bold; color: #FFFFFF;
     }
 
-    .frame-wrap { position: relative; margin: 5.5mm auto 0; width: 68%; }
+    .frame-wrap { position: relative; margin: 2mm auto 0; width: 68%; }
     .mc-card { background-color: #FFFFFF; border-radius: 1.6mm; }
-    .photo-box-wrap { padding-top: 1.5mm; text-align: center; }
+    .photo-box-wrap { padding-top: 1mm; text-align: center; }
     .photo-box { display: inline-block; background-color: #EDEDED; padding: 1.6mm; }
-    .info { padding: 2.2mm 2.6mm 1.8mm; }
-    .nama { color: #1A1247; font-weight: bold; font-size: 12pt; margin: 0; line-height: 1.16; }
-    .idpill { display: inline-block; background-color: #0A1226; color: #FFFFFF; border-radius: 999px; padding: 0.8mm 2.6mm; font-size: 6.5pt; font-weight: bold; margin-top: 1.3mm; }
-    .sub { font-size: 6.2pt; color: #8A8A8A; margin-top: 0.8mm; }
+    .info { padding: 1.2mm 2.4mm 1.4mm; }
+    .nama { color: #1A1247; font-weight: bold; font-size: 9.5pt; margin: 0; line-height: 1.14; }
+    .idpill { display: inline-block; background-color: #0A1226; color: #FFFFFF; border-radius: 999px; padding: 0.5mm 2mm; font-size: 5.6pt; font-weight: bold; margin-top: 0.8mm; }
+    .sub { font-size: 5.4pt; color: #8A8A8A; margin-top: 0.6mm; }
 
-    .quote { position: relative; margin-top: 3.5mm; background-color: rgba(0,0,0,0.28); padding: 2mm 3mm; text-align: center; font-style: italic; color: #FFFFFF; font-size: 6.6pt; }
+    .quote { position: relative; margin-top: 2mm; background-color: rgba(0,0,0,0.28); padding: 1.6mm 3mm; text-align: center; font-style: italic; color: #FFFFFF; font-size: 6.2pt; }
 </style>
 </head>
 <body>
@@ -52,7 +52,7 @@
                 <div class="photo-box">
                     @if ($profil->fotoUrl())
                         @php
-                            $photoBoxHeightMm = 26;
+                            $photoBoxHeightMm = 34;
                             $photoPaddingMm = 1.6;
                             $photoHeightMm = $photoBoxHeightMm - 2 * $photoPaddingMm;
                             $photoWidthMm = $photoHeightMm;
@@ -61,7 +61,7 @@
                             if ($photoDims && $photoDims[0] > 0 && $photoDims[1] > 0) {
                                 $photoRatio = $photoDims[0] / $photoDims[1];
                                 $photoWidthMm = round($photoHeightMm * $photoRatio, 2);
-                                $maxPhotoBoxWidthMm = 34;
+                                $maxPhotoBoxWidthMm = 35;
                                 if ($photoWidthMm + 2 * $photoPaddingMm > $maxPhotoBoxWidthMm) {
                                     $photoWidthMm = $maxPhotoBoxWidthMm - 2 * $photoPaddingMm;
                                     $photoHeightMm = round($photoWidthMm / $photoRatio, 2);
