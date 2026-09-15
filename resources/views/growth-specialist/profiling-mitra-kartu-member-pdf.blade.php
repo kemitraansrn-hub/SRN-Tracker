@@ -18,10 +18,10 @@
         padding: 0.9mm 3mm; font-size: 6.5pt; font-weight: bold; color: #FFFFFF;
     }
 
-    .frame-wrap { position: relative; margin: 7mm auto 0; width: 68%; }
+    .frame-wrap { position: relative; margin: 5.5mm auto 0; width: 68%; }
     .mc-card { background-color: #FFFFFF; border-radius: 1.6mm; }
-    .photo-slot-table { width: 100%; height: 26mm; border-collapse: collapse; background-color: #EDEDED; }
-    .photo-slot-cell { text-align: center; vertical-align: middle; padding: 1.6mm; }
+    .photo-box-wrap { padding-top: 1.5mm; text-align: center; }
+    .photo-box { display: inline-block; background-color: #EDEDED; padding: 1.6mm; }
     .info { padding: 2.2mm 2.6mm 1.8mm; }
     .nama { color: #1A1247; font-weight: bold; font-size: 12pt; margin: 0; line-height: 1.16; }
     .idpill { display: inline-block; background-color: #0A1226; color: #FFFFFF; border-radius: 999px; padding: 0.8mm 2.6mm; font-size: 6.5pt; font-weight: bold; margin-top: 1.3mm; }
@@ -48,31 +48,30 @@
 
     <div class="frame-wrap">
         <div class="mc-card">
-            <table class="photo-slot-table">
-                <tr>
-                    <td class="photo-slot-cell">
-                        @if ($profil->fotoUrl())
-                            @php
-                                $photoAbsPath = public_path('storage/'.$profil->foto);
-                                $maxW = 30.6; $maxH = 22.8;
-                                $photoWidthMm = $maxW; $photoHeightMm = $maxH;
-                                $photoDims = @getimagesize($photoAbsPath);
-                                if ($photoDims && $photoDims[0] > 0 && $photoDims[1] > 0) {
-                                    $ratio = $photoDims[0] / $photoDims[1];
-                                    if ($maxW / $ratio <= $maxH) {
-                                        $photoWidthMm = $maxW;
-                                        $photoHeightMm = round($maxW / $ratio, 2);
-                                    } else {
-                                        $photoHeightMm = $maxH;
-                                        $photoWidthMm = round($maxH * $ratio, 2);
-                                    }
+            <div class="photo-box-wrap">
+                <div class="photo-box">
+                    @if ($profil->fotoUrl())
+                        @php
+                            $photoBoxHeightMm = 26;
+                            $photoPaddingMm = 1.6;
+                            $photoHeightMm = $photoBoxHeightMm - 2 * $photoPaddingMm;
+                            $photoWidthMm = $photoHeightMm;
+                            $photoAbsPath = public_path('storage/'.$profil->foto);
+                            $photoDims = @getimagesize($photoAbsPath);
+                            if ($photoDims && $photoDims[0] > 0 && $photoDims[1] > 0) {
+                                $photoRatio = $photoDims[0] / $photoDims[1];
+                                $photoWidthMm = round($photoHeightMm * $photoRatio, 2);
+                                $maxPhotoBoxWidthMm = 34;
+                                if ($photoWidthMm + 2 * $photoPaddingMm > $maxPhotoBoxWidthMm) {
+                                    $photoWidthMm = $maxPhotoBoxWidthMm - 2 * $photoPaddingMm;
+                                    $photoHeightMm = round($photoWidthMm / $photoRatio, 2);
                                 }
-                            @endphp
-                            <img style="width: {{ $photoWidthMm }}mm; height: {{ $photoHeightMm }}mm;" src="{{ $photoAbsPath }}">
-                        @endif
-                    </td>
-                </tr>
-            </table>
+                            }
+                        @endphp
+                        <img style="width: {{ $photoWidthMm }}mm; height: {{ $photoHeightMm }}mm;" src="{{ $photoAbsPath }}">
+                    @endif
+                </div>
+            </div>
             <div class="info">
                 <p class="nama">{{ $mitra->nama }}</p>
                 <div class="idpill">{{ $mitra->kode_mitra }}</div>

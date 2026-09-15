@@ -23,11 +23,9 @@
         }
         .mc-frame-wrap { position: relative; margin: 8mm auto 0; width: 68%; }
         .mc-card { background: #FFFFFF; border-radius: 1.6mm; overflow: hidden; box-shadow: 0 3mm 6mm rgba(0,0,0,0.35); }
-        .mc-photo-slot {
-            width: 100%; height: 34mm; background: #EDEDED; padding: 1.6mm; box-sizing: border-box;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .mc-photo-slot img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
+        .mc-photo-box-wrap { padding-top: 3mm; text-align: center; }
+        .mc-photo-box { display: inline-block; background: #EDEDED; padding: 2mm; box-sizing: border-box; border-radius: 1mm; }
+        .mc-photo-box img { display: block; }
         .mc-info { padding: 2.2mm 2.6mm 2.6mm; }
         .mc-nama { color: #1A1247; font-weight: 800; font-size: 11pt; line-height: 1.16; }
         .mc-id {
@@ -64,12 +62,33 @@
 
             <div class="mc-frame-wrap">
                 <div class="mc-card">
-                    <div class="mc-photo-slot">
-                        @if ($profil->fotoUrl())
-                            <img src="{{ $profil->fotoUrl() }}" alt="Foto {{ $mitra->nama }}">
-                        @else
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#B8B8B8" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c1-4 4-6 8-6s7 2 8 6" stroke-linecap="round"/></svg>
-                        @endif
+                    <div class="mc-photo-box-wrap">
+                        <div class="mc-photo-box">
+                            @if ($profil->fotoUrl())
+                                @php
+                                    $photoBoxHeightMm = 30;
+                                    $photoPaddingMm = 2;
+                                    $photoHeightMm = $photoBoxHeightMm - 2 * $photoPaddingMm;
+                                    $photoWidthMm = $photoHeightMm;
+                                    $photoAbsPath = storage_path('app/public/'.$profil->foto);
+                                    $photoDims = @getimagesize($photoAbsPath);
+                                    if ($photoDims && $photoDims[0] > 0 && $photoDims[1] > 0) {
+                                        $photoRatio = $photoDims[0] / $photoDims[1];
+                                        $photoWidthMm = round($photoHeightMm * $photoRatio, 2);
+                                        $maxPhotoBoxWidthMm = 40;
+                                        if ($photoWidthMm + 2 * $photoPaddingMm > $maxPhotoBoxWidthMm) {
+                                            $photoWidthMm = $maxPhotoBoxWidthMm - 2 * $photoPaddingMm;
+                                            $photoHeightMm = round($photoWidthMm / $photoRatio, 2);
+                                        }
+                                    }
+                                @endphp
+                                <img src="{{ $profil->fotoUrl() }}" style="width: {{ $photoWidthMm }}mm; height: {{ $photoHeightMm }}mm;" alt="Foto {{ $mitra->nama }}">
+                            @else
+                                <div style="width: 26mm; height: 26mm; display: flex; align-items: center; justify-content: center;">
+                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#B8B8B8" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c1-4 4-6 8-6s7 2 8 6" stroke-linecap="round"/></svg>
+                                </div>
+                            @endif
+                        </div>
                     </div>
                     <div class="mc-info">
                         <div class="mc-nama">{{ $mitra->nama }}</div>
