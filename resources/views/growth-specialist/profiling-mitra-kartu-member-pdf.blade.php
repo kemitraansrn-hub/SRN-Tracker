@@ -9,14 +9,13 @@
 
     .bg { position: absolute; top: 0; left: 0; width: 53.98mm; height: 85.6mm; }
 
-    .top { position: relative; padding-top: 2.6mm; text-align: center; }
-    .logos { border-collapse: collapse; margin: 0 auto 1.6mm; }
-    .logos td { width: 4mm; height: 4mm; border-radius: 50%; background-color: #FFFFFF; text-align: center; vertical-align: middle; padding: 0 0.5mm; }
-    .logos img { width: 2.8mm; }
-    .pill {
-        display: inline-block; border: 0.25mm solid rgba(255,255,255,0.5); border-radius: 999px;
-        padding: 0.9mm 3mm; font-size: 6.5pt; font-weight: bold; color: #FFFFFF;
-    }
+    .top { position: relative; padding: 2.6mm 3mm 0; }
+    .brand-table { border-collapse: collapse; }
+    .brand-icon-td { width: 5.5mm; padding-right: 1.3mm; vertical-align: middle; }
+    .brand-icon-td img { width: 4.2mm; height: 4.2mm; display: block; }
+    .brand-text-td { vertical-align: middle; }
+    .brand-name { color: #FFFFFF; font-weight: bold; font-size: 10pt; margin: 0; line-height: 1; }
+    .brand-sub { color: #C7D6EC; font-size: 5.2pt; margin: 0.4mm 0 0; }
 
     .frame-wrap { position: relative; margin: 2mm auto 0; width: 68%; }
     .mc-card { background-color: #FFFFFF; border-radius: 1.6mm; }
@@ -32,22 +31,24 @@
     .line-text-td { font-size: 5.4pt; color: #8A8A8A; }
 
     .quote { position: relative; margin-top: 1.2mm; background-color: rgba(0,0,0,0.28); padding: 1.4mm 3mm; text-align: center; font-style: italic; color: #FFFFFF; font-size: 6pt; }
+
+    .footer-logos { position: absolute; top: 76mm; left: 0; border-collapse: collapse; width: 53.98mm; }
+    .footer-logos td { text-align: center; width: 25%; padding: 0; }
 </style>
 </head>
 <body>
     <img class="bg" src="{{ public_path('images/kartu-member-bg.png') }}">
 
     <div class="top">
-        <table class="logos" align="center">
+        <table class="brand-table">
             <tr>
-                <td><img src="{{ public_path('images/srn-icon.png') }}"></td>
-                <td><img src="{{ public_path('images/brands/reglow.png') }}"></td>
-                <td><img src="{{ public_path('images/brands/amura.png') }}"></td>
-                <td><img src="{{ public_path('images/brands/but.png') }}"></td>
-                <td><img src="{{ public_path('images/brands/purela.png') }}"></td>
+                <td class="brand-icon-td"><img src="{{ public_path('images/srn-icon.png') }}"></td>
+                <td class="brand-text-td">
+                    <p class="brand-name">SRN</p>
+                    <p class="brand-sub">Sinergi Retail Network</p>
+                </td>
             </tr>
         </table>
-        <div class="pill">Sinergi Retail Network</div>
     </div>
 
     <div class="frame-wrap">
@@ -101,5 +102,31 @@
     </div>
 
     <div class="quote">&ldquo;Tumbuh Bersama, Sukses Bersama&rdquo;</div>
+
+    @php
+        $footerLogos = [
+            'reglow-white.png',
+            'amura-white.png',
+            'but-white.png',
+            'purela-white.png',
+        ];
+        $footerLogoHeightMm = 3.4;
+    @endphp
+    <table class="footer-logos">
+        <tr>
+            @foreach ($footerLogos as $logoFile)
+                @php
+                    $logoPath = public_path('images/brands/'.$logoFile);
+                    $logoDims = @getimagesize($logoPath);
+                    $logoWidthMm = $footerLogoHeightMm;
+                    if ($logoDims && $logoDims[0] > 0 && $logoDims[1] > 0) {
+                        $logoWidthMm = round($footerLogoHeightMm * ($logoDims[0] / $logoDims[1]), 2);
+                        $logoWidthMm = min($logoWidthMm, 10);
+                    }
+                @endphp
+                <td><img style="width: {{ $logoWidthMm }}mm; height: {{ $footerLogoHeightMm }}mm;" src="{{ $logoPath }}"></td>
+            @endforeach
+        </tr>
+    </table>
 </body>
 </html>

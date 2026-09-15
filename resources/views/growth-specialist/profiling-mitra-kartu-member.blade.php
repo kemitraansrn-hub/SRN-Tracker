@@ -10,17 +10,11 @@
                 linear-gradient(165deg, #16264f 0%, #0A1226 42%, #3a1b52 100%);
             box-shadow: 0 8px 24px rgba(0,0,0,0.28); margin: 0 auto;
         }
-        .mc-top { padding: 2.6mm 3mm 0; text-align: center; }
-        .mc-logos { display: flex; justify-content: center; gap: 1mm; margin-bottom: 1.6mm; }
-        .mc-logo-badge {
-            width: 4mm; height: 4mm; border-radius: 50%; background: rgba(255,255,255,0.92);
-            display: flex; align-items: center; justify-content: center; flex: none;
-        }
-        .mc-logo-badge img { width: 2.9mm; height: 2.9mm; object-fit: contain; display: block; }
-        .mc-pill {
-            display: inline-block; border: 0.25mm solid rgba(255,255,255,0.45); border-radius: 999px;
-            padding: 0.9mm 3mm; font-size: 6.5pt; font-weight: 700; color: #FFFFFF; letter-spacing: 0.2px;
-        }
+        .mc-top { padding: 2.6mm 3mm 0; text-align: left; }
+        .mc-brand-row { display: flex; align-items: center; gap: 1.3mm; }
+        .mc-brand-icon { width: 4.2mm; height: 4.2mm; display: block; flex: none; }
+        .mc-brand-name { color: #FFFFFF; font-weight: 800; font-size: 10pt; line-height: 1; }
+        .mc-brand-sub { color: #C7D6EC; font-size: 5.2pt; margin-top: 0.4mm; }
         .mc-frame-wrap { position: relative; margin: 2mm auto 0; width: 68%; }
         .mc-card { background: #FFFFFF; border-radius: 1.6mm; overflow: hidden; box-shadow: 0 3mm 6mm rgba(0,0,0,0.35); }
         .mc-photo-box-wrap { text-align: center; }
@@ -39,6 +33,11 @@
             margin-top: 1mm; background: rgba(0,0,0,0.28); padding: 1.6mm 3mm;
             text-align: center; font-style: italic; color: #FFFFFF; font-size: 6pt;
         }
+        .mc-footer-logos {
+            margin-top: 1.4mm; display: flex; align-items: center; justify-content: space-evenly;
+            padding: 0 3mm;
+        }
+        .mc-footer-logos img { height: 3.4mm; max-width: 10mm; object-fit: contain; display: block; }
     </style>
 
     <div class="kartu-no-print" style="display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:16px;">
@@ -52,14 +51,13 @@
     <div class="card kartu-no-print" style="max-width:500px; margin:0 auto 24px; text-align:center; padding:24px; background:var(--surface-alt);">
         <div class="member-card">
             <div class="mc-top">
-                <div class="mc-logos">
-                    <div class="mc-logo-badge"><img src="{{ asset('images/srn-icon.png') }}" alt="SRN"></div>
-                    <div class="mc-logo-badge"><img src="{{ asset('images/brands/reglow.png') }}" alt="Reglow"></div>
-                    <div class="mc-logo-badge"><img src="{{ asset('images/brands/amura.png') }}" alt="Amura"></div>
-                    <div class="mc-logo-badge"><img src="{{ asset('images/brands/but.png') }}" alt="B.U.T"></div>
-                    <div class="mc-logo-badge"><img src="{{ asset('images/brands/purela.png') }}" alt="Purela"></div>
+                <div class="mc-brand-row">
+                    <img class="mc-brand-icon" src="{{ asset('images/srn-icon.png') }}" alt="SRN">
+                    <div>
+                        <div class="mc-brand-name">SRN</div>
+                        <div class="mc-brand-sub">Sinergi Retail Network</div>
+                    </div>
                 </div>
-                <div class="mc-pill">Sinergi Retail Network</div>
             </div>
 
             <div class="mc-frame-wrap">
@@ -113,6 +111,13 @@
             </div>
 
             <div class="mc-quote">&ldquo;Tumbuh Bersama, Sukses Bersama&rdquo;</div>
+
+            <div class="mc-footer-logos">
+                <img src="{{ asset('images/brands/reglow-white.png') }}" alt="Reglow">
+                <img src="{{ asset('images/brands/amura-white.png') }}" alt="Amura">
+                <img src="{{ asset('images/brands/but-white.png') }}" alt="B.U.T">
+                <img src="{{ asset('images/brands/purela-white.png') }}" alt="Purela">
+            </div>
         </div>
     </div>
 @endsection
