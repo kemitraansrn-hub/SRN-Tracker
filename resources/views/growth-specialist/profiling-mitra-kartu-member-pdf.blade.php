@@ -9,59 +9,59 @@
 
     .bg { position: absolute; top: 0; left: 0; width: 53.98mm; height: 85.6mm; }
 
-    .photo { position: absolute; top: 10.8mm; left: 10.79mm; width: 32.4mm; height: 41.4mm; }
-    .photo img { width: 100%; height: 100%; }
-    .photo-placeholder { width: 100%; height: 100%; border-radius: 2.9mm; background-color: #EDEDED; }
+    .top { position: relative; padding-top: 2.6mm; text-align: center; }
+    .logos { border-collapse: collapse; margin: 0 auto 1.6mm; }
+    .logos td { width: 4mm; height: 4mm; border-radius: 50%; background-color: #FFFFFF; text-align: center; vertical-align: middle; padding: 0 0.5mm; }
+    .logos img { width: 2.8mm; }
+    .pill {
+        display: inline-block; border: 0.25mm solid rgba(255,255,255,0.5); border-radius: 999px;
+        padding: 0.9mm 3mm; font-size: 6.5pt; font-weight: bold; color: #FFFFFF;
+    }
 
-    .idblock { position: absolute; top: 57.2mm; left: 0; width: 53.98mm; text-align: center; }
-    .nama { color: #FFFFFF; font-weight: bold; font-size: 12pt; margin: 0; }
-    .id { color: #EF8F20; font-weight: bold; font-size: 7pt; letter-spacing: 0.5px; margin: 0.6mm 0 0; }
+    .frame-wrap { position: relative; margin: 10mm auto 0; width: 68%; }
+    .mc-card { background-color: #FFFFFF; border-radius: 1.6mm; }
+    .photo-slot { width: 100%; height: 22mm; background-color: #EDEDED; }
+    .info { padding: 2.2mm 2.6mm 1.8mm; }
+    .nama { color: #1A1247; font-weight: bold; font-size: 12pt; margin: 0; line-height: 1.16; }
+    .idpill { display: inline-block; background-color: #0A1226; color: #FFFFFF; border-radius: 999px; padding: 0.8mm 2.6mm; font-size: 6.5pt; font-weight: bold; margin-top: 1.3mm; }
+    .sub { font-size: 6.2pt; color: #8A8A8A; margin-top: 0.8mm; }
 
-    table.lines { position: absolute; top: 67mm; left: 5mm; width: 43.98mm; border-collapse: collapse; }
-    table.lines td { padding: 0 0 1.1mm 0; vertical-align: middle; }
-    .icon-td { width: 3mm; }
-    .icon-inline { width: 2.6mm; height: 2.6mm; }
-    .line-text { color: #DCE3F0; font-size: 6.6pt; padding-left: 1.1mm; }
+    .photo-pop { position: absolute; top: 15.37mm; left: 16.05mm; width: 21.89mm; height: 30mm; z-index: 2; }
 
-    table.brands { position: absolute; top: 80mm; left: 0; width: 53.98mm; border-collapse: collapse; }
-    table.brands td { text-align: center; width: 25%; padding: 0; }
-    table.brands img { height: 3.4mm; }
+    .quote { position: relative; margin-top: 3.5mm; background-color: rgba(0,0,0,0.28); padding: 2mm 3mm; text-align: center; font-style: italic; color: #FFFFFF; font-size: 6.6pt; }
 </style>
 </head>
 <body>
     <img class="bg" src="{{ public_path('images/kartu-member-bg.png') }}">
 
-    <div class="photo">
-        @if ($profil->fotoUrl())
-            <img src="{{ public_path('storage/'.$profil->foto) }}">
-        @else
-            <div class="photo-placeholder"></div>
-        @endif
+    <div class="top">
+        <table class="logos" align="center">
+            <tr>
+                <td><img src="{{ public_path('images/srn-icon.png') }}"></td>
+                <td><img src="{{ public_path('images/brands/reglow.png') }}"></td>
+                <td><img src="{{ public_path('images/brands/amura.png') }}"></td>
+                <td><img src="{{ public_path('images/brands/but.png') }}"></td>
+                <td><img src="{{ public_path('images/brands/purela.png') }}"></td>
+            </tr>
+        </table>
+        <div class="pill">Sinergi Retail Network</div>
     </div>
 
-    <div class="idblock">
-        <p class="nama">{{ $mitra->nama }}</p>
-        <p class="id">{{ $mitra->kode_mitra }}</p>
+    <div class="frame-wrap">
+        <div class="mc-card">
+            <div class="photo-slot"></div>
+            <div class="info">
+                <p class="nama">{{ $mitra->nama }}</p>
+                <div class="idpill">{{ $mitra->kode_mitra }}</div>
+                <p class="sub">{{ $profil->no_wa ?? '-' }} &middot; {{ $profil->domisili_kota ?? '-' }}</p>
+            </div>
+        </div>
     </div>
 
-    <table class="lines">
-        <tr>
-            <td class="icon-td"><img class="icon-inline" src="{{ public_path('images/icons/icon-phone.png') }}"></td>
-            <td class="line-text">{{ $profil->no_wa ?? '-' }}</td>
-        </tr>
-        <tr>
-            <td class="icon-td"><img class="icon-inline" src="{{ public_path('images/icons/icon-map.png') }}"></td>
-            <td class="line-text">{{ $profil->domisili_kota ? $profil->domisili_kota.($provinsi ? ', '.$provinsi : '') : '-' }}</td>
-        </tr>
-    </table>
+    @if ($profil->fotoUrl())
+        <img class="photo-pop" src="{{ public_path('storage/'.$profil->foto) }}">
+    @endif
 
-    <table class="brands">
-        <tr>
-            <td><img src="{{ public_path('images/brands/reglow.png') }}"></td>
-            <td><img src="{{ public_path('images/brands/amura.png') }}"></td>
-            <td><img src="{{ public_path('images/brands/but.png') }}"></td>
-            <td><img src="{{ public_path('images/brands/purela.png') }}"></td>
-        </tr>
-    </table>
+    <div class="quote">&ldquo;Tumbuh Bersama, Sukses Bersama&rdquo;</div>
 </body>
 </html>
