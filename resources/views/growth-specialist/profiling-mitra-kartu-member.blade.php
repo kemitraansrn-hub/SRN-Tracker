@@ -21,9 +21,13 @@
             display: inline-block; border: 0.25mm solid rgba(255,255,255,0.45); border-radius: 999px;
             padding: 0.9mm 3mm; font-size: 6.5pt; font-weight: 700; color: #FFFFFF; letter-spacing: 0.2px;
         }
-        .mc-frame-wrap { position: relative; margin: 15mm auto 0; width: 68%; }
+        .mc-frame-wrap { position: relative; margin: 8mm auto 0; width: 68%; }
         .mc-card { background: #FFFFFF; border-radius: 1.6mm; overflow: hidden; box-shadow: 0 3mm 6mm rgba(0,0,0,0.35); }
-        .mc-photo-slot { width: 100%; height: 31.2mm; background: #EDEDED; }
+        .mc-photo-slot {
+            width: 100%; height: 34mm; background: #EDEDED; padding: 1.6mm; box-sizing: border-box;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .mc-photo-slot img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
         .mc-info { padding: 2.2mm 2.6mm 2.6mm; }
         .mc-nama { color: #1A1247; font-weight: 800; font-size: 11pt; line-height: 1.16; }
         .mc-id {
@@ -31,10 +35,6 @@
             border-radius: 999px; padding: 0.8mm 2.6mm; font-size: 6.5pt; font-weight: 700; margin-top: 1.3mm;
         }
         .mc-sub { font-size: 6.2pt; color: #8A8A8A; margin-top: 1.1mm; }
-        .mc-photo-pop {
-            position: absolute; top: -13mm; left: 50%; transform: translateX(-50%);
-            width: 70%; z-index: 2; filter: drop-shadow(0 2mm 3mm rgba(0,0,0,0.4));
-        }
         .mc-quote {
             margin-top: 3.5mm; background: rgba(0,0,0,0.28); padding: 2.4mm 3mm;
             text-align: center; font-style: italic; color: #FFFFFF; font-size: 6.6pt;
@@ -64,16 +64,19 @@
 
             <div class="mc-frame-wrap">
                 <div class="mc-card">
-                    <div class="mc-photo-slot"></div>
+                    <div class="mc-photo-slot">
+                        @if ($profil->fotoUrl())
+                            <img src="{{ $profil->fotoUrl() }}" alt="Foto {{ $mitra->nama }}">
+                        @else
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#B8B8B8" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c1-4 4-6 8-6s7 2 8 6" stroke-linecap="round"/></svg>
+                        @endif
+                    </div>
                     <div class="mc-info">
                         <div class="mc-nama">{{ $mitra->nama }}</div>
                         <div class="mc-id">{{ $mitra->kode_mitra }}</div>
                         <div class="mc-sub">{{ $profil->no_wa ?? '—' }} &middot; {{ $profil->domisili_kota ?? '—' }}</div>
                     </div>
                 </div>
-                @if ($profil->fotoUrl())
-                    <img class="mc-photo-pop" src="{{ $profil->fotoUrl() }}" alt="Foto {{ $mitra->nama }}">
-                @endif
             </div>
 
             <div class="mc-quote">&ldquo;Tumbuh Bersama, Sukses Bersama&rdquo;</div>

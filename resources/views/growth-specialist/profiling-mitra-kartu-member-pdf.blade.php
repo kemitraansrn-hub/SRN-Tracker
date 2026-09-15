@@ -18,15 +18,14 @@
         padding: 0.9mm 3mm; font-size: 6.5pt; font-weight: bold; color: #FFFFFF;
     }
 
-    .frame-wrap { position: relative; margin: 10mm auto 0; width: 68%; }
+    .frame-wrap { position: relative; margin: 7mm auto 0; width: 68%; }
     .mc-card { background-color: #FFFFFF; border-radius: 1.6mm; }
-    .photo-slot { width: 100%; height: 22mm; background-color: #EDEDED; }
+    .photo-slot-table { width: 100%; height: 26mm; border-collapse: collapse; background-color: #EDEDED; }
+    .photo-slot-cell { text-align: center; vertical-align: middle; padding: 1.6mm; }
     .info { padding: 2.2mm 2.6mm 1.8mm; }
     .nama { color: #1A1247; font-weight: bold; font-size: 12pt; margin: 0; line-height: 1.16; }
     .idpill { display: inline-block; background-color: #0A1226; color: #FFFFFF; border-radius: 999px; padding: 0.8mm 2.6mm; font-size: 6.5pt; font-weight: bold; margin-top: 1.3mm; }
     .sub { font-size: 6.2pt; color: #8A8A8A; margin-top: 0.8mm; }
-
-    .photo-pop { position: absolute; top: 15.37mm; left: 16.05mm; width: 21.89mm; z-index: 2; }
 
     .quote { position: relative; margin-top: 3.5mm; background-color: rgba(0,0,0,0.28); padding: 2mm 3mm; text-align: center; font-style: italic; color: #FFFFFF; font-size: 6.6pt; }
 </style>
@@ -49,7 +48,31 @@
 
     <div class="frame-wrap">
         <div class="mc-card">
-            <div class="photo-slot"></div>
+            <table class="photo-slot-table">
+                <tr>
+                    <td class="photo-slot-cell">
+                        @if ($profil->fotoUrl())
+                            @php
+                                $photoAbsPath = public_path('storage/'.$profil->foto);
+                                $maxW = 30.6; $maxH = 22.8;
+                                $photoWidthMm = $maxW; $photoHeightMm = $maxH;
+                                $photoDims = @getimagesize($photoAbsPath);
+                                if ($photoDims && $photoDims[0] > 0 && $photoDims[1] > 0) {
+                                    $ratio = $photoDims[0] / $photoDims[1];
+                                    if ($maxW / $ratio <= $maxH) {
+                                        $photoWidthMm = $maxW;
+                                        $photoHeightMm = round($maxW / $ratio, 2);
+                                    } else {
+                                        $photoHeightMm = $maxH;
+                                        $photoWidthMm = round($maxH * $ratio, 2);
+                                    }
+                                }
+                            @endphp
+                            <img style="width: {{ $photoWidthMm }}mm; height: {{ $photoHeightMm }}mm;" src="{{ $photoAbsPath }}">
+                        @endif
+                    </td>
+                </tr>
+            </table>
             <div class="info">
                 <p class="nama">{{ $mitra->nama }}</p>
                 <div class="idpill">{{ $mitra->kode_mitra }}</div>
@@ -57,19 +80,6 @@
             </div>
         </div>
     </div>
-
-    @if ($profil->fotoUrl())
-        @php
-            $photoAbsPath = public_path('storage/'.$profil->foto);
-            $photoWidthMm = 21.89;
-            $photoHeightMm = 30;
-            $photoDims = @getimagesize($photoAbsPath);
-            if ($photoDims && $photoDims[0] > 0 && $photoDims[1] > 0) {
-                $photoHeightMm = round($photoWidthMm / ($photoDims[0] / $photoDims[1]), 2);
-            }
-        @endphp
-        <img class="photo-pop" style="height: {{ $photoHeightMm }}mm;" src="{{ $photoAbsPath }}">
-    @endif
 
     <div class="quote">&ldquo;Tumbuh Bersama, Sukses Bersama&rdquo;</div>
 </body>
