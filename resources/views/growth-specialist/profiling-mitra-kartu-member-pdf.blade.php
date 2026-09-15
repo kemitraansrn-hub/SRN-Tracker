@@ -25,9 +25,13 @@
     .info { padding: 1.2mm 2.4mm 1.4mm; }
     .nama { color: #1A1247; font-weight: bold; font-size: 9.5pt; margin: 0; line-height: 1.14; }
     .idpill { display: inline-block; background-color: #0A1226; color: #FFFFFF; border-radius: 999px; padding: 0.5mm 2mm; font-size: 5.6pt; font-weight: bold; margin-top: 0.8mm; }
-    .sub { font-size: 5.4pt; color: #8A8A8A; margin-top: 0.6mm; }
+    .line-table { border-collapse: collapse; margin-top: 0.5mm; }
+    .line-table td { padding: 0; vertical-align: middle; }
+    .line-icon-td { width: 2.3mm; padding-right: 0.8mm; }
+    .line-icon-td img { width: 2.1mm; height: 2.1mm; display: block; }
+    .line-text-td { font-size: 5.4pt; color: #8A8A8A; }
 
-    .quote { position: relative; margin-top: 2mm; background-color: rgba(0,0,0,0.28); padding: 1.6mm 3mm; text-align: center; font-style: italic; color: #FFFFFF; font-size: 6.2pt; }
+    .quote { position: relative; margin-top: 1.2mm; background-color: rgba(0,0,0,0.28); padding: 1.4mm 3mm; text-align: center; font-style: italic; color: #FFFFFF; font-size: 6pt; }
 </style>
 </head>
 <body>
@@ -50,7 +54,7 @@
         <div class="mc-card">
             @php
                 $mcCardWidthMm = 53.98 * 0.68;
-                $photoBoxHeightMm = 34;
+                $photoBoxHeightMm = 32;
                 $photoPaddingMm = 1.6;
                 $photoHeightMm = $photoBoxHeightMm - 2 * $photoPaddingMm;
                 $photoWidthMm = $photoHeightMm;
@@ -80,7 +84,18 @@
             <div class="info">
                 <p class="nama">{{ $mitra->nama }}</p>
                 <div class="idpill">{{ $mitra->kode_mitra }}</div>
-                <p class="sub">{{ $profil->no_wa ?? '-' }} &middot; {{ $profil->domisili_kota ?? '-' }}</p>
+                <table class="line-table">
+                    <tr>
+                        <td class="line-icon-td"><img src="{{ public_path('images/icons/icon-phone.png') }}"></td>
+                        <td class="line-text-td">{{ $profil->no_wa ?? '-' }}</td>
+                    </tr>
+                </table>
+                <table class="line-table">
+                    <tr>
+                        <td class="line-icon-td"><img src="{{ public_path('images/icons/icon-map.png') }}"></td>
+                        <td class="line-text-td">{{ $profil->domisili_kota ?? '-' }}</td>
+                    </tr>
+                </table>
             </div>
         </div>
     </div>

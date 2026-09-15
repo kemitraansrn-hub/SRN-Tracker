@@ -32,10 +32,12 @@
             display: inline-flex; align-items: center; background: #0A1226; color: #FFFFFF;
             border-radius: 999px; padding: 0.5mm 2mm; font-size: 5.6pt; font-weight: 700; margin-top: 0.8mm;
         }
-        .mc-sub { font-size: 5.4pt; color: #8A8A8A; margin-top: 0.6mm; }
+        .mc-line { display: flex; align-items: center; gap: 1mm; margin-top: 0.5mm; }
+        .mc-line img { width: 2.1mm; height: 2.1mm; display: block; flex: none; }
+        .mc-line span { font-size: 5.4pt; color: #8A8A8A; }
         .mc-quote {
-            margin-top: 2mm; background: rgba(0,0,0,0.28); padding: 1.8mm 3mm;
-            text-align: center; font-style: italic; color: #FFFFFF; font-size: 6.2pt;
+            margin-top: 1mm; background: rgba(0,0,0,0.28); padding: 1.6mm 3mm;
+            text-align: center; font-style: italic; color: #FFFFFF; font-size: 6pt;
         }
     </style>
 
@@ -64,7 +66,7 @@
                 <div class="mc-card">
                     @php
                         $mcCardWidthMm = 53.98 * 0.68;
-                        $photoBoxHeightMm = 38;
+                        $photoBoxHeightMm = 36;
                         $photoPaddingMm = 2;
                         $photoHeightMm = $photoBoxHeightMm - 2 * $photoPaddingMm;
                         $photoWidthMm = $photoHeightMm;
@@ -98,7 +100,14 @@
                     <div class="mc-info">
                         <div class="mc-nama">{{ $mitra->nama }}</div>
                         <div class="mc-id">{{ $mitra->kode_mitra }}</div>
-                        <div class="mc-sub">{{ $profil->no_wa ?? '—' }} &middot; {{ $profil->domisili_kota ?? '—' }}</div>
+                        <div class="mc-line">
+                            <img src="{{ asset('images/icons/icon-phone.png') }}" alt="WA">
+                            <span>{{ $profil->no_wa ?? '—' }}</span>
+                        </div>
+                        <div class="mc-line">
+                            <img src="{{ asset('images/icons/icon-map.png') }}" alt="Kota">
+                            <span>{{ $profil->domisili_kota ?? '—' }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
