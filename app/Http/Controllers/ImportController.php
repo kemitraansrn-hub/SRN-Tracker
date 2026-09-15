@@ -187,6 +187,28 @@ class ImportController extends Controller
         return $redirect;
     }
 
+    public function destroy(ImportBatch $importBatch): RedirectResponse
+    {
+        if (in_array($importBatch->jenis, ['order_harian', 'order_historis'], true)) {
+            $orderIds = $importBatch->orders()->pluck('id');
+            $itemCount = \App\Models\OrderItem::whereIn('order_id', $orderIds)->count();
+            $orderCount = $orderIds->count();
+
+            $importBatch->orders()->delete();
+            $importBatch->delete();
+
+            return redirect()->route('import.index')
+                ->with('status', 'Batch import berhasil dihapus: '.$orderCount.' order ('.$itemCount.' item) dari file "'.$importBatch->nama_file.'".');
+        }
+
+        $targetCount = $importBatch->targetBulanan()->count();
+        $importBatch->targetBulanan()->delete();
+        $importBatch->delete();
+
+        return redirect()->route('import.index')
+            ->with('status', 'Batch import berhasil dihapus: '.$targetCount.' target bulanan dari file "'.$importBatch->nama_file.'".');
+    }
+
     private function handleConfirmedReplace(Request $request): RedirectResponse
     {
         $request->validate(['confirm_token' => ['required', 'string']]);

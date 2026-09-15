@@ -147,7 +147,7 @@
                 <thead>
                     <tr>
                         <th>Tanggal Data</th><th>Jenis</th><th>Nama File</th><th>Diupload Oleh</th>
-                        <th>Waktu</th><th>Baris</th><th>Status</th>
+                        <th>Waktu</th><th>Baris</th><th>Status</th><th>Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -184,9 +184,17 @@
                                     <span class="chip chip-critical">Gagal</span>
                                 @endif
                             </td>
+                            <td>
+                                <form method="POST" action="{{ route('import.destroy', $batch) }}"
+                                      onsubmit="return confirm('Hapus batch ini? {{ $batch->jumlah_baris }} baris data dari file &quot;{{ $batch->nama_file }}&quot; akan dihapus permanen dari database. Tindakan ini tidak bisa dibatalkan.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger" style="width:auto; padding:4px 12px; font-size:12px;">Hapus</button>
+                                </form>
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" style="color:var(--ink-muted);">Belum ada riwayat import.</td></tr>
+                        <tr><td colspan="8" style="color:var(--ink-muted);">Belum ada riwayat import.</td></tr>
                     @endforelse
                 </tbody>
             </table>

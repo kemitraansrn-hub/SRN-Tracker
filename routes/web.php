@@ -176,6 +176,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::get('/', [ImportController::class, 'index'])->name('index');
         Route::post('/', [ImportController::class, 'store'])->name('store');
         Route::get('/template/{jenis}', [ImportController::class, 'downloadTemplate'])->name('template');
+        Route::delete('/{importBatch}', [ImportController::class, 'destroy'])->name('destroy');
     });
 
     Route::prefix('mitra')->name('mitra.')->group(function () {
