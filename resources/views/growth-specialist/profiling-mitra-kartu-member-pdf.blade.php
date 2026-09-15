@@ -20,7 +20,7 @@
 
     .frame-wrap { position: relative; margin: 2mm auto 0; width: 68%; }
     .mc-card { background-color: #FFFFFF; border-radius: 1.6mm; }
-    .photo-box-wrap { padding-top: 1mm; text-align: center; }
+    .photo-box-wrap { text-align: center; }
     .photo-box { display: inline-block; background-color: #EDEDED; padding: 1.6mm; }
     .info { padding: 1.2mm 2.4mm 1.4mm; }
     .nama { color: #1A1247; font-weight: bold; font-size: 9.5pt; margin: 0; line-height: 1.14; }
@@ -48,26 +48,31 @@
 
     <div class="frame-wrap">
         <div class="mc-card">
-            <div class="photo-box-wrap">
+            @php
+                $mcCardWidthMm = 53.98 * 0.68;
+                $photoBoxHeightMm = 34;
+                $photoPaddingMm = 1.6;
+                $photoHeightMm = $photoBoxHeightMm - 2 * $photoPaddingMm;
+                $photoWidthMm = $photoHeightMm;
+                if ($profil->fotoUrl()) {
+                    $photoAbsPath = public_path('storage/'.$profil->foto);
+                    $photoDims = @getimagesize($photoAbsPath);
+                    if ($photoDims && $photoDims[0] > 0 && $photoDims[1] > 0) {
+                        $photoRatio = $photoDims[0] / $photoDims[1];
+                        $photoWidthMm = round($photoHeightMm * $photoRatio, 2);
+                        $maxPhotoBoxWidthMm = 32;
+                        if ($photoWidthMm + 2 * $photoPaddingMm > $maxPhotoBoxWidthMm) {
+                            $photoWidthMm = $maxPhotoBoxWidthMm - 2 * $photoPaddingMm;
+                            $photoHeightMm = round($photoWidthMm / $photoRatio, 2);
+                        }
+                    }
+                }
+                $photoBoxWidthMm = $photoWidthMm + 2 * $photoPaddingMm;
+                $photoSideGapMm = round(($mcCardWidthMm - $photoBoxWidthMm) / 2, 2);
+            @endphp
+            <div class="photo-box-wrap" style="padding-top: {{ $photoSideGapMm }}mm;">
                 <div class="photo-box">
                     @if ($profil->fotoUrl())
-                        @php
-                            $photoBoxHeightMm = 34;
-                            $photoPaddingMm = 1.6;
-                            $photoHeightMm = $photoBoxHeightMm - 2 * $photoPaddingMm;
-                            $photoWidthMm = $photoHeightMm;
-                            $photoAbsPath = public_path('storage/'.$profil->foto);
-                            $photoDims = @getimagesize($photoAbsPath);
-                            if ($photoDims && $photoDims[0] > 0 && $photoDims[1] > 0) {
-                                $photoRatio = $photoDims[0] / $photoDims[1];
-                                $photoWidthMm = round($photoHeightMm * $photoRatio, 2);
-                                $maxPhotoBoxWidthMm = 35;
-                                if ($photoWidthMm + 2 * $photoPaddingMm > $maxPhotoBoxWidthMm) {
-                                    $photoWidthMm = $maxPhotoBoxWidthMm - 2 * $photoPaddingMm;
-                                    $photoHeightMm = round($photoWidthMm / $photoRatio, 2);
-                                }
-                            }
-                        @endphp
                         <img style="width: {{ $photoWidthMm }}mm; height: {{ $photoHeightMm }}mm;" src="{{ $photoAbsPath }}">
                     @endif
                 </div>

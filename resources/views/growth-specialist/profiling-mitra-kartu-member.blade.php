@@ -23,7 +23,7 @@
         }
         .mc-frame-wrap { position: relative; margin: 2mm auto 0; width: 68%; }
         .mc-card { background: #FFFFFF; border-radius: 1.6mm; overflow: hidden; box-shadow: 0 3mm 6mm rgba(0,0,0,0.35); }
-        .mc-photo-box-wrap { padding-top: 1mm; text-align: center; }
+        .mc-photo-box-wrap { text-align: center; }
         .mc-photo-box { display: inline-block; background: #EDEDED; padding: 2mm; box-sizing: border-box; border-radius: 1mm; }
         .mc-photo-box img { display: block; }
         .mc-info { padding: 1.2mm 2.4mm 1.4mm; }
@@ -62,26 +62,31 @@
 
             <div class="mc-frame-wrap">
                 <div class="mc-card">
-                    <div class="mc-photo-box-wrap">
+                    @php
+                        $mcCardWidthMm = 53.98 * 0.68;
+                        $photoBoxHeightMm = 38;
+                        $photoPaddingMm = 2;
+                        $photoHeightMm = $photoBoxHeightMm - 2 * $photoPaddingMm;
+                        $photoWidthMm = $photoHeightMm;
+                        if ($profil->fotoUrl()) {
+                            $photoAbsPath = storage_path('app/public/'.$profil->foto);
+                            $photoDims = @getimagesize($photoAbsPath);
+                            if ($photoDims && $photoDims[0] > 0 && $photoDims[1] > 0) {
+                                $photoRatio = $photoDims[0] / $photoDims[1];
+                                $photoWidthMm = round($photoHeightMm * $photoRatio, 2);
+                                $maxPhotoBoxWidthMm = 32;
+                                if ($photoWidthMm + 2 * $photoPaddingMm > $maxPhotoBoxWidthMm) {
+                                    $photoWidthMm = $maxPhotoBoxWidthMm - 2 * $photoPaddingMm;
+                                    $photoHeightMm = round($photoWidthMm / $photoRatio, 2);
+                                }
+                            }
+                        }
+                        $photoBoxWidthMm = $photoWidthMm + 2 * $photoPaddingMm;
+                        $photoSideGapMm = round(($mcCardWidthMm - $photoBoxWidthMm) / 2, 2);
+                    @endphp
+                    <div class="mc-photo-box-wrap" style="padding-top: {{ $photoSideGapMm }}mm;">
                         <div class="mc-photo-box">
                             @if ($profil->fotoUrl())
-                                @php
-                                    $photoBoxHeightMm = 38;
-                                    $photoPaddingMm = 2;
-                                    $photoHeightMm = $photoBoxHeightMm - 2 * $photoPaddingMm;
-                                    $photoWidthMm = $photoHeightMm;
-                                    $photoAbsPath = storage_path('app/public/'.$profil->foto);
-                                    $photoDims = @getimagesize($photoAbsPath);
-                                    if ($photoDims && $photoDims[0] > 0 && $photoDims[1] > 0) {
-                                        $photoRatio = $photoDims[0] / $photoDims[1];
-                                        $photoWidthMm = round($photoHeightMm * $photoRatio, 2);
-                                        $maxPhotoBoxWidthMm = 40;
-                                        if ($photoWidthMm + 2 * $photoPaddingMm > $maxPhotoBoxWidthMm) {
-                                            $photoWidthMm = $maxPhotoBoxWidthMm - 2 * $photoPaddingMm;
-                                            $photoHeightMm = round($photoWidthMm / $photoRatio, 2);
-                                        }
-                                    }
-                                @endphp
                                 <img src="{{ $profil->fotoUrl() }}" style="width: {{ $photoWidthMm }}mm; height: {{ $photoHeightMm }}mm;" alt="Foto {{ $mitra->nama }}">
                             @else
                                 <div style="width: 26mm; height: 26mm; display: flex; align-items: center; justify-content: center;">
