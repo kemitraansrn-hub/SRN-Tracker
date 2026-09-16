@@ -80,7 +80,8 @@
 
         <div class="field">
             <label>Link Etalase / Produk</label>
-            <input type="text" name="link_etalase" value="{{ old('link_etalase', $isEdit ? $cpCase->link_etalase : '') }}" placeholder="https://...">
+            <input type="text" name="link_etalase" id="linkEtalaseInput" value="{{ old('link_etalase', $isEdit ? $cpCase->link_etalase : '') }}" placeholder="https://..." onblur="cekLinkEtalase(this.value)">
+            <div id="linkEtalaseWarning" style="display:none; margin-top:8px; padding:10px 13px; border-radius:8px; background:var(--warn-soft); color:var(--warn); font-size:12.5px; line-height:1.6;"></div>
         </div>
 
         <div class="field-row">
@@ -143,5 +144,36 @@
                 document.getElementById('hargaSopInput').value = Math.round(parseFloat(het));
             }
         }
+
+        function cekLinkEtalase(link) {
+            const box = document.getElementById('linkEtalaseWarning');
+            link = (link || '').trim();
+            if (! link) {
+                box.style.display = 'none';
+                return;
+            }
+            fetch('{{ route("tracking-cp.check-link-etalase") }}?link=' + encodeURIComponent(link), {
+                headers: { 'Accept': 'application/json' },
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (! data.found) {
+                        box.style.display = 'none';
+                        return;
+                    }
+                    const rows = data.matches.map(m =>
+                        '&bull; ' + m.mitra + ' (' + m.toko + ') &mdash; status: <strong>' + m.status + '</strong>'
+                        + (m.tanggal_mulai ? ', periode ' + m.tanggal_mulai + ' s/d ' + m.tanggal_selesai : '')
+                    ).join('<br>');
+                    box.innerHTML = '&#9888; Link ini sudah ada di pengajuan Price Adjustment &mdash; kemungkinan bukan pelanggaran cutting price, tapi program titipan/diskon resmi yang sudah/sedang diajukan izinnya:<br>' + rows;
+                    box.style.display = '';
+                })
+                .catch(() => { box.style.display = 'none'; });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const initial = document.getElementById('linkEtalaseInput').value;
+            if (initial) cekLinkEtalase(initial);
+        });
     </script>
 @endsection

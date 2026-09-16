@@ -6,9 +6,11 @@ use App\Models\CpCase;
 use App\Models\CpTakedownBanding;
 use App\Models\KotaKabupaten;
 use App\Models\Mitra;
+use App\Models\PriceAdjustmentItem;
 use App\Models\Produk;
 use App\Services\NotificationCenter;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -159,6 +161,39 @@ class CpCaseController extends Controller
     public function edit(CpCase $cpCase): View
     {
         return view('cp-case.form', [...$this->formOptions(), 'cpCase' => $cpCase]);
+    }
+
+    /**
+     * Dicek live (AJAX) pas Compliance ngetik Link Etalase di form Tracking
+     * CP - kalau link yang sama udah ada di salah satu item Price
+     * Adjustment (siapa pun mitranya, apa pun statusnya), tampilin warning:
+     * kemungkinan ini bukan pelanggaran cutting price, tapi memang program
+     * titipan/diskon resmi yang udah/lagi diajukan izinnya.
+     */
+    public function checkLinkEtalase(Request $request): JsonResponse
+    {
+        $link = trim((string) $request->input('link'));
+
+        if ($link === '') {
+            return response()->json(['found' => false]);
+        }
+
+        $matches = PriceAdjustmentItem::with('priceAdjustmentRequest.mitra')
+            ->where('link_etalase', $link)
+            ->get()
+            ->map(fn (PriceAdjustmentItem $item) => [
+                'mitra' => $item->priceAdjustmentRequest->mitra->nama ?? '—',
+                'toko' => $item->priceAdjustmentRequest->toko ?? '—',
+                'status' => $item->priceAdjustmentRequest->status_approval ?? '—',
+                'tanggal_mulai' => optional($item->priceAdjustmentRequest?->tanggal_mulai)->format('d/m/Y'),
+                'tanggal_selesai' => optional($item->priceAdjustmentRequest?->tanggal_selesai)->format('d/m/Y'),
+            ])
+            ->values();
+
+        return response()->json([
+            'found' => $matches->isNotEmpty(),
+            'matches' => $matches,
+        ]);
     }
 
     private function formOptions(): array

@@ -231,6 +231,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::get('/', [CpCaseController::class, 'index'])->name('index');
         Route::get('/export', [CpCaseController::class, 'export'])->name('export');
         Route::get('/create', [CpCaseController::class, 'create'])->name('create');
+        Route::get('/check-link-etalase', [CpCaseController::class, 'checkLinkEtalase'])->name('check-link-etalase');
         Route::post('/', [CpCaseController::class, 'store'])->name('store');
         Route::get('/{cpCase}/edit', [CpCaseController::class, 'edit'])->name('edit');
         Route::put('/{cpCase}', [CpCaseController::class, 'update'])->name('update');
