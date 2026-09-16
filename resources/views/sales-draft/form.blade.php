@@ -35,12 +35,14 @@
                 </div>
                 <div class="field" style="margin-bottom:0; flex:1; min-width:220px;">
                     <label>Pilih Mitra</label>
-                    <select id="mitra-select" name="mitra_id" required>
-                        <option value="">-- pilih mitra --</option>
-                        @foreach ($mitraList as $m)
-                            <option value="{{ $m->id }}" data-alamat="{{ $m->alamat }}" {{ (old('mitra_id', $draft->mitra_id ?? '')) == $m->id ? 'selected' : '' }}>{{ $m->nama }} ({{ $m->kode_mitra }})</option>
-                        @endforeach
-                    </select>
+                    @include('partials.searchable-select', [
+                        'name' => 'mitra_id',
+                        'options' => $mitraList->map(fn ($m) => (object) ['id' => $m->id, 'label' => $m->nama.' ('.$m->kode_mitra.')', 'alamat' => $m->alamat]),
+                        'selectedId' => old('mitra_id', $draft->mitra_id ?? ''),
+                        'placeholder' => 'Ketik buat cari mitra...',
+                        'extraAttr' => 'alamat',
+                        'onchangeJs' => 'isiAlamatMitra',
+                    ])
                 </div>
                 <div class="field" style="margin-bottom:0; flex:1; min-width:220px;">
                     <label>Alamat</label>
@@ -128,10 +130,9 @@
         const rp = (v) => 'Rp' + Math.round(v || 0).toLocaleString('id-ID');
         let items = @json($existingItems);
 
-        document.getElementById('mitra-select').addEventListener('change', function () {
-            const opt = this.options[this.selectedIndex];
-            document.getElementById('mitra-alamat').value = opt ? (opt.dataset.alamat || '') : '';
-        });
+        function isiAlamatMitra(mitraId, alamat) {
+            document.getElementById('mitra-alamat').value = alamat || '';
+        }
 
         function openProdukModal() {
             document.getElementById('produk-search').value = '';

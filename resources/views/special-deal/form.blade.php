@@ -17,14 +17,16 @@
 
         <div class="field">
             <label>Mitra</label>
-            <select name="mitra_id" required {{ $deal->exists ? 'disabled' : '' }}>
-                <option value="">— Pilih mitra —</option>
-                @foreach ($mitraOptions as $m)
-                    <option value="{{ $m->id }}" {{ old('mitra_id', $selectedMitraId) == $m->id ? 'selected' : '' }}>{{ $m->nama }} ({{ $m->kode_mitra }})</option>
-                @endforeach
-            </select>
             @if ($deal->exists)
+                <input type="text" value="{{ $deal->mitra->nama ?? '' }} ({{ $deal->mitra->kode_mitra ?? '' }})" disabled>
                 <input type="hidden" name="mitra_id" value="{{ $deal->mitra_id }}">
+            @else
+                @include('partials.searchable-select', [
+                    'name' => 'mitra_id',
+                    'options' => $mitraOptions->map(fn ($m) => (object) ['id' => $m->id, 'label' => $m->nama.' ('.$m->kode_mitra.')']),
+                    'selectedId' => old('mitra_id', $selectedMitraId),
+                    'placeholder' => 'Ketik buat cari mitra...',
+                ])
             @endif
         </div>
 

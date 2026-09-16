@@ -7,13 +7,21 @@
     <div class="card" style="max-width:480px;">
         <div class="field">
             <label>Pilih Mitra</label>
-            <select id="pilihMitraKartu" onchange="if (this.value) window.location.href = this.value;">
-                <option value="">— pilih mitra —</option>
-                @foreach ($mitraOptions as $m)
-                    <option value="{{ route('growth-specialist.profiling-mitra.kartu', $m) }}">{{ $m->nama }} ({{ $m->kode_mitra }})</option>
-                @endforeach
-            </select>
+            @include('partials.searchable-select', [
+                'id' => 'pilihMitraKartu',
+                'name' => '_picker',
+                'options' => $mitraOptions->map(fn ($m) => (object) ['id' => $m->id, 'label' => $m->nama.' ('.$m->kode_mitra.')', 'url' => route('growth-specialist.profiling-mitra.kartu', $m)]),
+                'placeholder' => 'Ketik buat cari mitra...',
+                'extraAttr' => 'url',
+                'onchangeJs' => 'gotoPilihanMitra',
+            ])
         </div>
+
+        <script>
+            function gotoPilihanMitra(id, url) {
+                if (url) window.location.href = url;
+            }
+        </script>
         @if ($mitraOptions->isEmpty())
             <div class="card-hint" style="margin-top:6px;">Belum ada mitra yang diisi profilnya. Isi dulu lewat menu Profiling Mitra.</div>
         @endif

@@ -616,6 +616,8 @@
                         if (opt.value.trim().toLowerCase() === typed) matched = opt;
                     });
                     hidden.value = matched ? matched.dataset.id : '';
+                    hidden.dataset.extra = matched && matched.dataset.extra !== undefined ? matched.dataset.extra : '';
+                    hidden.dataset.label = matched ? matched.value : '';
                     if (onchangeFn && typeof window[onchangeFn] === 'function') {
                         window[onchangeFn](hidden.value, matched ? matched.dataset.extra : null);
                     }
@@ -623,6 +625,7 @@
 
                 search.addEventListener('input', sync);
                 search.addEventListener('change', sync);
+                if (search.value) sync();
             });
         }
         document.addEventListener('DOMContentLoaded', initSearchableSelects);

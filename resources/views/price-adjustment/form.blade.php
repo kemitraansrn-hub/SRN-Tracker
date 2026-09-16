@@ -28,12 +28,12 @@
 
         <div class="field">
             <label>Mitra</label>
-            <select name="mitra_id" required>
-                <option value="">— pilih —</option>
-                @foreach ($mitraOptions as $m)
-                    <option value="{{ $m->id }}" {{ (string) old('mitra_id', $isEdit ? $priceAdjustmentRequest->mitra_id : '') === (string) $m->id ? 'selected' : '' }}>{{ $m->nama }} ({{ $m->kode_mitra }})</option>
-                @endforeach
-            </select>
+            @include('partials.searchable-select', [
+                'name' => 'mitra_id',
+                'options' => $mitraOptions->map(fn ($m) => (object) ['id' => $m->id, 'label' => $m->nama.' ('.$m->kode_mitra.')']),
+                'selectedId' => old('mitra_id', $isEdit ? $priceAdjustmentRequest->mitra_id : ''),
+                'placeholder' => 'Ketik buat cari mitra...',
+            ])
         </div>
 
         <div class="field-row">

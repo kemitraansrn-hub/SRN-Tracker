@@ -23,12 +23,15 @@
         <div class="field-row">
             <div class="field" style="flex:1;">
                 <label>Nama Mitra</label>
-                <select id="mitra-select" name="mitra_id" required>
-                    <option value="">-- pilih mitra --</option>
-                    @foreach ($mitraList as $m)
-                        <option value="{{ $m->id }}" data-saldo="{{ $m->saldo_poin }}" {{ (old('mitra_id', $redemption->mitra_id ?? '')) == $m->id ? 'selected' : '' }}>{{ $m->nama }} ({{ $m->kode_mitra }})</option>
-                    @endforeach
-                </select>
+                @include('partials.searchable-select', [
+                    'id' => 'mitra',
+                    'name' => 'mitra_id',
+                    'options' => $mitraList->map(fn ($m) => (object) ['id' => $m->id, 'label' => $m->nama.' ('.$m->kode_mitra.')', 'saldo_poin' => $m->saldo_poin]),
+                    'selectedId' => old('mitra_id', $redemption->mitra_id ?? ''),
+                    'placeholder' => 'Ketik buat cari mitra...',
+                    'extraAttr' => 'saldo_poin',
+                    'onchangeJs' => 'updateSaldo',
+                ])
             </div>
             <div class="field" style="flex:1;">
                 <label>Saldo Poin Tersedia</label>
@@ -163,15 +166,13 @@
         let rewardItems = @json($rewardItemsJs);
 
         function updateSaldo() {
-            const sel = document.getElementById('mitra-select');
-            const opt = sel.options[sel.selectedIndex];
-            const saldo = opt && opt.value ? parseInt(opt.dataset.saldo) || 0 : null;
+            const hidden = document.getElementById('mitra_hidden');
+            const saldo = hidden.value ? (parseInt(hidden.dataset.extra) || 0) : null;
             document.getElementById('mitra-saldo').value = saldo !== null ? (saldo + ' poin') : '';
-            document.getElementById('ringkasan-mitra').textContent = opt && opt.value ? opt.textContent : '—';
+            document.getElementById('ringkasan-mitra').textContent = hidden.value ? hidden.dataset.label : '—';
             document.getElementById('ringkasan-saldo').textContent = saldo !== null ? saldo.toLocaleString('id-ID') + ' poin' : '—';
             recalc();
         }
-        document.getElementById('mitra-select').addEventListener('change', updateSaldo);
 
         function rp(v) {
             return 'Rp' + Math.round(v || 0).toLocaleString('id-ID');
@@ -256,9 +257,8 @@
         @endunless
 
         function recalc() {
-            const mitraSel = document.getElementById('mitra-select');
-            const mitraOpt = mitraSel.options[mitraSel.selectedIndex];
-            const saldo = mitraOpt && mitraOpt.value ? parseInt(mitraOpt.dataset.saldo) || 0 : null;
+            const mitraHidden = document.getElementById('mitra_hidden');
+            const saldo = mitraHidden.value ? (parseInt(mitraHidden.dataset.extra) || 0) : null;
 
             let terpakai = 0;
             let rewardLabel = '—';

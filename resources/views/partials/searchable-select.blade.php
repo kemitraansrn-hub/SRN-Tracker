@@ -40,7 +40,14 @@
         placeholder="{{ $placeholder ?? '— pilih —' }}"
         autocomplete="off"
     >
-    <input type="hidden" name="{{ $name }}" id="{{ $fieldId }}_hidden" value="{{ old($name, $selectedId ?? '') }}">
+    <input
+        type="hidden"
+        name="{{ $name }}"
+        id="{{ $fieldId }}_hidden"
+        value="{{ old($name, $selectedId ?? '') }}"
+        data-extra="{{ ! empty($extraAttr) && $selectedOption ? $selectedOption->{$extraAttr} : '' }}"
+        data-label="{{ $displayValue }}"
+    >
     <datalist id="{{ $fieldId }}_list">
         @foreach ($options as $opt)
             <option data-id="{{ $opt->id }}" @if (! empty($extraAttr)) data-extra="{{ $opt->{$extraAttr} }}" @endif value="{{ $opt->label }}"></option>

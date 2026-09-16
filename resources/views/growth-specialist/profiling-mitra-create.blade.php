@@ -11,12 +11,20 @@
     <div class="card" style="max-width:480px;">
         <div class="field">
             <label>Pilih Mitra</label>
-            <select id="pilihMitra" onchange="if (this.value) window.location.href = this.value;">
-                <option value="">— pilih mitra —</option>
-                @foreach ($mitraOptions as $m)
-                    <option value="{{ route('growth-specialist.profiling-mitra.edit', $m) }}">{{ $m->nama }} ({{ $m->kode_mitra }})</option>
-                @endforeach
-            </select>
+            @include('partials.searchable-select', [
+                'id' => 'pilihMitra',
+                'name' => '_picker',
+                'options' => $mitraOptions->map(fn ($m) => (object) ['id' => $m->id, 'label' => $m->nama.' ('.$m->kode_mitra.')', 'url' => route('growth-specialist.profiling-mitra.edit', $m)]),
+                'placeholder' => 'Ketik buat cari mitra...',
+                'extraAttr' => 'url',
+                'onchangeJs' => 'gotoPilihanMitra',
+            ])
         </div>
+
+        <script>
+            function gotoPilihanMitra(id, url) {
+                if (url) window.location.href = url;
+            }
+        </script>
     </div>
 @endsection

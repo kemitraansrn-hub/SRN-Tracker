@@ -35,12 +35,15 @@
             <div class="field-row" style="align-items:flex-end;">
                 <div class="field" style="margin-bottom:0; flex:1; min-width:220px;">
                     <label>Nama Mitra</label>
-                    <select id="mitra-select" name="mitra_id" required>
-                        <option value="">-- pilih mitra --</option>
-                        @foreach ($mitraList as $m)
-                            <option value="{{ $m->id }}" data-aov="{{ $m->aov }}" {{ (old('mitra_id', $buybackRequest->mitra_id ?? '')) == $m->id ? 'selected' : '' }}>{{ $m->nama }} ({{ $m->kode_mitra }})</option>
-                        @endforeach
-                    </select>
+                    @include('partials.searchable-select', [
+                        'id' => 'mitra',
+                        'name' => 'mitra_id',
+                        'options' => $mitraList->map(fn ($m) => (object) ['id' => $m->id, 'label' => $m->nama.' ('.$m->kode_mitra.')', 'aov' => $m->aov]),
+                        'selectedId' => old('mitra_id', $buybackRequest->mitra_id ?? ''),
+                        'placeholder' => 'Ketik buat cari mitra...',
+                        'extraAttr' => 'aov',
+                        'onchangeJs' => 'isiAovMitra',
+                    ])
                 </div>
                 <div class="field" style="margin-bottom:0;">
                     <label>AOV (rata-rata order YTD)</label>
@@ -116,10 +119,9 @@
         const todayStr = @json(now()->toDateString());
         let items = @json($existingItems);
 
-        document.getElementById('mitra-select').addEventListener('change', function () {
-            const opt = this.options[this.selectedIndex];
-            document.getElementById('mitra-aov').value = opt && opt.value ? rp(parseFloat(opt.dataset.aov || 0)) : '';
-        });
+        function isiAovMitra(mitraId, aov) {
+            document.getElementById('mitra-aov').value = mitraId ? rp(parseFloat(aov || 0)) : '';
+        }
 
         function openProdukModal() {
             document.getElementById('produk-search').value = '';
