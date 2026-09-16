@@ -34,7 +34,7 @@ class PriceAdjustmentRequestController extends Controller
     {
         $user = $request->user();
 
-        if ($user->isHeadOrManager()) {
+        if ($user->isHeadOrManager() && $request->input('status_approval') === 'Pending') {
             NotificationCenter::dismiss($user, 'price_adjustment_approval');
         }
 
@@ -76,7 +76,7 @@ class PriceAdjustmentRequestController extends Controller
         // canViewAll() umum) soalnya notifikasi ini emang cuma buat
         // Compliance, jangan sampai kebuka sama Admin/Head terus notifnya
         // ikut ke-dismiss padahal Compliance-nya sendiri belum lihat.
-        if ($request->user()->isCompliance()) {
+        if ($request->user()->isCompliance() && $request->boolean('sudah_diputuskan')) {
             NotificationCenter::dismiss($request->user(), 'price_adjustment_keputusan');
         }
 

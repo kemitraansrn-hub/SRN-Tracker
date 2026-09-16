@@ -47,10 +47,10 @@ class CpCaseController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
-        if ($user->canActAsHead()) {
+        if ($user->canActAsHead() && $request->boolean('menunggu_approval')) {
             NotificationCenter::dismiss($user, 'takedown_approval');
         }
-        if ($user->isCompliance()) {
+        if ($user->isCompliance() && $request->boolean('keputusan_head')) {
             NotificationCenter::dismiss($user, 'takedown_keputusan');
         }
 
