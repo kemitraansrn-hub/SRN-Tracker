@@ -2,6 +2,9 @@
 
 @php
     $isEdit = isset($cpCase);
+    $mitraOptionsFmt = $mitraOptions->map(fn ($m) => (object) ['id' => $m->id, 'label' => $m->nama.' ('.$m->kode_mitra.')']);
+    $kotaOptionsFmt = $kotaOptions->map(fn ($k) => (object) ['id' => $k->id, 'label' => $k->nama.' ('.$k->provinsi.')']);
+    $produkOptionsFmt = $produkOptions->map(fn ($p) => (object) ['id' => $p->id, 'label' => \Illuminate\Support\Str::limit($p->nama, 45).' ('.$p->brand.')', 'harga_het' => $p->harga_het]);
 @endphp
 
 @section('content')
@@ -37,12 +40,12 @@
 
         <div class="field">
             <label>List Mitra SRN</label>
-            <select name="mitra_id">
-                <option value="">— Mitra Belum Diketahui —</option>
-                @foreach ($mitraOptions as $m)
-                    <option value="{{ $m->id }}" {{ (string) old('mitra_id', $isEdit ? $cpCase->mitra_id : '') === (string) $m->id ? 'selected' : '' }}>{{ $m->nama }} ({{ $m->kode_mitra }})</option>
-                @endforeach
-            </select>
+            @include('partials.searchable-select', [
+                'name' => 'mitra_id',
+                'options' => $mitraOptionsFmt,
+                'selectedId' => old('mitra_id', $isEdit ? $cpCase->mitra_id : ''),
+                'placeholder' => '— Mitra Belum Diketahui — ketik buat cari —',
+            ])
         </div>
 
         <div class="field-row">
@@ -66,12 +69,12 @@
         <div class="field-row">
             <div class="field" style="flex:1;">
                 <label>Kota Toko</label>
-                <select name="kota_kabupaten_id">
-                    <option value="">— pilih —</option>
-                    @foreach ($kotaOptions as $k)
-                        <option value="{{ $k->id }}" {{ (string) old('kota_kabupaten_id', $isEdit ? $cpCase->kota_kabupaten_id : '') === (string) $k->id ? 'selected' : '' }}>{{ $k->nama }} ({{ $k->provinsi }})</option>
-                    @endforeach
-                </select>
+                @include('partials.searchable-select', [
+                    'name' => 'kota_kabupaten_id',
+                    'options' => $kotaOptionsFmt,
+                    'selectedId' => old('kota_kabupaten_id', $isEdit ? $cpCase->kota_kabupaten_id : ''),
+                    'placeholder' => 'Ketik buat cari kota...',
+                ])
             </div>
         </div>
 
@@ -83,12 +86,14 @@
         <div class="field-row">
             <div class="field" style="flex:1;">
                 <label>Produk</label>
-                <select name="produk_id" id="produkSelect" onchange="isiHargaHet()" required>
-                    <option value="">— pilih dari Master Produk —</option>
-                    @foreach ($produkOptions as $p)
-                        <option value="{{ $p->id }}" data-het="{{ $p->harga_het }}" {{ (string) old('produk_id', $isEdit ? $cpCase->produk_id : '') === (string) $p->id ? 'selected' : '' }}>{{ \Illuminate\Support\Str::limit($p->nama, 45) }} ({{ $p->brand }})</option>
-                    @endforeach
-                </select>
+                @include('partials.searchable-select', [
+                    'name' => 'produk_id',
+                    'options' => $produkOptionsFmt,
+                    'selectedId' => old('produk_id', $isEdit ? $cpCase->produk_id : ''),
+                    'placeholder' => 'Ketik buat cari dari Master Produk...',
+                    'extraAttr' => 'harga_het',
+                    'onchangeJs' => 'isiHargaHet',
+                ])
             </div>
             <div class="field" style="flex:1;">
                 <label>Kode Barcode</label>
@@ -133,10 +138,7 @@
     @endif
 
     <script>
-        function isiHargaHet() {
-            const select = document.getElementById('produkSelect');
-            const opt = select.options[select.selectedIndex];
-            const het = opt ? opt.getAttribute('data-het') : null;
+        function isiHargaHet(produkId, het) {
             if (het && het !== '' && het !== 'null') {
                 document.getElementById('hargaSopInput').value = Math.round(parseFloat(het));
             }

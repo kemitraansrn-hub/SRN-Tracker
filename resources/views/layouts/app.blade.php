@@ -595,6 +595,37 @@
                 refreshNotifBadgeAndEmptyState();
             });
         }
+
+        // Select yang bisa dicari (partials/searchable-select.blade.php) -
+        // <input list>+<datalist> browser native, disinkronin manual ke
+        // hidden input yang beneran ke-submit. Kalau teks yang diketik gak
+        // persis cocok sama salah satu pilihan, hidden value dikosongin
+        // (biar gak ke-submit ID lama yang udah gak sesuai teksnya).
+        function initSearchableSelects() {
+            document.querySelectorAll('.searchable-select-wrap').forEach(function (wrap) {
+                const search = wrap.querySelector('.searchable-select-input');
+                const hidden = wrap.querySelector('input[type="hidden"]');
+                const datalist = wrap.querySelector('datalist');
+                if (! search || ! hidden || ! datalist) return;
+                const onchangeFn = wrap.dataset.onchange;
+
+                function sync() {
+                    const typed = search.value.trim().toLowerCase();
+                    let matched = null;
+                    datalist.querySelectorAll('option').forEach(function (opt) {
+                        if (opt.value.trim().toLowerCase() === typed) matched = opt;
+                    });
+                    hidden.value = matched ? matched.dataset.id : '';
+                    if (onchangeFn && typeof window[onchangeFn] === 'function') {
+                        window[onchangeFn](hidden.value, matched ? matched.dataset.extra : null);
+                    }
+                }
+
+                search.addEventListener('input', sync);
+                search.addEventListener('change', sync);
+            });
+        }
+        document.addEventListener('DOMContentLoaded', initSearchableSelects);
     </script>
 </body>
 </html>
