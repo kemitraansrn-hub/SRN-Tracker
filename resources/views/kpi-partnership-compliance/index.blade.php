@@ -12,7 +12,13 @@
                 Scorecard bulanan tim Compliance &mdash; {{ $bulanNama }} {{ $tahun }} ({{ $totalKasus }} kasus tercatat)
             </div>
         </div>
-        @include('partials.bulan-tahun-filter', ['action' => route('kpi-partnership-compliance.index'), 'bulan' => $bulan, 'tahun' => $tahun, 'isBulanIni' => $isBulanIni, 'resetAction' => route('kpi-partnership-compliance.index')])
+        <div style="display:flex; align-items:flex-start; gap:10px; flex-wrap:wrap;">
+            <a href="{{ route('kpi-partnership-compliance.export', ['bulan' => $bulan, 'tahun' => $tahun]) }}" class="btn" style="width:auto; display:inline-flex; align-items:center; gap:6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v13.5"/><path d="M7 12l5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 20h16" stroke-linecap="round"/></svg>
+                Download Excel
+            </a>
+            @include('partials.bulan-tahun-filter', ['action' => route('kpi-partnership-compliance.index'), 'bulan' => $bulan, 'tahun' => $tahun, 'isBulanIni' => $isBulanIni, 'resetAction' => route('kpi-partnership-compliance.index')])
+        </div>
     </div>
 
     @if ($totalKasus === 0)

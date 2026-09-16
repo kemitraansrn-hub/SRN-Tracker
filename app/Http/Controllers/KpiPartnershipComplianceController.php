@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\CpCase;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * KPI Partnership Compliance — scorecard bulanan buat tim Compliance,
@@ -25,6 +29,71 @@ class KpiPartnershipComplianceController extends Controller
         $bulan = max(1, min(12, (int) $request->input('bulan', now()->month)));
         $tahun = max(2000, min(2100, (int) $request->input('tahun', now()->year)));
 
+        [$kpis, $totalKasus] = $this->computeKpis($bulan, $tahun);
+
+        return view('kpi-partnership-compliance.index', [
+            'kpis' => $kpis,
+            'totalKasus' => $totalKasus,
+            'bulan' => $bulan,
+            'tahun' => $tahun,
+            'isBulanIni' => $bulan === now()->month && $tahun === now()->year,
+        ]);
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $bulan = max(1, min(12, (int) $request->input('bulan', now()->month)));
+        $tahun = max(2000, min(2100, (int) $request->input('tahun', now()->year)));
+        $bulanNama = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][$bulan];
+
+        [$kpis, $totalKasus] = $this->computeKpis($bulan, $tahun);
+
+        $headers = ['No', 'KPI', 'Bobot', 'Target', 'Realisasi', 'Tercapai', 'Numerator', 'Denominator', 'Keterangan'];
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('KPI Compliance');
+        $sheet->setCellValue('A1', 'KPI Partnership Compliance — '.$bulanNama.' '.$tahun.' ('.$totalKasus.' kasus tercatat)');
+        $sheet->mergeCells('A1:I1');
+        $sheet->getStyle('A1')->getFont()->setBold(true);
+
+        $sheet->fromArray($headers, null, 'A3');
+        $sheet->getStyle('A3:I3')->getFont()->setBold(true);
+        $sheet->getStyle('A3:I3')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F2F5F9');
+        foreach ([5, 26, 8, 10, 10, 10, 14, 24, 60] as $col => $width) {
+            $sheet->getColumnDimensionByColumn($col + 1)->setWidth($width);
+        }
+
+        $row = 4;
+        foreach ($kpis as $kpi) {
+            $sheet->fromArray([
+                $kpi['no'],
+                $kpi['nama'],
+                $kpi['bobot'].'%',
+                $kpi['target_label'],
+                $kpi['realisasi'] !== null ? $kpi['realisasi'].'%' : '—',
+                $kpi['tercapai'] ? 'Ya' : 'Tidak',
+                $kpi['numerator'].' '.$kpi['numerator_label'],
+                $kpi['denominator'].' '.$kpi['denominator_label'],
+                $kpi['keterangan'],
+            ], null, 'A'.$row);
+            $row++;
+        }
+
+        $filename = 'kpi-partnership-compliance_'.$tahun.'-'.str_pad((string) $bulan, 2, '0', STR_PAD_LEFT).'.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * @return array{0: array<int, array<string, mixed>>, 1: int}
+     */
+    private function computeKpis(int $bulan, int $tahun): array
+    {
         $baseQuery = fn () => CpCase::whereYear('tanggal_temuan', $tahun)->whereMonth('tanggal_temuan', $bulan);
 
         $totalKasus = $baseQuery()->count();
@@ -112,13 +181,8 @@ class KpiPartnershipComplianceController extends Controller
             $kpi['tercapai'] = $kpi['realisasi'] !== null
                 && ($kpi['target_op'] === '>' ? $kpi['realisasi'] > $kpi['target'] : $kpi['realisasi'] >= $kpi['target']);
         }
+        unset($kpi);
 
-        return view('kpi-partnership-compliance.index', [
-            'kpis' => $kpis,
-            'totalKasus' => $totalKasus,
-            'bulan' => $bulan,
-            'tahun' => $tahun,
-            'isBulanIni' => $bulan === now()->month && $tahun === now()->year,
-        ]);
+        return [$kpis, $totalKasus];
     }
 }

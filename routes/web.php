@@ -262,6 +262,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
     Route::get('price-adjustment-monitoring', [PriceAdjustmentRequestController::class, 'monitoring'])->name('price-adjustment-monitoring.index');
 
     Route::get('kpi-partnership-compliance', [KpiPartnershipComplianceController::class, 'index'])->name('kpi-partnership-compliance.index');
+    Route::get('kpi-partnership-compliance/export', [KpiPartnershipComplianceController::class, 'export'])->name('kpi-partnership-compliance.export');
 
     Route::prefix('growth-specialist')->name('growth-specialist.')->group(function () {
         Route::get('profiling-mitra', [\App\Http\Controllers\GrowthSpecialistController::class, 'index'])->name('profiling-mitra');
