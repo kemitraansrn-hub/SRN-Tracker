@@ -9,6 +9,7 @@ use App\Services\MasterMitraImportService;
 use App\Services\StabilitasService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -59,8 +60,22 @@ class MitraController extends Controller
             ->when($request->boolean('omset_nol'), fn ($q) => $q->havingRaw('(omset_bulan_ini IS NULL OR omset_bulan_ini = 0)'))
             ->orderBy('nama');
 
-        $mitraList = $query->paginate(20)->withQueryString();
-        $mitraList->getCollection()->each(fn ($m) => $m->segmen = $segmenByMitraId[$m->id] ?? null);
+        // Pagination manual (bukan ->paginate() bawaan Eloquent) — pola
+        // yang sama dengan SegmentasiController, biar konsisten dan gak
+        // kena isu ->paginate() + havingRaw() (filter omset_nol di atas)
+        // yang total count-nya bisa gak akurat kalau dicampur groupBy/having.
+        $allMitra = $query->get();
+        $allMitra->each(fn ($m) => $m->segmen = $segmenByMitraId[$m->id] ?? null);
+
+        $perPage = 20;
+        $page = (int) $request->input('page', 1);
+        $mitraList = new LengthAwarePaginator(
+            $allMitra->forPage($page, $perPage)->values(),
+            $allMitra->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
 
         $quarterRange = StabilitasService::previousQuarterRange();
 
