@@ -32,6 +32,10 @@ class SpecialDealController extends Controller
             ->where('kuartal', $kuartal)
             ->where('tahun', $tahun)
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
+            ->when($request->filled('q'), fn ($q) => $q->whereHas('mitra', function ($qq) use ($request) {
+                $qq->where('nama', 'like', '%'.$request->input('q').'%')
+                    ->orWhere('kode_mitra', 'like', '%'.$request->input('q').'%');
+            }))
             ->get()
             ->sortBy(fn ($d) => $d->mitra->nama ?? '')
             ->values();
@@ -42,7 +46,14 @@ class SpecialDealController extends Controller
         $bulanLabels = collect([$bulanAwal, $bulanAwal + 1, $bulanAwal + 2])
             ->mapWithKeys(fn ($b) => [$b => \Carbon\Carbon::create($tahun, $b, 1)->translatedFormat('M')]);
 
-        $groups = $deals->groupBy(fn ($d) => $d->segmen ?: 'Lainnya')->map(function ($group) {
+        $groups = $deals->groupBy(fn ($d) => $d->segmen ?: 'Lainnya')->map(function ($group, $segmen) {
+            // Reguler diurutkan dari omset (Q_SD) terbesar ke terkecil biar
+            // mitra top performer di segmen ini langsung kelihatan di atas;
+            // segmen lain tetap alfabetis sesuai urutan $deals bawaan.
+            if ($segmen === 'REGULER') {
+                $group = $group->sortByDesc('q_sd')->values();
+            }
+
             $targetSum = $group->sum('target_kuartal');
             $qSdSum = $group->sum('q_sd');
 

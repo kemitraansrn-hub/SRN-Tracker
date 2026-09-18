@@ -34,6 +34,10 @@
 
     <form method="GET" action="{{ route('special-deal.index') }}" class="field-row" style="align-items:flex-end;">
         <div class="field" style="margin-bottom:0;">
+            <label>Cari Mitra</label>
+            <input type="text" name="q" value="{{ request('q') }}" placeholder="Nama atau kode mitra...">
+        </div>
+        <div class="field" style="margin-bottom:0;">
             <label>Kuartal</label>
             <select name="kuartal" class="select-pill" onchange="this.form.submit()">
                 @foreach ([1, 2, 3, 4] as $q)
@@ -58,6 +62,10 @@
                 @endforeach
             </select>
         </div>
+        <button type="submit" class="btn" style="width:auto;">Cari</button>
+        @if (request('q'))
+            <a href="{{ route('special-deal.index', ['kuartal' => $kuartal, 'tahun' => $tahun, 'status' => request('status')]) }}" class="btn" style="width:auto;">Reset</a>
+        @endif
     </form>
 
     @forelse ($groups as $segmen => $group)
@@ -102,9 +110,13 @@
                     </thead>
                     <tbody>
                         @foreach ($group['deals'] as $deal)
-                            <tr>
+                            @php $isTop10Reguler = $segmen === 'REGULER' && $loop->iteration <= 10; @endphp
+                            <tr @if ($isTop10Reguler) style="background:var(--accent-soft);" @endif>
                                 <td>{{ $deal->kae->name ?? '—' }}</td>
                                 <td>
+                                    @if ($isTop10Reguler)
+                                        <span class="chip chip-good" style="margin-right:6px;">#{{ $loop->iteration }}</span>
+                                    @endif
                                     <a href="{{ route('mitra.show', $deal->mitra) }}" style="color:var(--ink); text-decoration:none; font-weight:600;">{{ $deal->mitra->nama ?? '—' }}</a>
                                 </td>
                                 <td>{!! $statusChip($deal->status) !!}</td>
