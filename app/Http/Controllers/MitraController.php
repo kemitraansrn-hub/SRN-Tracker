@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Mitra;
 use App\Models\SpecialDeal;
 use App\Models\User;
+use App\Services\MasterMitraImportService;
 use App\Services\StabilitasService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -198,6 +199,34 @@ class MitraController extends Controller
         $mitra = Mitra::create($data);
 
         return redirect()->route('mitra.show', $mitra)->with('status', 'Mitra baru berhasil ditambahkan.');
+    }
+
+    public function showMasterUpload(): View
+    {
+        return view('mitra.master-upload');
+    }
+
+    public function masterUpload(Request $request, MasterMitraImportService $importer): RedirectResponse
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:10240'],
+        ], [], ['file' => 'File']);
+
+        $result = $importer->import($request->file('file'));
+
+        if (! $result['ok']) {
+            return back()->withErrors(['file' => implode(' ', $result['errors'])]);
+        }
+
+        $jumlahSkip = count($result['skipped']);
+        $redirect = redirect()->route('mitra.index')
+            ->with('status', 'Upload Master Mitra: '.$result['jumlah_diperbarui'].' mitra diperbarui, '.$result['jumlah_dibuat'].' mitra baru dibuat, dari '.$result['jumlah_baris'].' baris.'.($jumlahSkip > 0 ? ' '.$jumlahSkip.' baris dilewati.' : ''));
+
+        if ($jumlahSkip > 0) {
+            $redirect->with('import_skipped', $result['skipped']);
+        }
+
+        return $redirect;
     }
 
     public function edit(Mitra $mitra): View

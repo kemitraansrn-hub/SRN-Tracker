@@ -187,6 +187,8 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::middleware('role:admin')->group(function () {
             Route::get('/create', [MitraController::class, 'create'])->name('create');
             Route::post('/', [MitraController::class, 'store'])->name('store');
+            Route::get('/master-upload', [MitraController::class, 'showMasterUpload'])->name('master-upload');
+            Route::post('/master-upload', [MitraController::class, 'masterUpload'])->name('master-upload.store');
             Route::get('/{mitra}/edit', [MitraController::class, 'edit'])->name('edit');
             Route::put('/{mitra}', [MitraController::class, 'update'])->name('update');
         });

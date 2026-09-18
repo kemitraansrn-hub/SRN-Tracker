@@ -15,6 +15,7 @@
         <div class="field-row" style="margin-bottom:0;">
             <a href="{{ route('mitra.export', request()->query()) }}" class="btn" style="width:auto;">Download Excel</a>
             @if (auth()->user()->hasAdminAccess())
+                <a href="{{ route('mitra.master-upload') }}" class="btn" style="width:auto;">Upload Master Mitra</a>
                 <a href="{{ route('mitra.create') }}" class="btn btn-primary" style="width:auto;">+ Tambah Mitra</a>
             @endif
         </div>
@@ -22,6 +23,17 @@
 
     @if (session('status'))
         <div class="alert-success">{{ session('status') }}</div>
+    @endif
+
+    @if (session('import_skipped'))
+        <div class="card" style="margin-bottom:20px; border-color:var(--warn);">
+            <div class="card-title" style="color:var(--warn); margin-bottom:10px;">{{ count(session('import_skipped')) }} baris dilewati saat upload master mitra</div>
+            <div style="max-height:220px; overflow-y:auto; font-size:12px; color:var(--ink-muted); line-height:1.7;">
+                @foreach (session('import_skipped') as $reason)
+                    <div>{{ $reason }}</div>
+                @endforeach
+            </div>
+        </div>
     @endif
 
     <form method="GET" action="{{ route('mitra.index') }}" class="field-row" style="align-items:flex-end;">
