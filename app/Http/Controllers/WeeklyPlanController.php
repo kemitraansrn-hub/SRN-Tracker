@@ -9,12 +9,74 @@ use App\Services\AchievementStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class WeeklyPlanController extends Controller
 {
     private const WEEKS = ['W1', 'W2', 'W3', 'W4'];
 
     public function index(Request $request): View
+    {
+        $data = $this->buildPlan($request);
+
+        return view('weekly-plan.index', $data);
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $data = $this->buildPlan($request);
+
+        $headers = ['Mitra', 'Kode Mitra', 'Segmen', 'Minggu Andalan', 'W1 Target', 'W1 Realisasi', 'W2 Target', 'W2 Realisasi', 'W3 Target', 'W3 Realisasi', 'W4 Target', 'W4 Realisasi', 'Target Bulan', 'Realisasi Bulan', '% Bulan', 'Status Minggu', 'Status Pencapaian'];
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Weekly Plan');
+        $sheet->fromArray($headers, null, 'A1', true);
+        $sheet->getStyle('A1:Q1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:Q1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('EBE5EF');
+
+        $r = 2;
+        foreach ($data['plan'] as $p) {
+            $row = [
+                $p->mitra->nama,
+                $p->mitra->kode_mitra,
+                $p->segmen ?? '—',
+                $p->minggu_andalan ? implode(', ', $p->minggu_andalan) : '—',
+            ];
+            foreach (self::WEEKS as $w) {
+                $row[] = $p->target_per_week[$w];
+                $row[] = $p->actual[$w];
+            }
+            $row[] = $p->target_bulan;
+            $row[] = $p->realisasi_bulan;
+            $row[] = $p->pct_bulan;
+            $row[] = $p->status;
+            $row[] = $p->status_pencapaian;
+
+            $sheet->fromArray($row, null, 'A'.$r, true);
+            $r++;
+        }
+
+        foreach (range('A', 'Q') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $filename = 'weekly_plan_'.str_replace(' ', '_', $data['periodeLabel']).'.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * @return array{plan: \Illuminate\Support\Collection, weeks: array, weekTotals: array, currentWeekLabel: ?string, periodeLabel: string, segmenOptions: \Illuminate\Support\Collection, bulanIni: int, tahunIni: int, isBulanIni: bool}
+     */
+    private function buildPlan(Request $request): array
     {
         $user = $request->user();
 
@@ -193,7 +255,7 @@ class WeeklyPlanController extends Controller
         // segmen option with zero mitra in their own list.
         $segmenOptions = $plan->pluck('segmen')->filter()->unique()->sort()->values();
 
-        return view('weekly-plan.index', [
+        return [
             'plan' => $filteredPlan,
             'weeks' => self::WEEKS,
             'weekTotals' => $weekTotals,
@@ -203,6 +265,6 @@ class WeeklyPlanController extends Controller
             'bulanIni' => $bulan,
             'tahunIni' => $tahun,
             'isBulanIni' => $isBulanIni,
-        ]);
+        ];
     }
 }

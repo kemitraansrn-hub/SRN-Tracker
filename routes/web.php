@@ -58,6 +58,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         ->middleware('role:admin')->name('trend.saveDashboardCard');
     Route::get('/segmentasi/{segmen}', [SegmentasiController::class, 'show'])->name('segmentasi.show');
     Route::get('/weekly-plan', [WeeklyPlanController::class, 'index'])->name('weekly-plan.index');
+    Route::get('/weekly-plan/export', [WeeklyPlanController::class, 'export'])->name('weekly-plan.export');
 
     Route::prefix('forecast')->name('forecast.')->group(function () {
         Route::get('/', [ForecastController::class, 'index'])->name('index');
@@ -181,6 +182,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
 
     Route::prefix('mitra')->name('mitra.')->group(function () {
         Route::get('/', [MitraController::class, 'index'])->name('index');
+        Route::get('/export', [MitraController::class, 'export'])->name('export');
 
         Route::middleware('role:admin')->group(function () {
             Route::get('/create', [MitraController::class, 'create'])->name('create');

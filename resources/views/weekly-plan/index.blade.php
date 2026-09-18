@@ -12,9 +12,12 @@
                 {{ $periodeLabel }} &middot; "Minggu Andalan" dihitung dari minggu dengan omset terbesar 6 bulan terakhir
             </div>
         </div>
-        @if (auth()->user()->canAccessAdminGroup())
-            <a href="{{ route('pengaturan.minggu') }}" class="btn" style="width:auto;">Atur Periode Mingguan</a>
-        @endif
+        <div class="field-row" style="margin-bottom:0;">
+            <a href="{{ route('weekly-plan.export', request()->query()) }}" class="btn" style="width:auto;">Download Excel</a>
+            @if (auth()->user()->canAccessAdminGroup())
+                <a href="{{ route('pengaturan.minggu') }}" class="btn" style="width:auto;">Atur Periode Mingguan</a>
+            @endif
+        </div>
     </div>
 
     @if (session('status'))

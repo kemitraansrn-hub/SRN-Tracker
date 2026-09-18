@@ -16,6 +16,10 @@
         <form method="GET" action="{{ route('segmentasi.show', $segmen) }}" class="field-row" style="align-items:flex-end;">
             <input type="hidden" name="tab" value="{{ $segTabAktif }}">
             <div class="field" style="margin-bottom:0;">
+                <label>Cari</label>
+                <input type="text" name="q" value="{{ $q }}" placeholder="Nama atau kode mitra...">
+            </div>
+            <div class="field" style="margin-bottom:0;">
                 <label>Bulan</label>
                 <select class="select-pill" name="bulan" onchange="this.form.submit()">
                     @foreach (['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] as $i => $nama)
@@ -31,6 +35,10 @@
                     @endfor
                 </select>
             </div>
+            <button type="submit" class="btn" style="width:auto;">Cari</button>
+            @if ($q !== '')
+                <a href="{{ route('segmentasi.show', array_filter(['segmen' => $segmen, 'tab' => $segTabAktif, 'bulan' => $bulan, 'tahun' => $tahun])) }}" class="btn" style="width:auto;">Reset</a>
+            @endif
         </form>
     </div>
 
@@ -54,7 +62,7 @@
     <section class="card table-card" style="padding:0;">
         <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px;">
             <div class="card-title">Daftar Mitra &mdash; {{ $segmen }}</div>
-            <div class="card-hint">{{ $mitraList->count() }} mitra</div>
+            <div class="card-hint">{{ $mitraListPage->total() }} mitra{{ $q !== '' ? ' (hasil cari)' : '' }}</div>
         </div>
         <div class="table-scroll" style="max-height:none; overflow-y:visible;">
             <table>

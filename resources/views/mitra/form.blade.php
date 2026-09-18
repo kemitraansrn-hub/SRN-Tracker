@@ -28,8 +28,12 @@
 
         <div class="field-row">
             <div class="field" style="flex:1;">
-                <label>No. HP / WA</label>
+                <label>No. HP</label>
                 <input type="text" name="no_hp" value="{{ old('no_hp', $mitra->no_hp) }}">
+            </div>
+            <div class="field" style="flex:1;">
+                <label>No. WA</label>
+                <input type="text" name="no_wa" value="{{ old('no_wa', $mitra->no_wa) }}">
             </div>
             <div class="field" style="flex:1;">
                 <label>KAE</label>

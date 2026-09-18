@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
-    'kode_mitra', 'nama', 'no_hp', 'alamat', 'provinsi', 'kota',
+    'kode_mitra', 'nama', 'no_hp', 'no_wa', 'alamat', 'provinsi', 'kota',
     'kecamatan', 'desa', 'kodepos', 'kae_code', 'user_id', 'status',
 ])]
 class Mitra extends Model

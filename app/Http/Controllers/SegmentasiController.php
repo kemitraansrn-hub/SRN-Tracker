@@ -57,14 +57,20 @@ class SegmentasiController extends Controller
         $kesehatanMitra = MitraHealthService::bulkForYtd($mitraIds, $ytdReference);
 
         // Ringkasan segmen (tier, white space, dll di atas) tetap dihitung
-        // dari SEMUA mitra di segmen ($rows) — cuma tabelnya yang dipaginasi
-        // 20 baris, biar gak usah scroll vertikal buat scroll data yang
-        // banyak, tinggal pindah halaman.
+        // dari SEMUA mitra di segmen ($rows, sebelum difilter search) —
+        // cuma tabelnya yang difilter search & dipaginasi 20 baris, biar
+        // gak usah scroll vertikal buat scroll data yang banyak, tinggal
+        // pindah halaman.
+        $q = trim((string) $request->input('q'));
+        $filteredRows = $q === ''
+            ? $rows
+            : $rows->filter(fn ($r) => str_contains(mb_strtolower($r->nama), mb_strtolower($q)) || str_contains(mb_strtolower($r->kode_mitra), mb_strtolower($q)))->values();
+
         $perPage = 20;
         $page = (int) $request->input('page', 1);
         $mitraListPage = new LengthAwarePaginator(
-            $rows->forPage($page, $perPage)->values(),
-            $rows->count(),
+            $filteredRows->forPage($page, $perPage)->values(),
+            $filteredRows->count(),
             $perPage,
             $page,
             ['path' => $request->url(), 'query' => $request->query()]
@@ -72,6 +78,7 @@ class SegmentasiController extends Controller
 
         return view('segmentasi.show', [
             'segmen' => $segmen,
+            'q' => $q,
             'mitraList' => $rows,
             'mitraListPage' => $mitraListPage,
             'totalOmset' => $rows->sum('omset'),

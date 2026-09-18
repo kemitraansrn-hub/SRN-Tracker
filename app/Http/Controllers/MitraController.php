@@ -3,12 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Mitra;
+use App\Models\SpecialDeal;
 use App\Models\User;
 use App\Services\StabilitasService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MitraController extends Controller
 {
@@ -19,6 +24,7 @@ class MitraController extends Controller
         $prevMonthRef = $now->copy()->subMonthNoOverflow();
 
         $stabilitasByMitra = StabilitasService::bulkForPreviousQuarter();
+        $segmenByMitraId = $this->segmenByMitraId($now);
 
         $query = Mitra::query()
             ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_code', $user->kae_code))
@@ -36,6 +42,13 @@ class MitraController extends Controller
                 'id',
                 $stabilitasByMitra->filter(fn ($s) => $s['stabilitas'] === $request->input('stabilitas'))->keys()
             ))
+            // Segmen mitra ikut sumber yang sama dengan Special Deal
+            // Performance — diambil dari menu Special Deal kuartal
+            // berjalan, bukan kolom di tabel mitra.
+            ->when($request->filled('segmen'), fn ($q) => $q->whereIn(
+                'id',
+                $segmenByMitraId->filter(fn ($s) => $s === $request->input('segmen'))->keys()
+            ))
             ->withSum(['orders as omset_bulan_ini' => function ($q) use ($now) {
                 $q->whereYear('tanggal_order', $now->year)->whereMonth('tanggal_order', $now->month);
             }], 'total_transaksi')
@@ -45,7 +58,8 @@ class MitraController extends Controller
             ->when($request->boolean('omset_nol'), fn ($q) => $q->havingRaw('(omset_bulan_ini IS NULL OR omset_bulan_ini = 0)'))
             ->orderBy('nama');
 
-        $mitraList = $query->paginate(50)->withQueryString();
+        $mitraList = $query->paginate(20)->withQueryString();
+        $mitraList->getCollection()->each(fn ($m) => $m->segmen = $segmenByMitraId[$m->id] ?? null);
 
         $quarterRange = StabilitasService::previousQuarterRange();
 
@@ -53,9 +67,87 @@ class MitraController extends Controller
             'mitraList' => $mitraList,
             'kaeOptions' => $user->canViewAll() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
             'stabilitasByMitra' => $stabilitasByMitra,
+            'segmenOptions' => SpecialDeal::SEGMEN_OPTIONS,
             'blnAktifLabel' => 'Bln Aktif Q'.$quarterRange['kuartal'],
             'lmLabel' => 'LM ('.$prevMonthRef->translatedFormat('M').')',
         ]);
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $user = $request->user();
+        $now = now();
+        $segmenByMitraId = $this->segmenByMitraId($now);
+
+        $mitraList = Mitra::query()
+            ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_code', $user->kae_code))
+            ->when($request->filled('q'), fn ($q) => $q->where(function ($qq) use ($request) {
+                $qq->where('nama', 'like', '%'.$request->input('q').'%')
+                    ->orWhere('kode_mitra', 'like', '%'.$request->input('q').'%');
+            }))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($q) => $q->where('kae_code', $request->input('kae_code')))
+            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
+            ->when($request->filled('segmen'), fn ($q) => $q->whereIn(
+                'id',
+                $segmenByMitraId->filter(fn ($s) => $s === $request->input('segmen'))->keys()
+            ))
+            ->orderBy('nama')
+            ->get();
+
+        $kaeNameMap = User::kaeNameMap();
+        $headers = ['Kode Mitra', 'Nama', 'No HP', 'No WA', 'KAE', 'Segmen', 'Status', 'Kota', 'Provinsi'];
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Data Mitra');
+        $sheet->fromArray($headers, null, 'A1', true);
+        $sheet->getStyle('A1:I1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:I1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('EBE5EF');
+
+        $r = 2;
+        foreach ($mitraList as $m) {
+            $sheet->fromArray([
+                $m->kode_mitra,
+                $m->nama,
+                $m->no_hp,
+                $m->no_wa,
+                $kaeNameMap[$m->kae_code ?? ''] ?? ($m->kae_code ?? '—'),
+                $segmenByMitraId[$m->id] ?? '—',
+                $m->status,
+                $m->kota,
+                $m->provinsi,
+            ], null, 'A'.$r, true);
+            $r++;
+        }
+
+        foreach (range('A', 'I') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $filename = 'data_mitra_'.now()->format('Y-m-d').'.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * Segmen per mitra buat kuartal berjalan, sumber dari menu Special Deal
+     * — konsisten dengan SpecialDealPerformanceService. Kalau ada lebih
+     * dari satu Special Deal buat mitra yang sama, yang paling baru
+     * diinput yang dipakai.
+     *
+     * @return \Illuminate\Support\Collection<int, string>
+     */
+    private function segmenByMitraId(\Carbon\Carbon $reference): \Illuminate\Support\Collection
+    {
+        return DB::table('special_deals')
+            ->where('kuartal', (int) ceil($reference->month / 3))
+            ->where('tahun', $reference->year)
+            ->orderBy('created_at')
+            ->pluck('segmen', 'mitra_id');
     }
 
     public function show(Request $request, Mitra $mitra): View
@@ -129,6 +221,7 @@ class MitraController extends Controller
             'kode_mitra' => ['required', 'string', 'max:50', 'unique:mitra,kode_mitra'.($mitra ? ','.$mitra->id : '')],
             'nama' => ['required', 'string', 'max:255'],
             'no_hp' => ['nullable', 'string', 'max:30'],
+            'no_wa' => ['nullable', 'string', 'max:30'],
             'alamat' => ['nullable', 'string'],
             'provinsi' => ['nullable', 'string', 'max:100'],
             'kota' => ['nullable', 'string', 'max:100'],

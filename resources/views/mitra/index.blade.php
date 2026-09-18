@@ -12,9 +12,12 @@
                 {{ $mitraList->total() }} mitra {{ auth()->user()->canViewAll() ? '' : 'kamu' }}
             </div>
         </div>
-        @if (auth()->user()->hasAdminAccess())
-            <a href="{{ route('mitra.create') }}" class="btn btn-primary" style="width:auto;">+ Tambah Mitra</a>
-        @endif
+        <div class="field-row" style="margin-bottom:0;">
+            <a href="{{ route('mitra.export', request()->query()) }}" class="btn" style="width:auto;">Download Excel</a>
+            @if (auth()->user()->hasAdminAccess())
+                <a href="{{ route('mitra.create') }}" class="btn btn-primary" style="width:auto;">+ Tambah Mitra</a>
+            @endif
+        </div>
     </div>
 
     @if (session('status'))
@@ -55,13 +58,22 @@
             </select>
         </div>
         <div class="field" style="margin-bottom:0;">
+            <label>Segmen</label>
+            <select name="segmen" class="select-pill" onchange="this.form.submit()">
+                <option value="">Semua Segmen</option>
+                @foreach ($segmenOptions as $s)
+                    <option value="{{ $s }}" {{ request('segmen') === $s ? 'selected' : '' }}>{{ $s }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="field" style="margin-bottom:0;">
             <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
                 <input type="checkbox" name="omset_nol" value="1" onchange="this.form.submit()" {{ request()->boolean('omset_nol') ? 'checked' : '' }}>
                 Omset Bulan Ini = 0
             </label>
         </div>
         <button type="submit" class="btn" style="width:auto;">Cari</button>
-        @if (request('q') || request('kae_code') || request('status') || request('stabilitas') || request('omset_nol'))
+        @if (request('q') || request('kae_code') || request('status') || request('stabilitas') || request('segmen') || request('omset_nol'))
             <a href="{{ route('mitra.index') }}" class="btn" style="width:auto;">Reset</a>
         @endif
     </form>
@@ -71,7 +83,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Mitra</th><th>KAE</th><th>Status</th><th>Stabilitas</th>
+                        <th>Mitra</th><th>No. WA</th><th>KAE</th><th>Segmen</th><th>Status</th><th>Stabilitas</th>
                         <th>{{ $blnAktifLabel }}</th><th>Omset Bulan Ini</th><th>{{ $lmLabel }}</th><th>% Growth</th><th></th>
                     </tr>
                 </thead>
@@ -83,6 +95,7 @@
                                 <div style="font-weight:600;">{{ $m->nama }}</div>
                                 <div style="font-size:11.5px; color:var(--ink-muted);">{{ $m->kode_mitra }}</div>
                             </td>
+                            <td>{{ $m->no_wa ?: '—' }}</td>
                             <td>
                                 @if ($m->kae_code)
                                     <span style="display:inline-block; padding:2px 8px; border-radius:6px; background:var(--accent-soft); color:var(--accent-ink); font-size:11px; font-weight:600;">{{ \App\Models\User::kaeNameMap()[$m->kae_code] ?? $m->kae_code }}</span>
@@ -90,6 +103,7 @@
                                     <span style="color:var(--ink-faint);">—</span>
                                 @endif
                             </td>
+                            <td>{{ $m->segmen ?: '—' }}</td>
                             <td>
                                 @if ($m->status === 'aktif')
                                     <span class="chip chip-good">Aktif</span>
@@ -119,7 +133,7 @@
                             <td style="white-space:nowrap;"><a href="{{ route('mitra.show', $m) }}" class="link-action" style="color:var(--accent-ink); font-size:12.5px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 10px; white-space:nowrap; display:inline-block;">Lihat detail</a></td>
                         </tr>
                     @empty
-                        <tr><td colspan="9" style="color:var(--ink-muted);">Belum ada mitra.</td></tr>
+                        <tr><td colspan="11" style="color:var(--ink-muted);">Belum ada mitra.</td></tr>
                     @endforelse
                 </tbody>
             </table>

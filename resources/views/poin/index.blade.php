@@ -14,6 +14,10 @@
         </div>
         <form method="GET" action="{{ route('poin.index') }}" class="field-row" style="margin-bottom:0; align-items:flex-end;">
             <div class="field" style="margin-bottom:0;">
+                <label>Cari</label>
+                <input type="text" name="q" value="{{ $q }}" placeholder="Nama atau kode mitra...">
+            </div>
+            <div class="field" style="margin-bottom:0;">
                 <label>Tahun</label>
                 <select name="tahun" class="select-pill" onchange="this.form.submit()">
                     @for ($y = now()->year; $y >= now()->year - 4; $y--)
@@ -21,6 +25,10 @@
                     @endfor
                 </select>
             </div>
+            <button type="submit" class="btn" style="width:auto;">Cari</button>
+            @if ($q !== '')
+                <a href="{{ route('poin.index', ['tahun' => $tahun]) }}" class="btn" style="width:auto;">Reset</a>
+            @endif
         </form>
     </div>
 

@@ -16,8 +16,11 @@ class PoinController extends Controller
         $user = $request->user();
         $tahun = (int) $request->input('tahun', now()->year);
 
+        $q = trim((string) $request->input('q'));
+
         $mitraList = Mitra::query()
-            ->when($user->role === 'kae', fn ($q) => $q->where('kae_code', $user->kae_code))
+            ->when($user->role === 'kae', fn ($qr) => $qr->where('kae_code', $user->kae_code))
+            ->when($q !== '', fn ($qr) => $qr->where(fn ($w) => $w->where('nama', 'like', "%{$q}%")->orWhere('kode_mitra', 'like', "%{$q}%")))
             ->orderBy('nama')
             ->get(['id', 'nama', 'kode_mitra']);
 
@@ -34,6 +37,7 @@ class PoinController extends Controller
 
         return view('poin.index', [
             'tahun' => $tahun,
+            'q' => $q,
             'rows' => $rows,
             'monthTotals' => collect(range(1, 12))->mapWithKeys(fn ($m) => [$m => $rows->sum(fn ($r) => $r->monthly[$m])]),
             'grandTotal' => $grandTotal,
