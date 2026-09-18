@@ -10,6 +10,8 @@ use App\Services\SpecialDealImportService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpWord\IOFactory;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -81,6 +83,86 @@ class SpecialDealController extends Controller
             'kuartal' => $kuartal,
             'tahun' => $tahun,
             'totalCount' => $deals->count(),
+        ]);
+    }
+
+    /** Download Excel satu segmen (Pareto/RTP/Special Reguler/Reguler) saja, ikut filter kuartal/tahun/status/cari yang lagi aktif di layar. */
+    public function export(Request $request, string $segmen): StreamedResponse
+    {
+        $user = $request->user();
+        $kuartal = $request->integer('kuartal') ?: now()->quarter;
+        $tahun = $request->integer('tahun') ?: now()->year;
+
+        $deals = SpecialDeal::with(['mitra', 'kae'])
+            ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_user_id', $user->id))
+            ->where('kuartal', $kuartal)
+            ->where('tahun', $tahun)
+            ->where('segmen', $segmen)
+            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
+            ->when($request->filled('q'), fn ($q) => $q->whereHas('mitra', function ($qq) use ($request) {
+                $qq->where('nama', 'like', '%'.$request->input('q').'%')
+                    ->orWhere('kode_mitra', 'like', '%'.$request->input('q').'%');
+            }))
+            ->get()
+            ->sortBy(fn ($d) => $d->mitra->nama ?? '')
+            ->values();
+
+        SpecialDeal::attachAktual($deals);
+
+        // Sama seperti tampilan di layar: Reguler diurutkan dari omset
+        // (Q_SD) terbesar ke terkecil, segmen lain tetap alfabetis.
+        if ($segmen === 'REGULER') {
+            $deals = $deals->sortByDesc('q_sd')->values();
+        }
+
+        $bulanAwal = ($kuartal - 1) * 3 + 1;
+        $bulanLabels = collect([$bulanAwal, $bulanAwal + 1, $bulanAwal + 2])
+            ->map(fn ($b) => \Carbon\Carbon::create($tahun, $b, 1)->translatedFormat('M'));
+
+        $headers = ['KAE', 'Mitra', 'Kode Mitra', 'Status', 'Target Monthly', 'Target Kuartal', 'Budget %', 'NOM', 'Subsidi', ...$bulanLabels->all(), 'Q'.$kuartal.' SD', 'ACH %', 'Gap SD'];
+        $lastCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($headers));
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle(mb_substr($segmen, 0, 31));
+        $sheet->fromArray($headers, null, 'A1', true);
+        $sheet->getStyle('A1:'.$lastCol.'1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:'.$lastCol.'1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('EBE5EF');
+
+        $r = 2;
+        foreach ($deals as $deal) {
+            $row = [
+                $deal->kae->name ?? '—',
+                $deal->mitra->nama ?? '—',
+                $deal->mitra->kode_mitra ?? '—',
+                ucfirst($deal->status),
+                $deal->targetMonthly(),
+                $deal->target_kuartal,
+                $deal->budget_persen,
+                $deal->nominalReward(),
+                $deal->subsidi,
+            ];
+            foreach ($deal->bulan_aktual as $total) {
+                $row[] = $total;
+            }
+            $row[] = $deal->q_sd;
+            $row[] = $deal->ach_pct;
+            $row[] = $deal->gap;
+
+            $sheet->fromArray($row, null, 'A'.$r, true);
+            $r++;
+        }
+
+        foreach (range('A', $lastCol) as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $filename = 'special_deal_'.str_replace(' ', '_', mb_strtolower($segmen)).'_Q'.$kuartal.'_'.$tahun.'.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
     }
 

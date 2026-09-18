@@ -218,6 +218,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
 
     Route::prefix('special-deal')->name('special-deal.')->group(function () {
         Route::get('/', [SpecialDealController::class, 'index'])->name('index');
+        Route::get('/export/{segmen}', [SpecialDealController::class, 'export'])->name('export');
         Route::get('/create', [SpecialDealController::class, 'create'])->name('create');
         Route::post('/', [SpecialDealController::class, 'store'])->name('store');
         Route::middleware('role:admin')->group(function () {

@@ -76,7 +76,8 @@
                     <div class="card-title">{{ $segmen }}</div>
                     <div class="card-hint">{{ $s['count'] }} deal &middot; {{ $s['done_count'] }} done</div>
                 </div>
-                <div style="display:flex; gap:20px; flex-wrap:wrap; font-size:12.5px;">
+                <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap; font-size:12.5px;">
+                    <a href="{{ route('special-deal.export', array_merge(['segmen' => $segmen, 'kuartal' => $kuartal, 'tahun' => $tahun], request()->only(['status', 'q']))) }}" class="btn" style="width:auto;">Download Excel</a>
                     <div>
                         <div class="info-label">Total Target Q{{ $kuartal }}</div>
                         <div class="tnum" style="font-weight:700;">{{ $rp($s['target_sum']) }}</div>
