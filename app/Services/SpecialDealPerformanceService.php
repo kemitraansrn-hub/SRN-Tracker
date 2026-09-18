@@ -15,6 +15,14 @@ use Illuminate\Support\Facades\DB;
  *     bulan ini (sumber otoritatif dari Excel import).
  *   - New Mitra: mitra yang ditandai manual admin (NewMitraFlag) — gak ada
  *     sinyal otomatis yang reliable buat "order pertama kali".
+ * Segmen (Pareto/RTP/Special Reguler) per mitra diambil dari menu Special
+ * Deal (tabel special_deals, kuartal berjalan) — BUKAN dari target_bulanan
+ * lagi — supaya satu sumber kebenaran sama menu Special Deal: mitra yang
+ * belum ada Special Deal buat kuartal ini otomatis gak masuk segmen manapun
+ * di sini (jatuh ke Reguler), dan begitu Special Deal-nya diajukan/diubah,
+ * baris ini otomatis ikut berubah tanpa perlu proses lain. Kalau ada lebih
+ * dari satu Special Deal buat mitra+kuartal yang sama, yang dipakai yang
+ * paling baru diinput (created_at terakhir).
  * Sisanya (gak Pareto/RTP/Special Reguler/REAKTIVASI/New Mitra) jatuh ke
  * baris Reguler apa adanya, termasuk yang target-nya 0 atau gak punya
  * baris target_bulanan sama sekali — biar kalau ternyata belanja, omsetnya
@@ -28,13 +36,24 @@ class SpecialDealPerformanceService
 {
     private const SEGMEN_LABELS = [
         'PARETO' => 'Pareto',
-        'RTP (ROAD TO PARETO)' => 'RTP (Road To Pareto)',
+        'RTP' => 'RTP (Road To Pareto)',
         'SPECIAL REGULER' => 'Special Reguler',
     ];
 
     public static function summary(int $bulan, int $tahun, ?string $kaeCode = null): Collection
     {
         $targetSql = TargetBulanan::effectiveTargetSql();
+        $kuartal = (int) ceil($bulan / 3);
+
+        // segmen per mitra buat kuartal berjalan, sumber dari menu Special
+        // Deal — pluck menimpa key yang sama pas iterasi, jadi dengan urut
+        // created_at asc, Special Deal yang paling baru yang menang kalau
+        // ada lebih dari satu buat mitra yang sama.
+        $segmenByMitraId = DB::table('special_deals')
+            ->where('kuartal', $kuartal)
+            ->where('tahun', $tahun)
+            ->orderBy('created_at')
+            ->pluck('segmen', 'mitra_id');
 
         // Basis-nya SEMUA mitra aktif (bukan cuma yang punya baris
         // target_bulanan) — left join target_bulanan & orders, jadi mitra
@@ -54,10 +73,11 @@ class SpecialDealPerformanceService
             })
             ->where('mitra.status', 'aktif')
             ->when($kaeCode, fn ($q) => $q->where('mitra.kae_code', $kaeCode))
-            ->groupBy('mitra.id', 'mitra.nama', 'mitra.kode_mitra', 'target_bulanan.segmen', 'target_bulanan.kategori', 'target_bulanan.komit', 'target_bulanan.target', 'target_bulanan.stretch', 'target_bulanan.tier_dipakai')
-            ->selectRaw("mitra.id as mitra_id, mitra.nama, mitra.kode_mitra, target_bulanan.segmen, target_bulanan.kategori, COALESCE($targetSql, 0) as target, COALESCE(SUM(orders.total_transaksi), 0) as omset")
+            ->groupBy('mitra.id', 'mitra.nama', 'mitra.kode_mitra', 'target_bulanan.kategori', 'target_bulanan.komit', 'target_bulanan.target', 'target_bulanan.stretch', 'target_bulanan.tier_dipakai')
+            ->selectRaw("mitra.id as mitra_id, mitra.nama, mitra.kode_mitra, target_bulanan.kategori, COALESCE($targetSql, 0) as target, COALESCE(SUM(orders.total_transaksi), 0) as omset")
             ->get()
-            ->map(function ($r) {
+            ->map(function ($r) use ($segmenByMitraId) {
+                $r->segmen = $segmenByMitraId[$r->mitra_id] ?? null;
                 $r->target = (float) $r->target;
                 $r->omset = (float) $r->omset;
                 $r->pct = $r->target > 0 ? round($r->omset / $r->target * 100, 1) : null;
