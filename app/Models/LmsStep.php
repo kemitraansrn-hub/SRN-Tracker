@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 #[Fillable(['platform', 'urutan', 'judul', 'aktif'])]
 class LmsStep extends Model
 {
-    public const PLATFORMS = ['shopee' => 'Shopee', 'meta' => 'Meta', 'tiktok' => 'TikTok'];
+    public const PLATFORMS = ['shopee' => 'Shopee', 'meta' => 'Meta', 'tiktok' => 'TikTok', 'wa_sales_machine' => 'WA Sales Machine'];
 
     protected function casts(): array
     {
