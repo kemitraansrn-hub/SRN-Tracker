@@ -240,6 +240,10 @@
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="14" height="18" rx="2" transform="translate(3 1)"/><path d="M9 8h4M9 12h4M9 16h2" stroke-linecap="round"/></svg>
                             <span class="nav-label">Kartu Profil Mitra</span>
                         </a>
+                        <a href="{{ route('growth-specialist.set-up-lms') }}" class="nav-item {{ request()->routeIs('growth-specialist.set-up-lms*') ? 'active' : '' }}" title="Set Up LMS" style="padding-left:18px;">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M10 9l4 2-4 2z" stroke-linejoin="round"/><path d="M8 21h8" stroke-linecap="round"/></svg>
+                            <span class="nav-label">Set Up LMS</span>
+                        </a>
                         <div class="nav-group-label" style="padding-left:18px;">Pareto &amp; RTP</div>
                         <a href="{{ route('data-development.index') }}" class="nav-item {{ request()->routeIs('data-development.*') ? 'active' : '' }}" title="Data Development" style="padding-left:18px;">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
@@ -391,6 +395,10 @@
                     <a href="{{ route('growth-specialist.kartu-profil-mitra') }}" class="nav-item {{ request()->routeIs('growth-specialist.kartu-profil-mitra', 'growth-specialist.profiling-mitra.kartu') ? 'active' : '' }}" title="Kartu Profil Mitra" style="padding-left:18px;">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="14" height="18" rx="2" transform="translate(3 1)"/><path d="M9 8h4M9 12h4M9 16h2" stroke-linecap="round"/></svg>
                         <span class="nav-label">Kartu Profil Mitra</span>
+                    </a>
+                    <a href="{{ route('growth-specialist.set-up-lms') }}" class="nav-item {{ request()->routeIs('growth-specialist.set-up-lms*') ? 'active' : '' }}" title="Set Up LMS" style="padding-left:18px;">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M10 9l4 2-4 2z" stroke-linejoin="round"/><path d="M8 21h8" stroke-linecap="round"/></svg>
+                        <span class="nav-label">Set Up LMS</span>
                     </a>
                     <div class="nav-group-label" style="padding-left:18px;">Pareto &amp; RTP</div>
                     <a href="{{ route('data-development.index') }}" class="nav-item {{ request()->routeIs('data-development.*') ? 'active' : '' }}" title="Data Development" style="padding-left:18px;">

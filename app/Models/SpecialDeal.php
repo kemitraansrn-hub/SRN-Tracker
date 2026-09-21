@@ -17,6 +17,22 @@ class SpecialDeal extends Model
 
     public const SUBSIDI_OPTIONS = ['Iklan', 'Voucher Belanja'];
 
+    /**
+     * Segmen per mitra buat kuartal dari $reference, sumber dari menu Special
+     * Deal. Kalau ada lebih dari satu deal buat mitra yang sama, yang paling
+     * baru diinput yang dipakai (pluck menimpa key yang sama).
+     *
+     * @return \Illuminate\Support\Collection<int, string>
+     */
+    public static function segmenByMitraId(\Carbon\Carbon $reference): Collection
+    {
+        return DB::table('special_deals')
+            ->where('kuartal', (int) ceil($reference->month / 3))
+            ->where('tahun', $reference->year)
+            ->orderBy('created_at')
+            ->pluck('segmen', 'mitra_id');
+    }
+
     public function periodeLabel(): ?string
     {
         return $this->kuartal && $this->tahun ? 'Q'.$this->kuartal.' '.$this->tahun : null;

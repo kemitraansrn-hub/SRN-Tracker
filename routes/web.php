@@ -279,6 +279,11 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::get('profiling-mitra/{mitra}/kartu-member', [\App\Http\Controllers\GrowthSpecialistController::class, 'kartuMember'])->name('profiling-mitra.kartu-member');
         Route::get('profiling-mitra/{mitra}/kartu-member/pdf', [\App\Http\Controllers\GrowthSpecialistController::class, 'kartuMemberPdf'])->name('profiling-mitra.kartu-member.pdf');
         Route::get('kartu-profil-mitra', [\App\Http\Controllers\GrowthSpecialistController::class, 'kartuPicker'])->name('kartu-profil-mitra');
+
+        Route::get('set-up-lms', [\App\Http\Controllers\SetUpLmsController::class, 'index'])->name('set-up-lms');
+        Route::post('set-up-lms/enroll', [\App\Http\Controllers\SetUpLmsController::class, 'enroll'])->name('set-up-lms.enroll');
+        Route::post('set-up-lms/step', [\App\Http\Controllers\SetUpLmsController::class, 'storeStep'])->name('set-up-lms.step.store');
+        Route::delete('set-up-lms/step', [\App\Http\Controllers\SetUpLmsController::class, 'destroyStep'])->name('set-up-lms.step.destroy');
     });
 
     Route::prefix('notifications')->name('notifications.')->group(function () {

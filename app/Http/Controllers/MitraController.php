@@ -149,21 +149,9 @@ class MitraController extends Controller
         ]);
     }
 
-    /**
-     * Segmen per mitra buat kuartal berjalan, sumber dari menu Special Deal
-     * — konsisten dengan SpecialDealPerformanceService. Kalau ada lebih
-     * dari satu Special Deal buat mitra yang sama, yang paling baru
-     * diinput yang dipakai.
-     *
-     * @return \Illuminate\Support\Collection<int, string>
-     */
     private function segmenByMitraId(\Carbon\Carbon $reference): \Illuminate\Support\Collection
     {
-        return DB::table('special_deals')
-            ->where('kuartal', (int) ceil($reference->month / 3))
-            ->where('tahun', $reference->year)
-            ->orderBy('created_at')
-            ->pluck('segmen', 'mitra_id');
+        return SpecialDeal::segmenByMitraId($reference);
     }
 
     public function show(Request $request, Mitra $mitra): View
