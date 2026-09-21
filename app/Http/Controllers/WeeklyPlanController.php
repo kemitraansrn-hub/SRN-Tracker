@@ -85,7 +85,23 @@ class WeeklyPlanController extends Controller
         $now = \Carbon\Carbon::create($tahun, $bulan, 1)->startOfMonth();
         $isBulanIni = $now->isSameMonth(today());
 
+        // Daftar Weekly Plan = mitra yang punya data upload di bulan yang
+        // dipilih (Target Bulanan atau Order), BUKAN semua mitra di Data
+        // Mitra — Data Mitra itu master keseluruhan, jadi mitra yang baru
+        // masuk lewat Upload Master Mitra tapi belum punya data upload
+        // bulan ini gak ikut nongol di sini.
+        $mitraIdsPeriode = DB::table('target_bulanan')
+            ->where('bulan', $now->month)->where('tahun', $now->year)
+            ->pluck('mitra_id')
+            ->merge(
+                DB::table('orders')
+                    ->whereYear('tanggal_order', $now->year)->whereMonth('tanggal_order', $now->month)
+                    ->pluck('mitra_id')
+            )
+            ->unique()->values();
+
         $mitraList = Mitra::where('status', 'aktif')
+            ->whereIn('id', $mitraIdsPeriode)
             ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_code', $user->kae_code))
             ->orderBy('nama')
             ->get();
