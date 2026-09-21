@@ -50,6 +50,52 @@ class TrackingPerformance extends Model
         return $this->ads_spend > 0 ? round($this->gmv / $this->ads_spend, 2) : 0.0;
     }
 
+    /** Metrik yang dibandingkan dengan periode sebelumnya di kolom Δ. */
+    public const METRIK_DELTA = ['gmv', 'traffic', 'ctr', 'cvr'];
+
+    private function nilaiMetrik(string $metrik): float
+    {
+        return match ($metrik) {
+            'gmv' => (float) $this->gmv,
+            'traffic' => (float) $this->total_pengunjung,
+            'ctr' => $this->ctr() ?? 0.0,
+            'cvr' => $this->cvr() ?? 0.0,
+        };
+    }
+
+    /**
+     * Arah perubahan satu metrik dibanding periode sebelumnya milik mitra
+     * yang sama: 'naik' | 'turun' | 'sama'; null kalau belum ada pembanding
+     * (upload pertama mitra ini = baseline). CTR/CVR dibandingkan dengan
+     * pembulatan 2 desimal yang sama dengan yang tampil di tabel.
+     */
+    public function arah(string $metrik, ?self $sebelumnya): ?string
+    {
+        if (! $sebelumnya) {
+            return null;
+        }
+
+        $sekarang = round($this->nilaiMetrik($metrik), 2);
+        $lalu = round($sebelumnya->nilaiMetrik($metrik), 2);
+
+        return $sekarang > $lalu ? 'naik' : ($sekarang < $lalu ? 'turun' : 'sama');
+    }
+
+    /**
+     * Status kolom Growth: 'Baseline' | 'Growth' | 'Stagnan' | 'Turun'.
+     * Baseline = belum ada periode sebelumnya. Aturan KPI buat Growth/
+     * Stagnan/Turun BELUM diberikan user — sampai ada, mengembalikan null
+     * (kolom tampil kosong) dan aturannya nanti cukup diisi di sini.
+     */
+    public function statusGrowth(?self $sebelumnya): ?string
+    {
+        if (! $sebelumnya) {
+            return 'Baseline';
+        }
+
+        return null;
+    }
+
     public function periodeLabel(): string
     {
         return $this->tanggal_mulai->equalTo($this->tanggal_selesai)

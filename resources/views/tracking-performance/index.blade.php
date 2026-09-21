@@ -5,6 +5,20 @@
     $pct = fn ($v) => $v === null ? '—' : number_format($v, 2, ',', '.').'%';
     $bulanNama = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
     $adaFilter = request('q') || request('bulan') || request('tahun') || request('week');
+    $ikonDelta = function (?string $arah) {
+        return match ($arah) {
+            'naik' => '<span title="Naik dibanding minggu lalu" style="color:var(--good); font-size:15px;">&#9650;</span>',
+            'turun' => '<span title="Turun dibanding minggu lalu" style="color:var(--critical); font-size:15px;">&#9660;</span>',
+            'sama' => '<span title="Sama seperti minggu lalu" style="color:var(--ink-muted); font-weight:700;">=</span>',
+            default => '<span title="Belum ada pembanding (baseline)" style="color:var(--ink-faint);">&mdash;</span>',
+        };
+    };
+    $growthChip = [
+        'Baseline' => ['', '&bull;'],
+        'Growth' => ['chip-good', '&#8599;'],
+        'Stagnan' => ['chip-warn', '&rarr;'],
+        'Turun' => ['chip-critical', '&#8600;'],
+    ];
 @endphp
 
 @section('content')
@@ -86,16 +100,16 @@
                 @endif
             </form>
         </div>
-        <div class="card-hint" style="padding:0 20px 12px;">Filter bulan/tahun mengikuti tanggal akhir periode.</div>
+        <div class="card-hint" style="padding:0 20px 12px;">Filter bulan/tahun mengikuti tanggal akhir periode. Kolom &Delta; membandingkan dengan periode sebelumnya mitra yang sama: <span style="color:var(--good);">&#9650;</span> naik, <span style="color:var(--critical);">&#9660;</span> turun, = sama, &mdash; belum ada pembanding (Baseline).</div>
 
         <div class="table-scroll" style="max-height:none; overflow-y:visible;">
             <table>
                 <thead>
                     <tr>
-                        <th>Mitra</th><th>KAE</th><th>Week</th><th>Kuartal</th><th>Periode</th>
-                        <th>GMV</th><th>Pesanan</th><th>Produk Diklik</th><th>Traffic</th>
-                        <th>CTR</th><th>CVR</th><th>Ads Spend</th><th>ROAS</th>
-                        <th>Catatan KAE</th><th>&Delta; GMV</th><th>&Delta; Traffic</th><th>&Delta; CTR</th><th>&Delta; CVR</th><th>Growth</th><th></th>
+                        <th>Mitra</th><th>KAE</th><th>Tgl Input</th><th>Week</th><th>Kuartal</th><th>Periode</th>
+                        <th>Traffic</th><th>Produk Klik</th><th>CTR</th><th>Pesanan</th><th>CVR</th>
+                        <th>Ad Spend</th><th>GMV</th><th>ROAS</th>
+                        <th>Catatan KAE</th><th style="text-align:center;">&Delta; GMV</th><th style="text-align:center;">&Delta; Traffic</th><th style="text-align:center;">&Delta; CTR</th><th style="text-align:center;">&Delta; CVR</th><th>Growth</th><th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -106,23 +120,29 @@
                                 <div style="font-size:11.5px; color:var(--ink-muted);">{{ $r->mitra->kode_mitra ?? '' }}</div>
                             </td>
                             <td>{{ ($r->mitra?->kae_code ? ($kaeMap[$r->mitra->kae_code] ?? $r->mitra->kae_code) : null) ?? '—' }}</td>
+                            <td style="white-space:nowrap;">{{ $r->created_at?->format('d M Y') ?? '—' }}</td>
                             <td>{{ $r->week ?? '—' }}</td>
                             <td>{{ $r->kuartal ?? '—' }}</td>
                             <td style="white-space:nowrap;">{{ $r->periodeLabel() }}</td>
-                            <td class="tnum">{{ $rp($r->gmv) }}</td>
-                            <td class="tnum">{{ number_format($r->total_pesanan, 0, ',', '.') }}</td>
-                            <td class="tnum">{{ number_format($r->produk_diklik, 0, ',', '.') }}</td>
                             <td class="tnum">{{ number_format($r->total_pengunjung, 0, ',', '.') }}</td>
+                            <td class="tnum">{{ number_format($r->produk_diklik, 0, ',', '.') }}</td>
                             <td class="tnum">{{ $pct($r->ctr()) }}</td>
+                            <td class="tnum">{{ number_format($r->total_pesanan, 0, ',', '.') }}</td>
                             <td class="tnum">{{ $pct($r->cvr()) }}</td>
                             <td class="tnum">{{ $r->ads_spend > 0 ? $rp($r->ads_spend) : '—' }}</td>
+                            <td class="tnum">{{ $rp($r->gmv) }}</td>
                             <td class="tnum">{{ number_format($r->roas(), 2, ',', '.') }}</td>
                             <td style="color:var(--ink-faint);">—</td>
-                            <td style="color:var(--ink-faint);">—</td>
-                            <td style="color:var(--ink-faint);">—</td>
-                            <td style="color:var(--ink-faint);">—</td>
-                            <td style="color:var(--ink-faint);">—</td>
-                            <td style="color:var(--ink-faint);">—</td>
+                            @foreach (\App\Models\TrackingPerformance::METRIK_DELTA as $metrik)
+                                <td style="text-align:center;">{!! $ikonDelta($r->deltas[$metrik] ?? null) !!}</td>
+                            @endforeach
+                            <td>
+                                @if ($r->status_growth)
+                                    <span class="chip {{ $growthChip[$r->status_growth][0] }}">{!! $growthChip[$r->status_growth][1] !!} {{ $r->status_growth }}</span>
+                                @else
+                                    <span style="color:var(--ink-faint);">—</span>
+                                @endif
+                            </td>
                             <td>
                                 <form method="POST" action="{{ route('growth-specialist.tracking-performance.destroy', $r) }}" onsubmit="return confirm('Hapus data performa {{ addslashes($r->mitra->nama ?? 'mitra') }} periode {{ $r->periodeLabel() }}?');">
                                     @csrf
@@ -132,7 +152,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="20" style="color:var(--ink-muted);">{{ $adaFilter ? 'Tidak ada data yang cocok dengan filter.' : 'Belum ada data. Upload file performance di atas.' }}</td></tr>
+                        <tr><td colspan="21" style="color:var(--ink-muted);">{{ $adaFilter ? 'Tidak ada data yang cocok dengan filter.' : 'Belum ada data. Upload file performance di atas.' }}</td></tr>
                     @endforelse
                 </tbody>
             </table>

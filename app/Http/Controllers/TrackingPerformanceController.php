@@ -17,9 +17,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /**
  * Tracking Performance (Growth Specialist > Special Reg & Reg) — upload file
  * performa toko per mitra per periode, lalu tabel hasilnya. CTR/CVR/ROAS
- * dihitung dari angka mentah (lihat TrackingPerformance). Kolom Catatan KAE,
- * Δ GMV/Traffic/CTR/CVR, dan Growth sengaja masih kosong — menunggu aturan
- * pengisiannya.
+ * dihitung dari angka mentah (lihat TrackingPerformance). Kolom Δ GMV/
+ * Traffic/CTR/CVR membandingkan tiap periode dengan periode sebelumnya milik
+ * mitra yang sama (ikon naik/turun); upload pertama = Baseline. Growth
+ * Stagnan/Growth/Turun dan Catatan KAE masih kosong — menunggu aturan KPI.
  */
 class TrackingPerformanceController extends Controller
 {
@@ -42,6 +43,24 @@ class TrackingPerformanceController extends Controller
             ->get()
             ->sort(fn ($a, $b) => [$b->tanggal_selesai, $a->mitra->nama ?? ''] <=> [$a->tanggal_selesai, $b->mitra->nama ?? ''])
             ->values();
+
+        // Pembanding = periode tepat sebelumnya milik mitra yang sama. Diambil
+        // dari SELURUH riwayat mitra (bukan hasil filter), jadi filter Week
+        // W2 tetap dibandingkan dengan W1.
+        $sebelumnyaByRowId = [];
+        $terakhir = [];
+        $base->clone()->whereIn('mitra_id', $rows->pluck('mitra_id')->unique())
+            ->orderBy('tanggal_mulai')->orderBy('id')->get()
+            ->each(function ($r) use (&$sebelumnyaByRowId, &$terakhir) {
+                $sebelumnyaByRowId[$r->id] = $terakhir[$r->mitra_id] ?? null;
+                $terakhir[$r->mitra_id] = $r;
+            });
+
+        $rows->each(function ($r) use ($sebelumnyaByRowId) {
+            $prev = $sebelumnyaByRowId[$r->id] ?? null;
+            $r->deltas = collect(TrackingPerformance::METRIK_DELTA)->mapWithKeys(fn ($m) => [$m => $r->arah($m, $prev)])->all();
+            $r->status_growth = $r->statusGrowth($prev);
+        });
 
         $perPage = 20;
         $page = (int) $request->input('page', 1);
