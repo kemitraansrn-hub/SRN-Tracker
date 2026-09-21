@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Mitra;
 use App\Models\TrackingPerformance;
 use App\Models\User;
 use App\Services\TrackingPerformanceImportService;
@@ -27,7 +28,6 @@ class TrackingPerformanceController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
-        $q = trim((string) $request->input('q'));
 
         $base = TrackingPerformance::query()
             ->when($user->role === 'kae', fn ($qr) => $qr->whereHas('mitra', fn ($m) => $m->where('kae_code', $user->kae_code)));
@@ -36,7 +36,7 @@ class TrackingPerformanceController extends Controller
         $tahunOptions = (clone $base)->selectRaw('YEAR(tanggal_selesai) as t')->distinct()->orderByDesc('t')->pluck('t');
 
         $rows = (clone $base)->with('mitra')
-            ->when($q !== '', fn ($qr) => $qr->whereHas('mitra', fn ($m) => $m->where('nama', 'like', "%{$q}%")->orWhere('kode_mitra', 'like', "%{$q}%")))
+            ->when($request->filled('mitra_id'), fn ($qr) => $qr->where('mitra_id', $request->integer('mitra_id')))
             ->when($request->filled('bulan'), fn ($qr) => $qr->whereMonth('tanggal_selesai', $request->integer('bulan')))
             ->when($request->filled('tahun'), fn ($qr) => $qr->whereYear('tanggal_selesai', $request->integer('tahun')))
             ->when($request->filled('week'), fn ($qr) => $qr->where('week', $request->input('week')))
@@ -74,7 +74,10 @@ class TrackingPerformanceController extends Controller
 
         return view('tracking-performance.index', [
             'rowsPage' => $rowsPage,
-            'q' => $q,
+            'mitraOptions' => Mitra::query()
+                ->when($user->role === 'kae', fn ($qr) => $qr->where('kae_code', $user->kae_code))
+                ->orderBy('nama')->get(['id', 'nama', 'kode_mitra'])
+                ->map(fn ($m) => (object) ['id' => $m->id, 'label' => $m->nama.' ('.$m->kode_mitra.')']),
             'weekOptions' => $weekOptions,
             'tahunOptions' => $tahunOptions,
             'kaeMap' => User::kaeNameMap(),

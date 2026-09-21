@@ -4,7 +4,7 @@
     $rp = fn ($v) => 'Rp'.number_format((float) $v, 0, ',', '.');
     $pct = fn ($v) => $v === null ? '—' : number_format($v, 2, ',', '.').'%';
     $bulanNama = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-    $adaFilter = request('q') || request('bulan') || request('tahun') || request('week');
+    $adaFilter = request('mitra_id') || request('bulan') || request('tahun') || request('week');
     $ikonDelta = function (?string $arah) {
         return match ($arah) {
             'naik' => '<span title="Naik dibanding minggu lalu" style="color:var(--good); font-size:15px;">&#9650;</span>',
@@ -63,9 +63,16 @@
                 <div class="card-hint">{{ $rowsPage->total() }} baris{{ $adaFilter ? ' (hasil filter)' : '' }}</div>
             </div>
             <form method="GET" action="{{ route('growth-specialist.tracking-performance') }}" class="field-row" style="margin-bottom:0; align-items:flex-end;">
-                <div class="field" style="margin-bottom:0;">
+                <div class="field" style="margin-bottom:0; min-width:260px;">
                     <label>Cari Mitra</label>
-                    <input type="text" name="q" value="{{ $q }}" placeholder="Nama atau kode mitra...">
+                    @include('partials.searchable-select', [
+                        'id' => 'filterMitraTp',
+                        'name' => 'mitra_id',
+                        'options' => $mitraOptions,
+                        'selectedId' => request('mitra_id'),
+                        'placeholder' => 'Ketik buat cari mitra...',
+                        'onchangeJs' => 'pilihMitraTp',
+                    ])
                 </div>
                 <div class="field" style="margin-bottom:0;">
                     <label>Bulan</label>
@@ -160,4 +167,14 @@
     </section>
 
     <div style="margin-top:16px;">{{ $rowsPage->links() }}</div>
+
+    <script>
+        // Otomatis cari begitu mitra baru dipilih dari daftar. Sengaja gak submit
+        // pas kosong/sama dengan yang lagi aktif (komponen ini juga memanggil
+        // fungsi ini saat halaman dimuat), biar gak reload terus.
+        const mitraTpAktif = @json((string) request('mitra_id'));
+        function pilihMitraTp(id) {
+            if (id && id !== mitraTpAktif) document.getElementById('filterMitraTp_hidden').form.submit();
+        }
+    </script>
 @endsection
