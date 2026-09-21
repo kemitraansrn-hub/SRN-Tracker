@@ -244,6 +244,10 @@
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M10 9l4 2-4 2z" stroke-linejoin="round"/><path d="M8 21h8" stroke-linecap="round"/></svg>
                             <span class="nav-label">Set Up LMS</span>
                         </a>
+                        <a href="{{ route('growth-specialist.tracking-performance') }}" class="nav-item {{ request()->routeIs('growth-specialist.tracking-performance*') ? 'active' : '' }}" title="Tracking Performance" style="padding-left:18px;">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 9 11 13 15 21 7" stroke-linecap="round" stroke-linejoin="round"/><polyline points="15 7 21 7 21 13" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span class="nav-label">Tracking Performance</span>
+                        </a>
                         <div class="nav-group-label" style="padding-left:18px;">Pareto &amp; RTP</div>
                         <a href="{{ route('data-development.index') }}" class="nav-item {{ request()->routeIs('data-development.*') ? 'active' : '' }}" title="Data Development" style="padding-left:18px;">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
@@ -399,6 +403,10 @@
                     <a href="{{ route('growth-specialist.set-up-lms') }}" class="nav-item {{ request()->routeIs('growth-specialist.set-up-lms*') ? 'active' : '' }}" title="Set Up LMS" style="padding-left:18px;">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M10 9l4 2-4 2z" stroke-linejoin="round"/><path d="M8 21h8" stroke-linecap="round"/></svg>
                         <span class="nav-label">Set Up LMS</span>
+                    </a>
+                    <a href="{{ route('growth-specialist.tracking-performance') }}" class="nav-item {{ request()->routeIs('growth-specialist.tracking-performance*') ? 'active' : '' }}" title="Tracking Performance" style="padding-left:18px;">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 9 11 13 15 21 7" stroke-linecap="round" stroke-linejoin="round"/><polyline points="15 7 21 7 21 13" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span class="nav-label">Tracking Performance</span>
                     </a>
                     <div class="nav-group-label" style="padding-left:18px;">Pareto &amp; RTP</div>
                     <a href="{{ route('data-development.index') }}" class="nav-item {{ request()->routeIs('data-development.*') ? 'active' : '' }}" title="Data Development" style="padding-left:18px;">
