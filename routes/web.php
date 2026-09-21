@@ -282,6 +282,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
 
         Route::get('set-up-lms', [\App\Http\Controllers\SetUpLmsController::class, 'index'])->name('set-up-lms');
         Route::post('set-up-lms/enroll', [\App\Http\Controllers\SetUpLmsController::class, 'enroll'])->name('set-up-lms.enroll');
+        Route::delete('set-up-lms/enroll', [\App\Http\Controllers\SetUpLmsController::class, 'destroyEnrollment'])->name('set-up-lms.enroll.destroy');
         Route::post('set-up-lms/step', [\App\Http\Controllers\SetUpLmsController::class, 'storeStep'])->name('set-up-lms.step.store');
         Route::delete('set-up-lms/step', [\App\Http\Controllers\SetUpLmsController::class, 'destroyStep'])->name('set-up-lms.step.destroy');
     });

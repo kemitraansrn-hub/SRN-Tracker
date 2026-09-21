@@ -144,7 +144,7 @@
                             @foreach ($steps as $step)
                                 <th style="min-width:86px; font-size:10.5px; white-space:normal; text-align:center;" title="{{ $step->judul }}">{{ $step->urutan }}. {{ $step->judul }}</th>
                             @endforeach
-                            <th>% Selesai</th><th>Status</th>
+                            <th>% Selesai</th><th>Status</th><th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -164,9 +164,18 @@
                                 @endforeach
                                 <td class="tnum" style="font-weight:700;">{{ $r->pct }}%</td>
                                 <td><span class="chip chip-{{ $statusColor[$r->status] }}">{{ $r->status }}</span></td>
+                                <td>
+                                    <form method="POST" action="{{ route('growth-specialist.set-up-lms.enroll.destroy') }}" onsubmit="return confirm('Hapus {{ addslashes($r->mitra->nama) }} dari LMS {{ $platformLabel }}? Semua centang dan link GDrive-nya ikut terhapus.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <input type="hidden" name="mitra_id" value="{{ $r->mitra->id }}">
+                                        <input type="hidden" name="platform" value="{{ $tab }}">
+                                        <button type="submit" class="btn btn-danger" style="width:auto; font-size:11.5px; padding:5px 10px;">Hapus</button>
+                                    </form>
+                                </td>
                             </tr>
                         @empty
-                            <tr><td colspan="{{ 6 + $steps->count() }}" style="color:var(--ink-muted);">{{ $q !== '' ? 'Tidak ada mitra yang cocok.' : 'Belum ada mitra yang terdaftar di LMS '.$platformLabel.'. Pilih mitra di atas untuk mulai.' }}</td></tr>
+                            <tr><td colspan="{{ 7 + $steps->count() }}" style="color:var(--ink-muted);">{{ $q !== '' ? 'Tidak ada mitra yang cocok.' : 'Belum ada mitra yang terdaftar di LMS '.$platformLabel.'. Pilih mitra di atas untuk mulai.' }}</td></tr>
                         @endforelse
                     </tbody>
                 </table>

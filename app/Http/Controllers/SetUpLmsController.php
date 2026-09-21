@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
@@ -116,6 +117,27 @@ class SetUpLmsController extends Controller
         LmsEnrollment::firstOrCreate(['mitra_id' => $mitra->id, 'platform' => $data['platform']]);
 
         return $this->backToMitra($data['platform'], $mitra->id, $mitra->nama.' didaftarkan ke LMS '.LmsStep::PLATFORMS[$data['platform']].'.');
+    }
+
+    /** Hapus mitra dari tracking LMS satu platform beserta semua centang & link GDrive-nya. */
+    public function destroyEnrollment(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'mitra_id' => ['required', 'integer'],
+            'platform' => ['required', 'in:'.implode(',', array_keys(LmsStep::PLATFORMS))],
+        ]);
+
+        $mitra = $this->scopedMitra($request->user())->findOrFail($data['mitra_id']);
+
+        DB::transaction(function () use ($mitra, $data) {
+            LmsStepCompletion::where('mitra_id', $mitra->id)
+                ->whereIn('lms_step_id', LmsStep::where('platform', $data['platform'])->pluck('id'))
+                ->delete();
+            LmsEnrollment::where('mitra_id', $mitra->id)->where('platform', $data['platform'])->delete();
+        });
+
+        return redirect()->route('growth-specialist.set-up-lms', ['tab' => $data['platform']])
+            ->with('status', $mitra->nama.' dihapus dari LMS '.LmsStep::PLATFORMS[$data['platform']].'.');
     }
 
     public function storeStep(Request $request): RedirectResponse
