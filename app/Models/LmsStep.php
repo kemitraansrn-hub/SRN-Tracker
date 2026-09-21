@@ -19,6 +19,11 @@ class LmsStep extends Model
         return ['aktif' => 'boolean'];
     }
 
+    public function completions()
+    {
+        return $this->hasMany(LmsStepCompletion::class, 'lms_step_id');
+    }
+
     public function scopeAktifUntuk($query, string $platform)
     {
         return $query->where('platform', $platform)->where('aktif', true)->orderBy('urutan');

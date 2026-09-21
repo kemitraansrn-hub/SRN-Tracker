@@ -263,7 +263,7 @@
                     }
 
                     $salesRoutes = ['sales-overview.*', 'segmentasi.*', 'trend.*', 'omset-bulanan.*', 'weekly-plan.*', 'forecast.*', 'action-plan.*', 'mitra.*', 'order.*', 'followup.*', 'special-deal.*', 'ar.*', 'sales-draft.*', 'buyback.*', 'poin.*', 'poin-redemption.*', 'price-adjustment.*'];
-                    $adminRoutes = ['reward.*', 'produk.*', 'import.*', 'data-health.*', 'pengaturan.*', 'run-rate-target.*', 'tier-target.*', 'buyback-setting.*', 'npd.*', 'users.*', 'backup.*'];
+                    $adminRoutes = ['reward.*', 'produk.*', 'import.*', 'data-health.*', 'pengaturan.*', 'run-rate-target.*', 'tier-target.*', 'buyback-setting.*', 'npd.*', 'users.*', 'backup.*', 'master-lms.*'];
                     $salesActive = request()->routeIs(...$salesRoutes);
                     $developmentActive = request()->routeIs('development.*', 'data-development.*', 'tracking-cp.*', 'takedown-banding.*', 'price-adjustment-monitoring.*', 'kpi-partnership-compliance.*', 'growth-specialist.*');
                     $adminActive = request()->routeIs(...$adminRoutes);
@@ -447,6 +447,10 @@
                         <a href="{{ route('npd.index') }}" class="nav-item {{ request()->routeIs('npd.*') ? 'active' : '' }}" title="Input NPD">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="4"/></svg>
                             <span class="nav-label">Input NPD</span>
+                        </a>
+                        <a href="{{ route('master-lms.index') }}" class="nav-item {{ request()->routeIs('master-lms.*') ? 'active' : '' }}" title="Master LMS">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M10 9l4 2-4 2z" stroke-linejoin="round"/><path d="M8 21h8" stroke-linecap="round"/></svg>
+                            <span class="nav-label">Master LMS</span>
                         </a>
                         <a href="{{ route('users.index') }}" class="nav-item {{ request()->routeIs('users.*') ? 'active' : '' }}" title="User Management">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>

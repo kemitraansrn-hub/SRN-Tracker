@@ -165,6 +165,13 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::post('/{produk}/toggle', [NpdProductController::class, 'toggle'])->name('toggle');
     });
 
+    Route::middleware('role:admin')->prefix('master-lms')->name('master-lms.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\MasterLmsController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\MasterLmsController::class, 'store'])->name('store');
+        Route::put('/{lmsStep}', [\App\Http\Controllers\MasterLmsController::class, 'update'])->name('update');
+        Route::delete('/{lmsStep}', [\App\Http\Controllers\MasterLmsController::class, 'destroy'])->name('destroy');
+    });
+
     Route::middleware('role:admin')->prefix('users')->name('users.')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('index');
         Route::get('/create', [UserController::class, 'create'])->name('create');

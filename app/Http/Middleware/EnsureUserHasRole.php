@@ -17,7 +17,7 @@ class EnsureUserHasRole
      */
     private const ADMIN_GROUP_ROUTE_PATTERNS = [
         'produk.*', 'reward.*', 'pengaturan.*', 'run-rate-target.*', 'tier-target.*',
-        'buyback-setting.*', 'backup.*', 'data-health.*', 'npd.*', 'users.*', 'import.*',
+        'buyback-setting.*', 'backup.*', 'data-health.*', 'npd.*', 'users.*', 'import.*', 'master-lms.*',
     ];
 
     /**
