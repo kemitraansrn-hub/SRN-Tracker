@@ -83,9 +83,12 @@ class TrackingPerformance extends Model
 
     /**
      * Status kolom Growth: 'Baseline' | 'Growth' | 'Stagnan' | 'Turun'.
-     * Baseline = belum ada periode sebelumnya. Aturan KPI buat Growth/
-     * Stagnan/Turun BELUM diberikan user — sampai ada, mengembalikan null
-     * (kolom tampil kosong) dan aturannya nanti cukup diisi di sini.
+     * Baseline = belum ada periode sebelumnya. Selain itu, KPI-nya dari
+     * pertumbuhan GMV terhadap periode sebelumnya milik mitra yang sama:
+     * >= 5% Growth, 0% s/d 4,9% Stagnan, < 0% Turun (aturan dari user,
+     * 2026-09-22). Kalau GMV periode sebelumnya 0, persen gak terhitung
+     * (pembagi nol) — dianggap Growth kalau GMV sekarang > 0, Stagnan
+     * kalau tetap 0 (gak ada perubahan berarti).
      */
     public function statusGrowth(?self $sebelumnya): ?string
     {
@@ -93,7 +96,17 @@ class TrackingPerformance extends Model
             return 'Baseline';
         }
 
-        return null;
+        if ((float) $sebelumnya->gmv <= 0.0) {
+            return $this->gmv > 0 ? 'Growth' : 'Stagnan';
+        }
+
+        $persenGmv = ($this->gmv - $sebelumnya->gmv) / $sebelumnya->gmv * 100;
+
+        return match (true) {
+            $persenGmv >= 5 => 'Growth',
+            $persenGmv >= 0 => 'Stagnan',
+            default => 'Turun',
+        };
     }
 
     public function periodeLabel(): string
