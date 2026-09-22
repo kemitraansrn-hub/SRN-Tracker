@@ -4,7 +4,7 @@
     $rp = fn ($v) => 'Rp'.number_format((float) $v, 0, ',', '.');
     $pct = fn ($v) => $v === null ? '—' : number_format($v, 2, ',', '.').'%';
     $bulanNama = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-    $adaFilter = request('mitra_id') || request('bulan') || request('tahun') || request('week');
+    $adaFilter = request('mitra_id') || request('bulan') || request('tahun') || request('week') || request('growth');
     $ikonDelta = function (?string $arah) {
         return match ($arah) {
             'naik' => '<span title="Naik dibanding minggu lalu" style="color:var(--good); font-size:15px;">&#9650;</span>',
@@ -98,6 +98,15 @@
                         <option value="">Semua Week</option>
                         @foreach ($weekOptions as $w)
                             <option value="{{ $w }}" {{ request('week') === (string) $w ? 'selected' : '' }}>{{ $w }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="field" style="margin-bottom:0;">
+                    <label>Growth</label>
+                    <select name="growth" class="select-pill" onchange="this.form.submit()">
+                        <option value="">Semua Growth</option>
+                        @foreach ($growthOptions as $g)
+                            <option value="{{ $g }}" {{ request('growth') === $g ? 'selected' : '' }}>{{ $g }}</option>
                         @endforeach
                     </select>
                 </div>

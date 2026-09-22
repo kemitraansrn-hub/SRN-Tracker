@@ -62,6 +62,13 @@ class TrackingPerformanceController extends Controller
             $r->status_growth = $r->statusGrowth($prev);
         });
 
+        // Growth itu nilai turunan (dihitung dari periode sebelumnya), bukan
+        // kolom di database — jadi filternya baru bisa diterapkan di sini,
+        // sesudah status_growth tiap baris dihitung.
+        if ($request->filled('growth')) {
+            $rows = $rows->where('status_growth', $request->input('growth'))->values();
+        }
+
         $perPage = 20;
         $page = (int) $request->input('page', 1);
         $rowsPage = new LengthAwarePaginator(
@@ -80,6 +87,7 @@ class TrackingPerformanceController extends Controller
                 ->map(fn ($m) => (object) ['id' => $m->id, 'label' => $m->nama.' ('.$m->kode_mitra.')']),
             'weekOptions' => $weekOptions,
             'tahunOptions' => $tahunOptions,
+            'growthOptions' => TrackingPerformance::STATUS_GROWTH_OPTIONS,
             'kaeMap' => User::kaeNameMap(),
         ]);
     }

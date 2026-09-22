@@ -53,6 +53,8 @@ class TrackingPerformance extends Model
     /** Metrik yang dibandingkan dengan periode sebelumnya di kolom Δ. */
     public const METRIK_DELTA = ['gmv', 'traffic', 'ctr', 'cvr'];
 
+    public const STATUS_GROWTH_OPTIONS = ['Baseline', 'Growth', 'Stagnan', 'Turun'];
+
     private function nilaiMetrik(string $metrik): float
     {
         return match ($metrik) {
