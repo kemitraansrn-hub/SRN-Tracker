@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ForecastRo;
 use App\Models\Mitra;
 use App\Models\RunRateTarget;
+use App\Models\SpecialDeal;
 use App\Models\TargetBulanan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,27 +20,49 @@ class ForecastController extends Controller
     /** Semua segmen sekarang breakdown Plan RO-nya per mitra (bukan cuma agregat per segmen). */
     private const MITRA_LEVEL_SEGMEN = ['PARETO', 'RTP (ROAD TO PARETO)', 'REGULER', 'SPECIAL REGULER'];
 
+    /**
+     * Menu Special Deal pakai 'RTP' polos, sedangkan Forecast (dan
+     * ForecastRo yang sudah tersimpan) pakai label 'RTP (ROAD TO PARETO)' —
+     * dipetakan di sini biar gak perlu migrasi data forecast_ro lama.
+     */
+    private const SEGMEN_DARI_SPECIAL_DEAL = ['PARETO' => 'PARETO', 'RTP' => 'RTP (ROAD TO PARETO)', 'REGULER' => 'REGULER', 'SPECIAL REGULER' => 'SPECIAL REGULER'];
+
     public function index(Request $request): View
     {
         $bulan = (int) $request->input('bulan', now()->month);
         $tahun = (int) $request->input('tahun', now()->year);
         $targetSql = TargetBulanan::effectiveTargetSql();
 
-        // Target + Ach saat ini, per segmen — mitra_id dibawa serta supaya
-        // dropdown "Mitra" di form PARETO bisa langsung diambil dari sini.
-        $mitraRows = DB::table('target_bulanan')
-            ->join('mitra', 'mitra.id', '=', 'target_bulanan.mitra_id')
+        // Segmen per mitra sekarang dari menu Special Deal (kuartal
+        // berjalan) — bukan lagi dari target_bulanan.segmen — biar satu
+        // sumber kebenaran sama Special Deal Performance & Data Mitra.
+        // Target tetap dari Target Bulanan seperti sebelumnya (left join,
+        // 0 kalau mitra itu belum punya baris target bulan ini).
+        $segmenByMitraId = SpecialDeal::segmenByMitraId(\Carbon\Carbon::create($tahun, $bulan, 1))
+            ->map(fn ($s) => self::SEGMEN_DARI_SPECIAL_DEAL[$s] ?? null)
+            ->filter();
+
+        $mitraRows = DB::table('mitra')
+            ->leftJoin('target_bulanan', function ($join) use ($bulan, $tahun) {
+                $join->on('target_bulanan.mitra_id', '=', 'mitra.id')
+                    ->where('target_bulanan.bulan', $bulan)
+                    ->where('target_bulanan.tahun', $tahun);
+            })
             ->leftJoin('orders', function ($join) use ($bulan, $tahun) {
                 $join->on('orders.mitra_id', '=', 'mitra.id')
                     ->whereYear('orders.tanggal_order', $tahun)
                     ->whereMonth('orders.tanggal_order', $bulan);
             })
-            ->where('target_bulanan.bulan', $bulan)
-            ->where('target_bulanan.tahun', $tahun)
-            ->whereIn('target_bulanan.segmen', self::SEGMEN_LIST)
-            ->groupBy('mitra.id', 'mitra.nama', 'mitra.kae_code', 'target_bulanan.segmen', 'target_bulanan.komit', 'target_bulanan.target', 'target_bulanan.stretch', 'target_bulanan.tier_dipakai')
-            ->selectRaw("mitra.id as mitra_id, mitra.nama, mitra.kae_code, target_bulanan.segmen, $targetSql as target, COALESCE(SUM(orders.total_transaksi), 0) as omset")
-            ->get();
+            ->where('mitra.status', 'aktif')
+            ->whereIn('mitra.id', $segmenByMitraId->keys())
+            ->groupBy('mitra.id', 'mitra.nama', 'mitra.kae_code', 'target_bulanan.komit', 'target_bulanan.target', 'target_bulanan.stretch', 'target_bulanan.tier_dipakai')
+            ->selectRaw("mitra.id as mitra_id, mitra.nama, mitra.kae_code, COALESCE($targetSql, 0) as target, COALESCE(SUM(orders.total_transaksi), 0) as omset")
+            ->get()
+            ->map(function ($r) use ($segmenByMitraId) {
+                $r->segmen = $segmenByMitraId[$r->mitra_id];
+
+                return $r;
+            });
 
         $entries = ForecastRo::where('bulan', $bulan)->where('tahun', $tahun)
             ->with('mitra:id,nama,kode_mitra')
