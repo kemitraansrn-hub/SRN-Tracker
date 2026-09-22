@@ -20,13 +20,6 @@ class ForecastController extends Controller
     /** Semua segmen sekarang breakdown Plan RO-nya per mitra (bukan cuma agregat per segmen). */
     private const MITRA_LEVEL_SEGMEN = ['PARETO', 'RTP (ROAD TO PARETO)', 'REGULER', 'SPECIAL REGULER'];
 
-    /**
-     * Menu Special Deal pakai 'RTP' polos, sedangkan Forecast (dan
-     * ForecastRo yang sudah tersimpan) pakai label 'RTP (ROAD TO PARETO)' —
-     * dipetakan di sini biar gak perlu migrasi data forecast_ro lama.
-     */
-    private const SEGMEN_DARI_SPECIAL_DEAL = ['PARETO' => 'PARETO', 'RTP' => 'RTP (ROAD TO PARETO)', 'REGULER' => 'REGULER', 'SPECIAL REGULER' => 'SPECIAL REGULER'];
-
     public function index(Request $request): View
     {
         $bulan = (int) $request->input('bulan', now()->month);
@@ -38,9 +31,7 @@ class ForecastController extends Controller
         // sumber kebenaran sama Special Deal Performance & Data Mitra.
         // Target tetap dari Target Bulanan seperti sebelumnya (left join,
         // 0 kalau mitra itu belum punya baris target bulan ini).
-        $segmenByMitraId = SpecialDeal::segmenByMitraId(\Carbon\Carbon::create($tahun, $bulan, 1))
-            ->map(fn ($s) => self::SEGMEN_DARI_SPECIAL_DEAL[$s] ?? null)
-            ->filter();
+        $segmenByMitraId = SpecialDeal::segmenByMitraIdLabelLama(\Carbon\Carbon::create($tahun, $bulan, 1));
 
         $mitraRows = DB::table('mitra')
             ->leftJoin('target_bulanan', function ($join) use ($bulan, $tahun) {
@@ -69,6 +60,19 @@ class ForecastController extends Controller
             ->orderBy('segmen')
             ->orderBy('tanggal_plan_ro')
             ->get();
+
+        // Segmen yang ditampilkan & dipakai buat pengelompokan Plan RO ikut
+        // disamakan ke segmen mitra yang LIVE dari Special Deal (bukan nilai
+        // beku yang tersimpan pas Plan RO itu dibuat dulu) — supaya Daftar
+        // Plan RO gak "ketinggalan" kalau segmen mitranya berubah belakangan
+        // di Special Deal. Entry tanpa mitra_id (kalau ada peninggalan lama)
+        // atau mitra yang segmennya udah gak ketemu di Special Deal kuartal
+        // ini tetap pakai nilai tersimpannya, biar gak hilang dari tabel.
+        $entries->each(function ($e) use ($segmenByMitraId) {
+            if ($e->mitra_id && $segmenByMitraId->has($e->mitra_id)) {
+                $e->segmen = $segmenByMitraId[$e->mitra_id];
+            }
+        });
 
         // Realisasi dicocokkan per entry ke order asli mitra itu dari
         // tanggal_plan_ro sampai +1 hari sesudahnya (toleransi telat

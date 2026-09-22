@@ -33,6 +33,26 @@ class SpecialDeal extends Model
             ->pluck('segmen', 'mitra_id');
     }
 
+    /**
+     * Beberapa menu lama (Forecast, Segmentasi Mitra, dll) masih pakai label
+     * segmen format Target Bulanan ('RTP (ROAD TO PARETO)') di URL/data
+     * historis yang udah tersimpan — dipetakan dari sini biar satu tempat
+     * aja, bukan diduplikasi tiap controller. PARETO/REGULER/SPECIAL
+     * REGULER sama persis, cuma RTP yang beda format.
+     */
+    public const SEGMEN_LABEL_LAMA = ['PARETO' => 'PARETO', 'RTP' => 'RTP (ROAD TO PARETO)', 'REGULER' => 'REGULER', 'SPECIAL REGULER' => 'SPECIAL REGULER'];
+
+    /** Kebalikan dari SEGMEN_LABEL_LAMA — buat nerima parameter/URL lama terus dipetakan balik ke nilai mentah special_deals. */
+    public const SEGMEN_LABEL_LAMA_KE_MENTAH = ['PARETO' => 'PARETO', 'RTP (ROAD TO PARETO)' => 'RTP', 'REGULER' => 'REGULER', 'SPECIAL REGULER' => 'SPECIAL REGULER'];
+
+    /** segmenByMitraId() yang nilainya sudah dipetakan ke format label lama (lihat SEGMEN_LABEL_LAMA). */
+    public static function segmenByMitraIdLabelLama(\Carbon\Carbon $reference): Collection
+    {
+        return self::segmenByMitraId($reference)
+            ->map(fn ($s) => self::SEGMEN_LABEL_LAMA[$s] ?? null)
+            ->filter();
+    }
+
     public function periodeLabel(): ?string
     {
         return $this->kuartal && $this->tahun ? 'Q'.$this->kuartal.' '.$this->tahun : null;

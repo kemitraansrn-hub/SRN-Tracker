@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Mitra;
+use App\Models\SpecialDeal;
 use App\Models\TargetBulanan;
 use App\Models\WeekPeriod;
 use App\Services\AchievementStatus;
@@ -84,6 +85,11 @@ class WeeklyPlanController extends Controller
         $tahun = max(2000, min(2100, (int) $request->input('tahun', now()->year)));
         $now = \Carbon\Carbon::create($tahun, $bulan, 1)->startOfMonth();
         $isBulanIni = $now->isSameMonth(today());
+
+        // Segmen sekarang dari menu Special Deal (kuartal berjalan) —
+        // bukan lagi dari target_bulanan.segmen — satu sumber kebenaran
+        // sama Forecast/Special Deal Performance/Data Mitra.
+        $segmenByMitraId = SpecialDeal::segmenByMitraId($now);
 
         // Daftar Weekly Plan = mitra yang punya data upload di bulan yang
         // dipilih (Target Bulanan atau Order), BUKAN semua mitra di Data
@@ -179,7 +185,7 @@ class WeeklyPlanController extends Controller
 
         $isPastMonth = $now->lt(today()->startOfMonth());
 
-        $plan = $mitraList->map(function ($m) use ($historyTotals, $prevMonthTotals, $actualByMitra, $currentWeekLabel, $weekIndex, $targetByMitra, $isPastMonth) {
+        $plan = $mitraList->map(function ($m) use ($historyTotals, $prevMonthTotals, $actualByMitra, $currentWeekLabel, $weekIndex, $targetByMitra, $isPastMonth, $segmenByMitraId) {
             $hist = $historyTotals[$m->id] ?? [];
 
             $histPrevMonth = $prevMonthTotals[$m->id] ?? [];
@@ -228,7 +234,7 @@ class WeeklyPlanController extends Controller
 
             return (object) [
                 'mitra' => $m,
-                'segmen' => $targetByMitra->get($m->id)?->segmen,
+                'segmen' => $segmenByMitraId[$m->id] ?? null,
                 'minggu_andalan' => $mingguAndalan,
                 'actual' => $actualPerWeek,
                 'target_per_week' => $targetPerWeek,

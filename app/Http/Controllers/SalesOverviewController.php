@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\BuybackRequest;
 use App\Models\FollowupLog;
+use App\Models\Mitra;
 use App\Models\Order;
 use App\Models\RunRateTarget;
-use App\Models\TargetBulanan;
+use App\Models\SpecialDeal;
 use App\Models\User;
 use App\Services\SpecialDealPerformanceService;
 use Illuminate\Http\Request;
@@ -209,23 +210,23 @@ class SalesOverviewController extends Controller
         ])->all();
     }
 
+    /** Segmen sekarang dari menu Special Deal (kuartal berjalan), satu sumber kebenaran sama Forecast/Special Deal Performance/Data Mitra. */
     private function buildSegmenSegments(\Carbon\Carbon $now, ?string $kaeCode): array
     {
-        $rows = TargetBulanan::where('bulan', $now->month)
-            ->where('tahun', $now->year)
-            ->whereNotNull('segmen')
-            ->when($kaeCode, fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $kaeCode)))
-            ->selectRaw('segmen, COUNT(*) as jumlah')
-            ->groupBy('segmen')
-            ->orderByDesc('jumlah')
-            ->get();
+        $segmenByMitraId = SpecialDeal::segmenByMitraId($now);
 
-        $total = $rows->sum('jumlah');
+        if ($kaeCode) {
+            $mitraIds = Mitra::where('kae_code', $kaeCode)->pluck('id');
+            $segmenByMitraId = $segmenByMitraId->only($mitraIds);
+        }
 
-        return $rows->map(fn ($r) => [
-            'label' => $r->segmen,
-            'pct' => $total > 0 ? round($r->jumlah / $total * 100) : 0,
-        ])->all();
+        $counts = $segmenByMitraId->countBy()->sortDesc();
+        $total = $counts->sum();
+
+        return $counts->map(fn ($jumlah, $segmen) => [
+            'label' => $segmen,
+            'pct' => $total > 0 ? round($jumlah / $total * 100) : 0,
+        ])->values()->all();
     }
 
     /** Jumlah mitra per bracket omset bulan ini, buat bar chart. */

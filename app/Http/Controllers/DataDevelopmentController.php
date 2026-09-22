@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Mitra;
 use App\Models\MitraSnapshot;
+use App\Models\SpecialDeal;
 use App\Models\TargetBulanan;
 use App\Models\User;
 use App\Services\AchievementStatus;
@@ -117,22 +118,34 @@ class DataDevelopmentController extends Controller
         $tahun = (int) $request->input('tahun', now()->year);
         $targetSql = TargetBulanan::effectiveTargetSql();
 
-        $rows = DB::table('target_bulanan')
-            ->join('mitra', 'mitra.id', '=', 'target_bulanan.mitra_id')
+        // Segmen (dan filter Pareto/RTP di bawah) sekarang dari menu
+        // Special Deal (kuartal berjalan) — satu sumber kebenaran sama
+        // Forecast/Special Deal Performance/Data Mitra. Target tetap dari
+        // Target Bulanan seperti sebelumnya.
+        $mitraIdsParetoRtp = SpecialDeal::segmenByMitraId(\Carbon\Carbon::create($tahun, $bulan, 1))
+            ->filter(fn ($s) => in_array($s, ['PARETO', 'RTP'], true));
+        $segmenLabelLama = $mitraIdsParetoRtp->map(fn ($s) => SpecialDeal::SEGMEN_LABEL_LAMA[$s]);
+
+        $rows = DB::table('mitra')
+            ->leftJoin('target_bulanan', function ($join) use ($bulan, $tahun) {
+                $join->on('target_bulanan.mitra_id', '=', 'mitra.id')
+                    ->where('target_bulanan.bulan', $bulan)
+                    ->where('target_bulanan.tahun', $tahun);
+            })
             ->leftJoin('orders', function ($join) use ($bulan, $tahun) {
                 $join->on('orders.mitra_id', '=', 'mitra.id')
                     ->whereYear('orders.tanggal_order', $tahun)
                     ->whereMonth('orders.tanggal_order', $bulan);
             })
-            ->where('target_bulanan.bulan', $bulan)
-            ->where('target_bulanan.tahun', $tahun)
-            ->where(function ($q) {
-                $q->where('target_bulanan.segmen', 'PARETO')
-                    ->orWhere('target_bulanan.segmen', 'like', 'RTP%');
-            })
-            ->groupBy('mitra.id', 'mitra.nama', 'mitra.kode_mitra', 'mitra.kae_code', 'target_bulanan.segmen', 'target_bulanan.komit', 'target_bulanan.target', 'target_bulanan.stretch', 'target_bulanan.tier_dipakai')
-            ->selectRaw("mitra.id as mitra_id, mitra.nama, mitra.kode_mitra, mitra.kae_code, target_bulanan.segmen, $targetSql as target, COALESCE(SUM(orders.total_transaksi), 0) as omset")
-            ->get();
+            ->whereIn('mitra.id', $mitraIdsParetoRtp->keys())
+            ->groupBy('mitra.id', 'mitra.nama', 'mitra.kode_mitra', 'mitra.kae_code', 'target_bulanan.komit', 'target_bulanan.target', 'target_bulanan.stretch', 'target_bulanan.tier_dipakai')
+            ->selectRaw("mitra.id as mitra_id, mitra.nama, mitra.kode_mitra, mitra.kae_code, COALESCE($targetSql, 0) as target, COALESCE(SUM(orders.total_transaksi), 0) as omset")
+            ->get()
+            ->map(function ($r) use ($segmenLabelLama) {
+                $r->segmen = $segmenLabelLama[$r->mitra_id];
+
+                return $r;
+            });
 
         DB::transaction(function () use ($rows, $bulan, $tahun, $request) {
             MitraSnapshot::where('bulan', $bulan)->where('tahun', $tahun)->delete();

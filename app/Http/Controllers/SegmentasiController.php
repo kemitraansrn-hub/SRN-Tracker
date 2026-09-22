@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\SpecialDeal;
 use App\Models\TargetBulanan;
 use App\Services\AchievementStatus;
 use App\Services\MitraHealthService;
@@ -31,19 +32,31 @@ class SegmentasiController extends Controller
 
         $targetSql = TargetBulanan::effectiveTargetSql();
 
-        $rows = DB::table('target_bulanan')
-            ->join('mitra', 'mitra.id', '=', 'target_bulanan.mitra_id')
+        // Segmen sekarang dari menu Special Deal (kuartal berjalan) — satu
+        // sumber kebenaran sama Forecast/Special Deal Performance/Data
+        // Mitra. $segmen di URL masih format lama ('RTP (ROAD TO PARETO)')
+        // biar link-link yang sudah ada gak perlu diubah, dipetakan balik
+        // ke nilai mentah special_deals di sini.
+        $segmenMentah = SpecialDeal::SEGMEN_LABEL_LAMA_KE_MENTAH[$segmen] ?? $segmen;
+        $mitraIdsSegmenIni = SpecialDeal::segmenByMitraId($periode)
+            ->filter(fn ($s) => $s === $segmenMentah)
+            ->keys();
+
+        $rows = DB::table('mitra')
+            ->leftJoin('target_bulanan', function ($join) use ($periode) {
+                $join->on('target_bulanan.mitra_id', '=', 'mitra.id')
+                    ->where('target_bulanan.bulan', $periode->month)
+                    ->where('target_bulanan.tahun', $periode->year);
+            })
             ->leftJoin('orders', function ($join) use ($periode) {
                 $join->on('orders.mitra_id', '=', 'mitra.id')
                     ->whereYear('orders.tanggal_order', $periode->year)
                     ->whereMonth('orders.tanggal_order', $periode->month);
             })
-            ->where('target_bulanan.bulan', $periode->month)
-            ->where('target_bulanan.tahun', $periode->year)
-            ->where('target_bulanan.segmen', $segmen)
+            ->whereIn('mitra.id', $mitraIdsSegmenIni)
             ->when(! $user->canViewAll(), fn ($q) => $q->where('mitra.kae_code', $user->kae_code))
             ->groupBy('mitra.id', 'mitra.nama', 'mitra.kode_mitra', 'mitra.kae_code', 'target_bulanan.komit', 'target_bulanan.target', 'target_bulanan.stretch', 'target_bulanan.tier_dipakai')
-            ->selectRaw("mitra.id, mitra.nama, mitra.kode_mitra, mitra.kae_code, $targetSql as target, COALESCE(SUM(orders.total_transaksi), 0) as omset")
+            ->selectRaw("mitra.id, mitra.nama, mitra.kode_mitra, mitra.kae_code, COALESCE($targetSql, 0) as target, COALESCE(SUM(orders.total_transaksi), 0) as omset")
             ->orderByDesc('omset')
             ->get()
             ->map(function ($r) use ($weekIdx) {
