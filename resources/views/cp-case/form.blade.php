@@ -38,14 +38,20 @@
             </div>
         </div>
 
-        <div class="field">
-            <label>List Mitra SRN</label>
-            @include('partials.searchable-select', [
-                'name' => 'mitra_id',
-                'options' => $mitraOptionsFmt,
-                'selectedId' => old('mitra_id', $isEdit ? $cpCase->mitra_id : ''),
-                'placeholder' => '— Mitra Belum Diketahui — ketik buat cari —',
-            ])
+        <div class="field-row">
+            <div class="field" style="flex:1;">
+                <label>List Mitra SRN</label>
+                @include('partials.searchable-select', [
+                    'name' => 'mitra_id',
+                    'options' => $mitraOptionsFmt,
+                    'selectedId' => old('mitra_id', $isEdit ? $cpCase->mitra_id : ''),
+                    'placeholder' => '— Mitra Belum Diketahui — ketik buat cari —',
+                ])
+            </div>
+            <div class="field" style="flex:1;">
+                <label>Nama Mitra Manual (kalau gak ketemu di database)</label>
+                <input type="text" name="nama_mitra_manual" value="{{ old('nama_mitra_manual', $isEdit ? $cpCase->nama_mitra_manual : '') }}" placeholder="Isi kalau mitra di atas gak dipilih">
+            </div>
         </div>
 
         <div class="field-row">

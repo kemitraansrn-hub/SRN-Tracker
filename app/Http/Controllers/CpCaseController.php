@@ -71,6 +71,7 @@ class CpCaseController extends Controller
             ->when($request->filled('q'), fn ($q) => $q->where(function ($qq) use ($request) {
                 $qq->where('nama_toko', 'like', '%'.$request->input('q').'%')
                     ->orWhere('kode', 'like', '%'.$request->input('q').'%')
+                    ->orWhere('nama_mitra_manual', 'like', '%'.$request->input('q').'%')
                     ->orWhereHas('mitra', fn ($m) => $m->where('nama', 'like', '%'.$request->input('q').'%'));
             }))
             ->when($request->filled('status_kasus'), fn ($q) => $q->where('status_kasus', $request->input('status_kasus')))
@@ -384,6 +385,7 @@ class CpCaseController extends Controller
         $data = $request->validate([
             'tanggal_temuan' => ['required', 'date'],
             'mitra_id' => ['nullable', 'exists:mitra,id'],
+            'nama_mitra_manual' => ['nullable', 'string', 'max:255'],
             'nama_toko' => ['required', 'string', 'max:255'],
             'platform' => ['required', 'string', 'in:'.implode(',', self::PLATFORM_OPTIONS)],
             'terjual' => ['nullable', 'integer', 'min:0'],
@@ -400,6 +402,9 @@ class CpCaseController extends Controller
 
         if (empty($data['mitra_id'])) {
             $data['mitra_id'] = null;
+        } else {
+            // Mitra beneran dipilih dari database — nama manualnya gak relevan lagi.
+            $data['nama_mitra_manual'] = null;
         }
 
         return $data;
