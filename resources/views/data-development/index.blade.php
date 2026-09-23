@@ -59,7 +59,7 @@
         </div>
         <div class="table-scroll">
             <table>
-                <thead><tr><th>ID</th><th>Nama Mitra</th><th>KAE</th><th>Segmen</th><th>% vs Target</th><th>Status Bulan</th></tr></thead>
+                <thead><tr><th>ID</th><th>Nama Mitra</th><th>KAE</th><th>Segmen</th><th>% vs Target</th><th>Status Bulan</th><th></th></tr></thead>
                 <tbody>
                     @forelse ($kurang as $s)
                         <tr>
@@ -69,11 +69,18 @@
                             <td>{{ $kaeCode ? (\App\Models\User::kaeNameMap()[$kaeCode] ?? $kaeCode) : '—' }}</td>
                             <td>{{ $s->segmen }}</td>
                             <td class="tnum">{{ $s->pct }}%</td>
-                            @php $subStatus = \App\Services\AchievementStatus::resolveWeeklyPlan((float) $s->realisasi_bulan, (float) $s->target_bulan, (float) $s->pct); @endphp
-                            <td><span class="chip chip-{{ \App\Services\AchievementStatus::color($subStatus) }}">&#9679; {{ \App\Services\AchievementStatus::label($subStatus) }}</span></td>
+                            @php $subStatus = \App\Services\AchievementStatus::resolveWeeklyPlan((float) $s->realisasi_bulan, (float) $s->target_bulan, (float) $s->pct); $subLabel = \App\Services\AchievementStatus::label($subStatus); @endphp
+                            <td><span class="chip chip-{{ \App\Services\AchievementStatus::color($subStatus) }}">&#9679; {{ $subLabel }}</span></td>
+                            <td>
+                                @if ($mitraSudahAssignment->has($s->mitra_id))
+                                    <a href="{{ route('assignment.index') }}" class="link-action" style="color:var(--ink-muted); font-size:11.5px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 10px; white-space:nowrap;">Sudah Dijadwalkan</a>
+                                @else
+                                    <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="openAssignmentModal('{{ $s->mitra_id }}', '{{ addslashes($s->nama) }}', '{{ addslashes($subLabel) }}')">Assignment</button>
+                                @endif
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" style="color:var(--ink-muted);">Tidak ada data untuk periode ini.</td></tr>
+                        <tr><td colspan="7" style="color:var(--ink-muted);">Tidak ada data untuk periode ini.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -87,7 +94,7 @@
         </div>
         <div class="table-scroll">
             <table>
-                <thead><tr><th>ID</th><th>Nama Mitra</th><th>KAE</th><th>Segmen</th><th>% vs Target</th><th>Flag</th></tr></thead>
+                <thead><tr><th>ID</th><th>Nama Mitra</th><th>KAE</th><th>Segmen</th><th>% vs Target</th><th>Flag</th><th></th></tr></thead>
                 <tbody>
                     @forelse ($warning as $s)
                         <tr>
@@ -98,12 +105,61 @@
                             <td>{{ $s->segmen }}</td>
                             <td class="tnum">{{ $s->pct }}%</td>
                             <td><span class="chip chip-warn">&#9679; Warning</span></td>
+                            <td>
+                                @if ($mitraSudahAssignment->has($s->mitra_id))
+                                    <a href="{{ route('assignment.index') }}" class="link-action" style="color:var(--ink-muted); font-size:11.5px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 10px; white-space:nowrap;">Sudah Dijadwalkan</a>
+                                @else
+                                    <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="openAssignmentModal('{{ $s->mitra_id }}', '{{ addslashes($s->nama) }}', 'Warning')">Assignment</button>
+                                @endif
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" style="color:var(--ink-muted);">Tidak ada data untuk periode ini.</td></tr>
+                        <tr><td colspan="7" style="color:var(--ink-muted);">Tidak ada data untuk periode ini.</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
     </section>
+
+    <div class="modal-overlay" id="modal-assignment" style="display:none;">
+        <div class="modal-box">
+            <div class="modal-title">Buat Assignment</div>
+            <form method="POST" action="{{ route('assignment.store') }}">
+                @csrf
+                <input type="hidden" name="mitra_id" id="assign-mitra-id">
+                <input type="hidden" name="status_bulan" id="assign-status-bulan-input">
+                <input type="hidden" name="bulan" value="{{ $bulan }}">
+                <input type="hidden" name="tahun" value="{{ $tahun }}">
+                <div class="field">
+                    <label>Nama Mitra</label>
+                    <input type="text" id="assign-nama-display" disabled>
+                </div>
+                <div class="field">
+                    <label>Status Bulan</label>
+                    <input type="text" id="assign-status-display" disabled>
+                </div>
+                <div class="field">
+                    <label>Jadwal Zoom</label>
+                    <input type="datetime-local" name="jadwal_zoom" required>
+                </div>
+                <div class="modal-actions" style="margin-top:16px; display:flex; gap:8px; justify-content:flex-end;">
+                    <button type="button" class="btn" style="width:auto;" onclick="closeAssignmentModal()">Batal</button>
+                    <button type="submit" class="btn btn-primary" style="width:auto;">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openAssignmentModal(mitraId, nama, statusBulan) {
+            document.getElementById('assign-mitra-id').value = mitraId;
+            document.getElementById('assign-status-bulan-input').value = statusBulan;
+            document.getElementById('assign-nama-display').value = nama;
+            document.getElementById('assign-status-display').value = statusBulan;
+            document.getElementById('modal-assignment').style.display = 'flex';
+        }
+        function closeAssignmentModal() {
+            document.getElementById('modal-assignment').style.display = 'none';
+        }
+    </script>
 @endsection

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ArController;
+use App\Http\Controllers\AssignmentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\BuybackRequestController;
@@ -131,6 +132,13 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::get('/', [DataDevelopmentController::class, 'index'])->name('index');
         Route::get('/download', [DataDevelopmentController::class, 'download'])->name('download');
         Route::post('/', [DataDevelopmentController::class, 'store'])->middleware('role:admin')->name('store');
+    });
+
+    Route::prefix('assignment')->name('assignment.')->group(function () {
+        Route::get('/', [AssignmentController::class, 'index'])->name('index');
+        Route::post('/', [AssignmentController::class, 'store'])->name('store');
+        Route::post('/{mitraAssignment}/reschedule', [AssignmentController::class, 'reschedule'])->name('reschedule');
+        Route::post('/{mitraAssignment}/complete', [AssignmentController::class, 'complete'])->name('complete');
     });
 
     Route::middleware('role:admin')->prefix('pengaturan/minggu')->name('pengaturan.')->group(function () {

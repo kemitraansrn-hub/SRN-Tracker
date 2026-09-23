@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Mitra;
+use App\Models\MitraAssignment;
 use App\Models\MitraSnapshot;
 use App\Models\SpecialDeal;
 use App\Models\TargetBulanan;
@@ -35,6 +36,9 @@ class DataDevelopmentController extends Controller
             ->orderBy('pct')
             ->get();
 
+        $mitraSudahAssignment = MitraAssignment::where('bulan', $bulan)->where('tahun', $tahun)
+            ->pluck('mitra_id')->flip();
+
         return view('data-development.index', [
             'bulan' => $bulan,
             'tahun' => $tahun,
@@ -42,6 +46,7 @@ class DataDevelopmentController extends Controller
             'kurang' => $snapshots->where('status', 'kurang')->values(),
             'warning' => $snapshots->where('status', 'warning')->values(),
             'lastSnapshot' => $snapshots->max('created_at'),
+            'mitraSudahAssignment' => $mitraSudahAssignment,
         ]);
     }
 
