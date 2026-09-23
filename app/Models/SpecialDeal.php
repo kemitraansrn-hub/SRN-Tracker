@@ -142,4 +142,17 @@ class SpecialDeal extends Model
     {
         return $this->belongsTo(User::class, 'kae_user_id');
     }
+
+    /**
+     * Nama KAE yang TAMPIL — selalu live dari KAE mitra saat ini di Data
+     * Mitra, BUKAN dari kae_user_id (nilai beku milik siapa yang
+     * input/upload deal ini dulu, bisa ketinggalan kalau KAE mitranya
+     * dipindah belakangan di Data Mitra). Perlu eager-load relasi mitra.
+     */
+    public function kaeNamaLive(): string
+    {
+        $kaeCode = $this->mitra?->kae_code;
+
+        return $kaeCode ? (User::kaeNameMap()[$kaeCode] ?? $kaeCode) : '—';
+    }
 }

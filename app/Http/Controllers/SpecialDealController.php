@@ -30,7 +30,12 @@ class SpecialDealController extends Controller
         $tahun = $request->integer('tahun') ?: now()->year;
 
         $deals = SpecialDeal::with(['mitra', 'kae'])
-            ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_user_id', $user->id))
+            // KAE yang boleh diliat = KAE mitra SEKARANG di Data Mitra
+            // (live), bukan kae_user_id (beku, siapa yang dulu input/upload
+            // deal ini) — sama persis kayak authorizeMitra() di bawah,
+            // biar KAE yang baru ditugaskan ke mitra itu langsung ketemu
+            // deal lamanya di daftar, bukan cuma bisa akses kalau tau link-nya.
+            ->when(! $user->canViewAll(), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $user->kae_code)))
             ->where('kuartal', $kuartal)
             ->where('tahun', $tahun)
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
@@ -94,7 +99,7 @@ class SpecialDealController extends Controller
         $tahun = $request->integer('tahun') ?: now()->year;
 
         $deals = SpecialDeal::with(['mitra', 'kae'])
-            ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_user_id', $user->id))
+            ->when(! $user->canViewAll(), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $user->kae_code)))
             ->where('kuartal', $kuartal)
             ->where('tahun', $tahun)
             ->where('segmen', $segmen)
@@ -132,7 +137,7 @@ class SpecialDealController extends Controller
         $r = 2;
         foreach ($deals as $deal) {
             $row = [
-                $deal->kae->name ?? '—',
+                $deal->kaeNamaLive(),
                 $deal->mitra->nama ?? '—',
                 $deal->mitra->kode_mitra ?? '—',
                 ucfirst($deal->status),

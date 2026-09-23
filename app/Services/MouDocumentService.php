@@ -98,7 +98,7 @@ class MouDocumentService
     private static function addPageOne($section, SpecialDeal $deal): void
     {
         $mitraNama = $deal->mitra->nama ?? '—';
-        $kaeNama = $deal->kae->name ?? '—';
+        $kaeNama = $deal->kaeNamaLive();
         $channel = $deal->segmen ? ucwords(strtolower($deal->segmen)) : '—';
         $subsidiLabel = $deal->subsidi ?: 'Voucher Belanja';
         $tanggalSurat = now()->translatedFormat('d F Y');
@@ -172,7 +172,7 @@ class MouDocumentService
 
     private static function addPageTwo($section, SpecialDeal $deal): void
     {
-        $kaeNama = $deal->kae->name ?? '—';
+        $kaeNama = $deal->kaeNamaLive();
         $mitraNama = $deal->mitra->nama ?? '—';
 
         $section->addTextBreak(1);

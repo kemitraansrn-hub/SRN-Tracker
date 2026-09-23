@@ -113,7 +113,7 @@
                         @foreach ($group['deals'] as $deal)
                             @php $isTop10Reguler = $segmen === 'REGULER' && $loop->iteration <= 10; @endphp
                             <tr @if ($isTop10Reguler) style="background:var(--accent-soft);" @endif>
-                                <td>{{ $deal->kae->name ?? '—' }}</td>
+                                <td>{{ $deal->kaeNamaLive() }}</td>
                                 <td>
                                     @if ($isTop10Reguler)
                                         <span class="chip chip-good" style="margin-right:6px;">#{{ $loop->iteration }}</span>
