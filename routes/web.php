@@ -139,6 +139,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::post('/', [AssignmentController::class, 'store'])->name('store');
         Route::post('/{mitraAssignment}/reschedule', [AssignmentController::class, 'reschedule'])->name('reschedule');
         Route::post('/{mitraAssignment}/complete', [AssignmentController::class, 'complete'])->name('complete');
+        Route::delete('/{mitraAssignment}', [AssignmentController::class, 'destroy'])->name('destroy');
     });
 
     Route::middleware('role:admin')->prefix('pengaturan/minggu')->name('pengaturan.')->group(function () {

@@ -15,7 +15,53 @@
         <div class="alert-success">{{ session('status') }}</div>
     @endif
 
-    <section class="card table-card" style="padding:0;">
+    <form method="GET" action="{{ route('assignment.index') }}" class="field-row" style="align-items:flex-end;">
+        <div class="field" style="margin-bottom:0; flex:1; min-width:180px;">
+            <label>Cari Mitra</label>
+            <input type="text" name="q" value="{{ request('q') }}" placeholder="Nama atau kode mitra...">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+            <label>Bulan</label>
+            <select name="bulan" class="select-pill">
+                <option value="">Semua Bulan</option>
+                @foreach (['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'] as $i => $nama)
+                    <option value="{{ $i + 1 }}" {{ (string) request('bulan') === (string) ($i + 1) ? 'selected' : '' }}>{{ $nama }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+            <label>Tahun</label>
+            <select name="tahun" class="select-pill">
+                <option value="">Semua Tahun</option>
+                @for ($y = now()->year + 1; $y >= now()->year - 2; $y--)
+                    <option value="{{ $y }}" {{ (string) request('tahun') === (string) $y ? 'selected' : '' }}>{{ $y }}</option>
+                @endfor
+            </select>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+            <label>Status Bulan</label>
+            <select name="status_bulan" class="select-pill">
+                <option value="">Semua</option>
+                @foreach ($statusBulanOptions as $s)
+                    <option value="{{ $s }}" {{ request('status_bulan') === $s ? 'selected' : '' }}>{{ $s }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+            <label>Status</label>
+            <select name="status" class="select-pill">
+                <option value="">Semua</option>
+                <option value="terjadwal" {{ request('status') === 'terjadwal' ? 'selected' : '' }}>Terjadwal</option>
+                <option value="selesai" {{ request('status') === 'selesai' ? 'selected' : '' }}>Selesai</option>
+            </select>
+        </div>
+        <button type="submit" class="btn" style="width:auto;">Cari</button>
+        @if (request()->anyFilled(['q', 'bulan', 'tahun', 'status_bulan', 'status']))
+            <a href="{{ route('assignment.index') }}" class="btn" style="width:auto;">Reset</a>
+        @endif
+    </form>
+
+    <section class="card table-card" style="padding:0; margin-top:16px;">
         <div class="table-scroll">
             <table>
                 <thead>
@@ -45,6 +91,11 @@
                                         <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="openRescheduleModal({{ $a->id }}, '{{ $aktif?->jadwal_zoom?->format('Y-m-d\TH:i') }}')">Reschedule</button>
                                         <button type="button" class="btn btn-primary" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="openDoneModal({{ $a->id }}, {{ $aktif->urutan }}, {{ $aktif->urutan + 1 }})">Done</button>
                                     @endif
+                                    <form method="POST" action="{{ route('assignment.destroy', $a) }}" onsubmit="return confirm('Hapus Assignment untuk {{ $a->mitra->nama ?? 'mitra ini' }}? Semua riwayat sesinya ikut terhapus, dan mitra ini bisa dijadwalkan ulang lagi dari Data Development.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger" style="width:auto; font-size:11.5px; padding:5px 10px;">Hapus</button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>

@@ -19,14 +19,29 @@ use Illuminate\View\View;
  */
 class AssignmentController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $assignments = MitraAssignment::with(['mitra', 'sesis'])
-            ->get()
+        $query = MitraAssignment::with(['mitra', 'sesis'])
+            ->when($request->filled('bulan'), fn ($q) => $q->where('bulan', (int) $request->input('bulan')))
+            ->when($request->filled('tahun'), fn ($q) => $q->where('tahun', (int) $request->input('tahun')))
+            ->when($request->filled('status_bulan'), fn ($q) => $q->where('status_bulan', $request->input('status_bulan')))
+            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
+            ->when($request->filled('q'), function ($q) use ($request) {
+                $needle = $request->input('q');
+                $q->whereHas('mitra', fn ($m) => $m->where('nama', 'like', "%{$needle}%")->orWhere('kode_mitra', 'like', "%{$needle}%"));
+            });
+
+        $assignments = $query->get()
             ->sortBy(fn (MitraAssignment $a) => [$a->status === 'selesai' ? 1 : 0, $a->sesiAktif()?->jadwal_zoom])
             ->values();
 
-        return view('assignment.index', ['assignments' => $assignments]);
+        $statusBulanOptions = MitraAssignment::whereNotNull('status_bulan')
+            ->distinct()->orderBy('status_bulan')->pluck('status_bulan');
+
+        return view('assignment.index', [
+            'assignments' => $assignments,
+            'statusBulanOptions' => $statusBulanOptions,
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -124,5 +139,13 @@ class AssignmentController extends Controller
         });
 
         return redirect()->route('assignment.index')->with('status', 'Hasil '.$sesi->label().' tersimpan.');
+    }
+
+    public function destroy(MitraAssignment $mitraAssignment): RedirectResponse
+    {
+        $nama = $mitraAssignment->mitra->nama ?? 'mitra ini';
+        $mitraAssignment->delete(); // cascade hapus semua sesis (FK cascadeOnDelete)
+
+        return redirect()->route('assignment.index')->with('status', 'Assignment '.$nama.' dihapus. Mitra ini bisa dijadwalkan ulang lagi dari Data Development.');
     }
 }
