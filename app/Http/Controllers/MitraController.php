@@ -223,7 +223,7 @@ class MitraController extends Controller
 
         $jumlahSkip = count($result['skipped']);
         $redirect = redirect()->route('mitra.index')
-            ->with('status', 'Upload Master Mitra: '.$result['jumlah_diperbarui'].' mitra diperbarui, '.$result['jumlah_dibuat'].' mitra baru dibuat, dari '.$result['jumlah_baris'].' baris.'.($jumlahSkip > 0 ? ' '.$jumlahSkip.' baris dilewati.' : ''));
+            ->with('status', 'Upload Master Mitra: '.$result['jumlah_diperbarui'].' mitra diperbarui, '.$result['jumlah_dibuat'].' mitra baru dibuat, '.$result['jumlah_kae_diisi'].' KAE terisi/diperbarui, dari '.$result['jumlah_baris'].' baris.'.($jumlahSkip > 0 ? ' '.$jumlahSkip.' baris ada catatan.' : ''));
 
         if ($jumlahSkip > 0) {
             $redirect->with('import_skipped', $result['skipped']);

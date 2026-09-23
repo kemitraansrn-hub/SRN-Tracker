@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Mitra;
+use App\Models\User;
 use App\Services\Concerns\ParsesSpreadsheetHeaders;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -16,10 +17,12 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
  * ternyata format-nya SAMA PERSIS dengan kode_mitra yang sudah dipakai di
  * sistem (REB2025..., REC2025..., dst). Mitra yang cocok kode_mitra-nya
  * dilengkapi/ditimpa data kontak & alamatnya; yang belum ada di sistem
- * otomatis dibuat sebagai mitra baru (status aktif, KAE belum
- * ditentukan — harus diisi manual belakangan). Segmen SENGAJA tidak
- * disentuh di sini — itu datang dari menu Special Deal, bukan dari file
- * ini (lihat SpecialDealPerformanceService/MitraController::index()).
+ * otomatis dibuat sebagai mitra baru (status aktif). Kolom "Id Kae" (kalau
+ * ada & isinya kode KAE yang valid) ikut ngisi/nimpa KAE mitra — kalau
+ * kosong atau gak dikenali, KAE yang sudah ada gak disentuh. Segmen
+ * SENGAJA tidak disentuh di sini — itu datang dari menu Special Deal,
+ * bukan dari file ini (lihat SpecialDealPerformanceService/
+ * MitraController::index()).
  */
 class MasterMitraImportService
 {
@@ -35,6 +38,7 @@ class MasterMitraImportService
         'kecamatan' => ['KECAMATAN'],
         'desa' => ['DESA', 'KELURAHAN'],
         'kodepos' => ['KODEPOS', 'KODE POS'],
+        'kae_code' => ['ID KAE', 'KODE KAE', 'KAE CODE'],
     ];
 
     /**
@@ -93,11 +97,16 @@ class MasterMitraImportService
             return ['ok' => false, 'errors' => ['Sheet tidak berisi data.']];
         }
 
+        $kaeCodeValid = User::where('role', 'kae')->whereNotNull('kae_code')->pluck('kae_code')
+            ->map(fn ($k) => mb_strtoupper($k))->all();
+
         $skipped = [];
+        $peringatan = [];
         $updated = 0;
         $created = 0;
+        $kaeDiisi = 0;
 
-        DB::transaction(function () use ($rows, &$skipped, &$updated, &$created) {
+        DB::transaction(function () use ($rows, $kaeCodeValid, &$skipped, &$peringatan, &$updated, &$created, &$kaeDiisi) {
             foreach ($rows as $row) {
                 $label = 'Baris '.$row['_baris'].($row['kode_mitra'] ? ' ('.$row['kode_mitra'].')' : '');
 
@@ -119,11 +128,26 @@ class MasterMitraImportService
                     'kodepos' => $row['kodepos'] ?: null,
                 ];
 
+                // Id Kae kosong -> KAE yang sudah ada (atau kosong buat
+                // mitra baru) gak disentuh. Id Kae keisi tapi gak dikenali
+                // -> gak diterapkan (dicatat sebagai peringatan), baris
+                // tetap diproses buat field lainnya.
+                $kaeRaw = $row['kae_code'] ? mb_strtoupper(trim($row['kae_code'])) : null;
+                if ($kaeRaw !== null) {
+                    if (in_array($kaeRaw, $kaeCodeValid, true)) {
+                        $alamatFields['kae_code'] = $kaeRaw;
+                        $kaeDiisi++;
+                    } else {
+                        $peringatan[] = $label.': Id Kae "'.$row['kae_code'].'" gak dikenali, KAE mitra ini gak diubah.';
+                    }
+                }
+
                 if ($mitra) {
                     // Mitra sudah ada — lengkapi/timpa data kontak & alamat
-                    // dari master mitra (dianggap paling update), tapi
-                    // NAMA, KAE, dan status sengaja gak disentuh biar gak
-                    // ada perubahan identitas/assignment yang gak disengaja.
+                    // (plus KAE kalau Id Kae valid) dari master mitra
+                    // (dianggap paling update), tapi NAMA dan status
+                    // sengaja gak disentuh biar gak ada perubahan identitas
+                    // yang gak disengaja.
                     $mitra->update($alamatFields);
                     $updated++;
 
@@ -152,7 +176,8 @@ class MasterMitraImportService
             'jumlah_baris' => count($rows),
             'jumlah_diperbarui' => $updated,
             'jumlah_dibuat' => $created,
-            'skipped' => $skipped,
+            'jumlah_kae_diisi' => $kaeDiisi,
+            'skipped' => array_merge($skipped, $peringatan),
         ];
     }
 }
