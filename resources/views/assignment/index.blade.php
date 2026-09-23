@@ -50,7 +50,11 @@
                         </tr>
                         <tr id="riwayat-{{ $a->id }}" style="display:none;">
                             <td colspan="6" style="background:var(--surface-alt);">
-                                <table style="width:100%;">
+                                <table style="width:100%; table-layout:fixed;">
+                                    <colgroup>
+                                        <col style="width:70px;"><col style="width:130px;"><col style="width:90px;">
+                                        <col><col><col>
+                                    </colgroup>
                                     <thead>
                                         <tr>
                                             <th style="padding:6px 10px;">Sesi</th><th style="padding:6px 10px;">Jadwal</th>
@@ -61,12 +65,12 @@
                                     <tbody>
                                         @foreach ($a->sesis->sortBy('urutan') as $sesi)
                                             <tr>
-                                                <td style="padding:6px 10px; font-weight:600;">{{ $sesi->label() }}</td>
-                                                <td style="padding:6px 10px;" class="tnum">{{ $sesi->jadwal_zoom?->format('d/m/Y H:i') }}</td>
-                                                <td style="padding:6px 10px;">{{ $sesi->status === 'selesai' ? 'Selesai' : 'Terjadwal' }}</td>
-                                                <td style="padding:6px 10px; max-width:220px;">{{ $sesi->problem ?: '—' }}</td>
-                                                <td style="padding:6px 10px; max-width:220px;">{{ $sesi->solusi ?: '—' }}</td>
-                                                <td style="padding:6px 10px; max-width:220px;">{{ $sesi->action_plan ?: '—' }}</td>
+                                                <td style="padding:8px 10px; font-weight:600; vertical-align:top;">{{ $sesi->label() }}</td>
+                                                <td style="padding:8px 10px; vertical-align:top;" class="tnum">{{ $sesi->jadwal_zoom?->format('d/m/Y H:i') }}</td>
+                                                <td style="padding:8px 10px; vertical-align:top;">{{ $sesi->status === 'selesai' ? 'Selesai' : 'Terjadwal' }}</td>
+                                                <td style="padding:8px 10px; vertical-align:top; white-space:normal; word-break:break-word; overflow-wrap:anywhere;">{{ $sesi->problem ?: '—' }}</td>
+                                                <td style="padding:8px 10px; vertical-align:top; white-space:normal; word-break:break-word; overflow-wrap:anywhere;">{{ $sesi->solusi ?: '—' }}</td>
+                                                <td style="padding:8px 10px; vertical-align:top; white-space:normal; word-break:break-word; overflow-wrap:anywhere;">{{ $sesi->action_plan ?: '—' }}</td>
                                             </tr>
                                         @endforeach
                                     </tbody>
