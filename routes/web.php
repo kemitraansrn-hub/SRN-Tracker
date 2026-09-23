@@ -136,6 +136,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
 
     Route::prefix('assignment')->name('assignment.')->group(function () {
         Route::get('/', [AssignmentController::class, 'index'])->name('index');
+        Route::get('/download', [AssignmentController::class, 'download'])->name('download');
         Route::post('/', [AssignmentController::class, 'store'])->name('store');
         Route::post('/{mitraAssignment}/reschedule', [AssignmentController::class, 'reschedule'])->name('reschedule');
         Route::post('/{mitraAssignment}/complete', [AssignmentController::class, 'complete'])->name('complete');

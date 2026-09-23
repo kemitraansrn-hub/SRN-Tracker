@@ -8,7 +8,12 @@
                 {{ $assignments->count() }} assignment &mdash; follow-up Zoom mitra Kurang/Warning dari Data Development
             </div>
         </div>
-        <a href="{{ route('data-development.index') }}" class="btn" style="width:auto;">Kembali ke Data Development</a>
+        <div style="display:flex; gap:10px;">
+            @if ($assignments->isNotEmpty())
+                <a href="{{ route('assignment.download', request()->only(['q', 'bulan', 'tahun', 'status_bulan', 'status'])) }}" class="btn" style="width:auto;">Download Excel</a>
+            @endif
+            <a href="{{ route('data-development.index') }}" class="btn" style="width:auto;">Kembali ke Data Development</a>
+        </div>
     </div>
 
     @if (session('status'))
