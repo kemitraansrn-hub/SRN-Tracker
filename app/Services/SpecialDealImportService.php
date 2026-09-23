@@ -15,7 +15,10 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
  * Parses a per-quarter Special Deal upload (one row per mitra) and
  * upserts special_deals rows keyed on (mitra_id, kuartal, tahun), so
  * re-uploading a corrected file for the same quarter updates in place
- * instead of creating duplicates.
+ * instead of creating duplicates. KAE-nya BUKAN dari kolom di file (file
+ * gak punya kolom KAE lagi) — diambil otomatis dari mitra.kae_code yang
+ * sudah diisi di menu Data Mitra. Mitra yang belum ada KAE-nya di Data
+ * Mitra dilewati dengan catatan, bukan dipaksa pakai KAE uploader.
  */
 class SpecialDealImportService
 {
@@ -24,7 +27,6 @@ class SpecialDealImportService
     private const HEADER_ALIASES = [
         'kode_mitra' => ['KODE MITRA', 'RESELLER', 'KODE RESELLER'],
         'nama' => ['NAMA MITRA', 'NAMA', 'NAME'],
-        'kae' => ['KAE'],
         'segmen' => ['SEGMENTASI', 'SEGMEN'],
         'deskripsi' => ['DESKRIPSI', 'DESKRIPSI DEAL'],
         'kuartal' => ['KUARTAL'],
@@ -95,11 +97,11 @@ class SpecialDealImportService
             return ['ok' => false, 'errors' => ['Sheet tidak berisi data.']];
         }
 
-        $kaeByCodeOrName = User::where('role', 'kae')->get();
+        $kaeUserByCode = User::where('role', 'kae')->whereNotNull('kae_code')->get()->keyBy('kae_code');
         $skipped = [];
         $saved = 0;
 
-        DB::transaction(function () use ($rows, $user, $kaeByCodeOrName, &$skipped, &$saved) {
+        DB::transaction(function () use ($rows, $kaeUserByCode, &$skipped, &$saved) {
             foreach ($rows as $row) {
                 $label = 'Baris '.$row['_baris'].($row['kode_mitra'] ? ' ('.$row['kode_mitra'].')' : '');
 
@@ -115,6 +117,15 @@ class SpecialDealImportService
 
                     continue;
                 }
+
+                // KAE otomatis dari mitra.kae_code (Data Mitra) — bukan
+                // dari file ini lagi.
+                if (! $mitra->kae_code || ! $kaeUserByCode->has($mitra->kae_code)) {
+                    $skipped[] = $label.': Mitra ini belum ada KAE-nya di Data Mitra — isi KAE mitra dulu di menu Data Mitra sebelum upload Special Deal.';
+
+                    continue;
+                }
+                $kaeUserId = $kaeUserByCode[$mitra->kae_code]->id;
 
                 $kuartal = (int) ($row['kuartal'] ?? 0);
                 if ($kuartal < 1 || $kuartal > 4) {
@@ -146,20 +157,6 @@ class SpecialDealImportService
                     $skipped[] = $label.': Subsidi kosong.';
 
                     continue;
-                }
-
-                $kaeUserId = $user->id;
-                $kaeRaw = $row['kae'] ?? null;
-                if ($kaeRaw) {
-                    $kaeUser = $kaeByCodeOrName->first(fn ($u) => mb_strtolower($u->kae_code) === mb_strtolower($kaeRaw)
-                        || mb_strtolower($u->name) === mb_strtolower($kaeRaw));
-
-                    if (! $kaeUser) {
-                        $skipped[] = $label.': KAE "'.$kaeRaw.'" tidak dikenali.';
-
-                        continue;
-                    }
-                    $kaeUserId = $kaeUser->id;
                 }
 
                 $segmen = $row['segmen'] ? mb_strtoupper(trim($row['segmen'])) : null;

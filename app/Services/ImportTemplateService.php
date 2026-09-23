@@ -68,15 +68,15 @@ class ImportTemplateService
         $sheet = $ss->getActiveSheet();
         $sheet->setTitle('Special Deal');
         $sheet->fromArray([
-            'KODE MITRA', 'NAMA MITRA', 'KAE', 'SEGMENTASI', 'DESKRIPSI', 'KUARTAL', 'TAHUN',
+            'KODE MITRA', 'NAMA MITRA', 'SEGMENTASI', 'DESKRIPSI', 'KUARTAL', 'TAHUN',
             'TARGET KUARTAL (RP)', 'BUDGET (%)', 'SUBSIDI', 'STATUS MOU',
         ], null, 'A1');
         $sheet->fromArray([[
-            'REB2025080001', 'Contoh Nama Mitra', 'DITA', 'PARETO', 'Program subsidi Iklan Q3 2026', 3, 2026,
+            'REB2025080001', 'Contoh Nama Mitra', 'PARETO', 'Program subsidi Iklan Q3 2026', 3, 2026,
             900000000, 4, 'Iklan', 'Proses',
         ]], null, 'A2');
-        $this->styleHeader($sheet, 11);
-        $this->styleExampleRow($sheet, 2, 11);
+        $this->styleHeader($sheet, 10);
+        $this->styleExampleRow($sheet, 2, 10);
 
         return $ss;
     }

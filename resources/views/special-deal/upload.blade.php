@@ -31,6 +31,6 @@
 
     <div class="card" style="max-width:640px; margin-top:16px; font-size:12.5px; color:var(--ink-muted);">
         <div style="font-weight:600; color:var(--ink); margin-bottom:8px;">Kolom yang dibaca</div>
-        <div>KODE MITRA (wajib, harus sudah terdaftar), NAMA MITRA (info saja), KAE (kode/nama, kosong = KAE Anda), SEGMENTASI (Pareto/RTP/Reguler/Special Reguler), DESKRIPSI, KUARTAL (1-4), TAHUN, TARGET KUARTAL (RP), BUDGET (%), SUBSIDI, STATUS MOU (Proses/Done/Batal, kosong = Proses).</div>
+        <div>KODE MITRA (wajib, harus sudah terdaftar), NAMA MITRA (info saja), SEGMENTASI (Pareto/RTP/Reguler/Special Reguler), DESKRIPSI, KUARTAL (1-4), TAHUN, TARGET KUARTAL (RP), BUDGET (%), SUBSIDI, STATUS MOU (Proses/Done/Batal, kosong = Proses). KAE tidak perlu diisi di file — otomatis diambil dari KAE mitra di menu Data Mitra (mitra yang belum ada KAE-nya di Data Mitra akan dilewati, isi dulu KAE-nya di sana).</div>
     </div>
 @endsection
