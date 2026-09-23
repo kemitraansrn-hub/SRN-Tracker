@@ -30,6 +30,6 @@
 
     <div class="card" style="max-width:640px; margin-top:16px; font-size:12.5px; color:var(--ink-muted);">
         <div style="font-weight:600; color:var(--ink); margin-bottom:8px;">Kolom yang dibaca</div>
-        <div>Reseller ID (wajib, ini yang dicocokkan ke Kode Mitra), Name (wajib buat mitra baru), Phone (diisi ke No. WA), Alamat Pengiriman, Provinsi, Kota/Kab, Kecamatan, Desa, Kodepos, Id Kae (kode KAE — B, C, dst; kosong = KAE mitra gak diubah, gak dikenali = dilewati dengan catatan).</div>
+        <div>Reseller ID (wajib, ini yang dicocokkan ke Kode Mitra), Name (wajib buat mitra baru), Phone (diisi ke No. WA), Alamat Pengiriman, Provinsi, Kota/Kab, Kecamatan, Desa, Kodepos, Kae (nama KAE-nya — dicocokkan ke nama user KAE di sistem; kosong = KAE mitra gak diubah, gak ketemu = dilewati dengan catatan). Kolom Id Kae di file diabaikan.</div>
     </div>
 @endsection

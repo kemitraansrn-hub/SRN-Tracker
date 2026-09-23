@@ -17,9 +17,11 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
  * ternyata format-nya SAMA PERSIS dengan kode_mitra yang sudah dipakai di
  * sistem (REB2025..., REC2025..., dst). Mitra yang cocok kode_mitra-nya
  * dilengkapi/ditimpa data kontak & alamatnya; yang belum ada di sistem
- * otomatis dibuat sebagai mitra baru (status aktif). Kolom "Id Kae" (kalau
- * ada & isinya kode KAE yang valid) ikut ngisi/nimpa KAE mitra — kalau
- * kosong atau gak dikenali, KAE yang sudah ada gak disentuh. Segmen
+ * otomatis dibuat sebagai mitra baru (status aktif). Kolom "Kae" (nama
+ * KAE-nya, dicocokkan ke nama user KAE yang ada di sistem — BUKAN kolom
+ * "Id Kae", yang cuma unique key internal sumber datanya, gak dipakai
+ * sama sekali) ikut ngisi/nimpa KAE mitra — kalau kosong atau namanya gak
+ * ketemu, KAE yang sudah ada gak disentuh. Segmen
  * SENGAJA tidak disentuh di sini — itu datang dari menu Special Deal,
  * bukan dari file ini (lihat SpecialDealPerformanceService/
  * MitraController::index()).
@@ -38,7 +40,7 @@ class MasterMitraImportService
         'kecamatan' => ['KECAMATAN'],
         'desa' => ['DESA', 'KELURAHAN'],
         'kodepos' => ['KODEPOS', 'KODE POS'],
-        'kae_code' => ['ID KAE', 'KODE KAE', 'KAE CODE'],
+        'kae_nama' => ['KAE'],
     ];
 
     /**
@@ -97,8 +99,8 @@ class MasterMitraImportService
             return ['ok' => false, 'errors' => ['Sheet tidak berisi data.']];
         }
 
-        $kaeCodeValid = User::where('role', 'kae')->whereNotNull('kae_code')->pluck('kae_code')
-            ->map(fn ($k) => mb_strtoupper($k))->all();
+        $kaeCodeByNama = User::where('role', 'kae')->whereNotNull('kae_code')->get(['name', 'kae_code'])
+            ->mapWithKeys(fn ($u) => [mb_strtoupper(trim($u->name)) => $u->kae_code]);
 
         $skipped = [];
         $peringatan = [];
@@ -106,7 +108,7 @@ class MasterMitraImportService
         $created = 0;
         $kaeDiisi = 0;
 
-        DB::transaction(function () use ($rows, $kaeCodeValid, &$skipped, &$peringatan, &$updated, &$created, &$kaeDiisi) {
+        DB::transaction(function () use ($rows, $kaeCodeByNama, &$skipped, &$peringatan, &$updated, &$created, &$kaeDiisi) {
             foreach ($rows as $row) {
                 $label = 'Baris '.$row['_baris'].($row['kode_mitra'] ? ' ('.$row['kode_mitra'].')' : '');
 
@@ -128,17 +130,17 @@ class MasterMitraImportService
                     'kodepos' => $row['kodepos'] ?: null,
                 ];
 
-                // Id Kae kosong -> KAE yang sudah ada (atau kosong buat
-                // mitra baru) gak disentuh. Id Kae keisi tapi gak dikenali
-                // -> gak diterapkan (dicatat sebagai peringatan), baris
-                // tetap diproses buat field lainnya.
-                $kaeRaw = $row['kae_code'] ? mb_strtoupper(trim($row['kae_code'])) : null;
-                if ($kaeRaw !== null) {
-                    if (in_array($kaeRaw, $kaeCodeValid, true)) {
-                        $alamatFields['kae_code'] = $kaeRaw;
+                // Kae kosong -> KAE yang sudah ada (atau kosong buat mitra
+                // baru) gak disentuh. Kae keisi tapi namanya gak ketemu di
+                // daftar user KAE -> gak diterapkan (dicatat sebagai
+                // peringatan), baris tetap diproses buat field lainnya.
+                $kaeNamaRaw = $row['kae_nama'] ? mb_strtoupper(trim($row['kae_nama'])) : null;
+                if ($kaeNamaRaw !== null) {
+                    if ($kaeCodeByNama->has($kaeNamaRaw)) {
+                        $alamatFields['kae_code'] = $kaeCodeByNama[$kaeNamaRaw];
                         $kaeDiisi++;
                     } else {
-                        $peringatan[] = $label.': Id Kae "'.$row['kae_code'].'" gak dikenali, KAE mitra ini gak diubah.';
+                        $peringatan[] = $label.': KAE "'.$row['kae_nama'].'" gak ketemu di daftar user KAE, KAE mitra ini gak diubah.';
                     }
                 }
 
