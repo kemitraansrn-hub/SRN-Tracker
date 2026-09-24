@@ -17,6 +17,26 @@
         <div class="alert-success">{{ session('status') }}</div>
     @endif
 
+    @php
+        $totalAch = $rows->sum('pencapaian');
+        $totalKomit = $rows->sum('komit');
+        $totalPctAch = $totalKomit > 0 ? round($totalAch / $totalKomit * 100, 1) : null;
+    @endphp
+    <section style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-bottom:20px;">
+        <div class="card" style="min-width:0;">
+            <div class="info-label" style="margin-bottom:8px;">Total Ach ({{ $bulanNama }})</div>
+            <div class="tnum" style="font-size:22px; font-weight:700;">Rp{{ number_format($totalAch, 0, ',', '.') }}</div>
+        </div>
+        <div class="card" style="min-width:0;">
+            <div class="info-label" style="margin-bottom:8px;">Total Target Komit ({{ $bulanNama }})</div>
+            <div class="tnum" style="font-size:22px; font-weight:700;">Rp{{ number_format($totalKomit, 0, ',', '.') }}</div>
+        </div>
+        <div class="card" style="min-width:0;">
+            <div class="info-label" style="margin-bottom:8px;">% Ach</div>
+            <div class="tnum" style="font-size:22px; font-weight:700; color:{{ $totalPctAch !== null && $totalPctAch >= 100 ? 'var(--good)' : 'var(--ink)' }};">{{ $totalPctAch !== null ? $totalPctAch.'%' : '—' }}</div>
+        </div>
+    </section>
+
     <form method="GET" action="{{ route('growth-specialist.growth-tracker') }}" class="field-row" style="align-items:flex-end;">
         <div class="field" style="margin-bottom:0; flex:1; min-width:180px;">
             <label>Cari Mitra</label>
