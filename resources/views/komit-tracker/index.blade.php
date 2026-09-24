@@ -3,13 +3,13 @@
 @section('content')
     <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:22px; flex-wrap:wrap;">
         <div>
-            <h1 class="display" style="font-size:24px;">Growth Tracker</h1>
+            <h1 class="display" style="font-size:24px;">Komit Tracker</h1>
             <div style="color:var(--ink-muted); font-size:13px; margin-top:4px;">
                 {{ $rows->count() }} mitra &mdash; sudah Lengkap LMS &amp; tercatat di Tracking Performance
             </div>
         </div>
         @if ($rows->isNotEmpty())
-            <a href="{{ route('growth-specialist.growth-tracker.download', request()->only(['bulan', 'tahun', 'q', 'status_belanja'])) }}" class="btn" style="width:auto;">Download Excel</a>
+            <a href="{{ route('growth-specialist.komit-tracker.download', request()->only(['bulan', 'tahun', 'q', 'status_belanja'])) }}" class="btn" style="width:auto;">Download Excel</a>
         @endif
     </div>
 
@@ -37,7 +37,7 @@
         </div>
     </section>
 
-    <form method="GET" action="{{ route('growth-specialist.growth-tracker') }}" class="field-row" style="align-items:flex-end;">
+    <form method="GET" action="{{ route('growth-specialist.komit-tracker') }}" class="field-row" style="align-items:flex-end;">
         <div class="field" style="margin-bottom:0; flex:1; min-width:180px;">
             <label>Cari Mitra</label>
             <input type="text" name="q" value="{{ request('q') }}" placeholder="Nama atau kode mitra...">
@@ -69,7 +69,7 @@
         </div>
         <button type="submit" class="btn" style="width:auto;">Cari</button>
         @if (request()->anyFilled(['q', 'status_belanja']))
-            <a href="{{ route('growth-specialist.growth-tracker', ['bulan' => $bulan, 'tahun' => $tahun]) }}" class="btn" style="width:auto;">Reset</a>
+            <a href="{{ route('growth-specialist.komit-tracker', ['bulan' => $bulan, 'tahun' => $tahun]) }}" class="btn" style="width:auto;">Reset</a>
         @endif
     </form>
 

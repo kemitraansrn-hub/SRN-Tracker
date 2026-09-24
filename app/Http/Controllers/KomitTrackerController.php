@@ -16,13 +16,13 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
- * Growth Tracker (Growth Specialist > Special Reg & Reg, di bawah Set Up
+ * Komit Tracker (Growth Specialist > Special Reg & Reg, di bawah Set Up
  * LMS) — roster mitra yang sudah Lengkap LMS-nya di minimal satu platform
  * DAN datanya sudah pernah masuk ke Tracking Performance. Data Komit/
  * Pencapaian/% Ach/Status Belanja mengikuti bulan-tahun yang dipilih (roster
  * sendiri gak berubah per bulan, cuma angkanya).
  */
-class GrowthTrackerController extends Controller
+class KomitTrackerController extends Controller
 {
     public function index(Request $request): View
     {
@@ -31,7 +31,7 @@ class GrowthTrackerController extends Controller
 
         $rows = $this->buildRows($bulan, $tahun, $request);
 
-        return view('growth-tracker.index', [
+        return view('komit-tracker.index', [
             'bulan' => $bulan,
             'tahun' => $tahun,
             'periodeLabel' => \Carbon\Carbon::create($tahun, $bulan)->translatedFormat('F Y'),
@@ -50,7 +50,7 @@ class GrowthTrackerController extends Controller
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Growth Tracker');
+        $sheet->setTitle('Komit Tracker');
 
         $headers = ['Nama Mitra', 'KAE RO', 'KAE Development', 'Status LMS', 'Komit '.$bulanNama, $bulanNama, '% Ach', 'Status Belanja'];
         $sheet->fromArray($headers, null, 'A1', true);
@@ -77,7 +77,7 @@ class GrowthTrackerController extends Controller
 
         return response()->streamDownload(function () use ($spreadsheet) {
             (new Xlsx($spreadsheet))->save('php://output');
-        }, 'Growth Tracker '.$bulanNama.' '.$tahun.'.xlsx', [
+        }, 'Komit Tracker '.$bulanNama.' '.$tahun.'.xlsx', [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
     }
