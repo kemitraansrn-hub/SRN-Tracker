@@ -303,6 +303,9 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::post('set-up-lms/step', [\App\Http\Controllers\SetUpLmsController::class, 'storeStep'])->name('set-up-lms.step.store');
         Route::delete('set-up-lms/step', [\App\Http\Controllers\SetUpLmsController::class, 'destroyStep'])->name('set-up-lms.step.destroy');
 
+        Route::get('growth-tracker', [\App\Http\Controllers\GrowthTrackerController::class, 'index'])->name('growth-tracker');
+        Route::get('growth-tracker/download', [\App\Http\Controllers\GrowthTrackerController::class, 'download'])->name('growth-tracker.download');
+
         Route::get('tracking-performance', [\App\Http\Controllers\TrackingPerformanceController::class, 'index'])->name('tracking-performance');
         Route::get('tracking-performance/template', [\App\Http\Controllers\TrackingPerformanceController::class, 'template'])->name('tracking-performance.template');
         Route::post('tracking-performance/upload', [\App\Http\Controllers\TrackingPerformanceController::class, 'upload'])->name('tracking-performance.upload');

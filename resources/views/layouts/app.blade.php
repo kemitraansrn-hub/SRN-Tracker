@@ -244,6 +244,10 @@
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M10 9l4 2-4 2z" stroke-linejoin="round"/><path d="M8 21h8" stroke-linecap="round"/></svg>
                             <span class="nav-label">Set Up LMS</span>
                         </a>
+                        <a href="{{ route('growth-specialist.growth-tracker') }}" class="nav-item {{ request()->routeIs('growth-specialist.growth-tracker*') ? 'active' : '' }}" title="Growth Tracker" style="padding-left:18px;">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+                            <span class="nav-label">Growth Tracker</span>
+                        </a>
                         <a href="{{ route('growth-specialist.tracking-performance') }}" class="nav-item {{ request()->routeIs('growth-specialist.tracking-performance*') ? 'active' : '' }}" title="Tracking Performance" style="padding-left:18px;">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 9 11 13 15 21 7" stroke-linecap="round" stroke-linejoin="round"/><polyline points="15 7 21 7 21 13" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             <span class="nav-label">Tracking Performance</span>
@@ -407,6 +411,10 @@
                     <a href="{{ route('growth-specialist.set-up-lms') }}" class="nav-item {{ request()->routeIs('growth-specialist.set-up-lms*') ? 'active' : '' }}" title="Set Up LMS" style="padding-left:18px;">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M10 9l4 2-4 2z" stroke-linejoin="round"/><path d="M8 21h8" stroke-linecap="round"/></svg>
                         <span class="nav-label">Set Up LMS</span>
+                    </a>
+                    <a href="{{ route('growth-specialist.growth-tracker') }}" class="nav-item {{ request()->routeIs('growth-specialist.growth-tracker*') ? 'active' : '' }}" title="Growth Tracker" style="padding-left:18px;">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+                        <span class="nav-label">Growth Tracker</span>
                     </a>
                     <a href="{{ route('growth-specialist.tracking-performance') }}" class="nav-item {{ request()->routeIs('growth-specialist.tracking-performance*') ? 'active' : '' }}" title="Tracking Performance" style="padding-left:18px;">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 9 11 13 15 21 7" stroke-linecap="round" stroke-linejoin="round"/><polyline points="15 7 21 7 21 13" stroke-linecap="round" stroke-linejoin="round"/></svg>
