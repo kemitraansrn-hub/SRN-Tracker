@@ -123,15 +123,23 @@
             <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px; flex-wrap:wrap; gap:12px;">
                 <div>
                     <div class="card-title">Progres LMS {{ $platformLabel }}</div>
-                    <div class="card-hint">{{ $rowsPage->total() }} mitra{{ $q !== '' ? ' (hasil cari)' : '' }}</div>
+                    <div class="card-hint">{{ $rowsPage->total() }} mitra{{ $q !== '' || $status !== '' ? ' (hasil filter)' : '' }}</div>
                 </div>
                 <form method="GET" action="{{ route('growth-specialist.set-up-lms') }}" class="field-row" style="margin-bottom:0; align-items:flex-end;">
                     <input type="hidden" name="tab" value="{{ $tab }}">
                     <div class="field" style="margin-bottom:0;">
                         <input type="text" name="q" value="{{ $q }}" placeholder="Cari nama atau kode mitra...">
                     </div>
+                    <div class="field" style="margin-bottom:0;">
+                        <select name="status" class="select-pill" onchange="this.form.submit()">
+                            <option value="">Semua Status</option>
+                            @foreach (['Lengkap', 'Proses', 'Awal'] as $s)
+                                <option value="{{ $s }}" {{ $status === $s ? 'selected' : '' }}>{{ $s }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                     <button type="submit" class="btn" style="width:auto;">Cari</button>
-                    @if ($q !== '')
+                    @if ($q !== '' || $status !== '')
                         <a href="{{ route('growth-specialist.set-up-lms', ['tab' => $tab]) }}" class="btn" style="width:auto;">Reset</a>
                     @endif
                 </form>

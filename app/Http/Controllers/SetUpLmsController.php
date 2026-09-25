@@ -79,6 +79,11 @@ class SetUpLmsController extends Controller
             ];
         });
 
+        $status = trim((string) $request->input('status'));
+        if ($status !== '') {
+            $rows = $rows->where('status', $status)->values();
+        }
+
         $perPage = 20;
         $page = (int) $request->input('page', 1);
         $rowsPage = new LengthAwarePaginator(
@@ -103,6 +108,7 @@ class SetUpLmsController extends Controller
             'isEnrolled' => $isEnrolled,
             'rowsPage' => $rowsPage,
             'q' => $q,
+            'status' => $status,
         ]);
     }
 
