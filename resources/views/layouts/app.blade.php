@@ -252,6 +252,10 @@
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 9 11 13 15 21 7" stroke-linecap="round" stroke-linejoin="round"/><polyline points="15 7 21 7 21 13" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             <span class="nav-label">Tracking Performance</span>
                         </a>
+                        <a href="{{ route('one-on-one.index') }}" class="nav-item {{ request()->routeIs('one-on-one.*') ? 'active' : '' }}" title="1 on 1" style="padding-left:18px;">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            <span class="nav-label">1 on 1</span>
+                        </a>
                         <div class="nav-group-label" style="padding-left:18px;">Pareto &amp; RTP</div>
                         <a href="{{ route('data-development.index') }}" class="nav-item {{ request()->routeIs('data-development.*') ? 'active' : '' }}" title="Data Development" style="padding-left:18px;">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
@@ -419,6 +423,10 @@
                     <a href="{{ route('growth-specialist.tracking-performance') }}" class="nav-item {{ request()->routeIs('growth-specialist.tracking-performance*') ? 'active' : '' }}" title="Tracking Performance" style="padding-left:18px;">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 9 11 13 15 21 7" stroke-linecap="round" stroke-linejoin="round"/><polyline points="15 7 21 7 21 13" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         <span class="nav-label">Tracking Performance</span>
+                    </a>
+                    <a href="{{ route('one-on-one.index') }}" class="nav-item {{ request()->routeIs('one-on-one.*') ? 'active' : '' }}" title="1 on 1" style="padding-left:18px;">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        <span class="nav-label">1 on 1</span>
                     </a>
                     <div class="nav-group-label" style="padding-left:18px;">Pareto &amp; RTP</div>
                     <a href="{{ route('data-development.index') }}" class="nav-item {{ request()->routeIs('data-development.*') ? 'active' : '' }}" title="Data Development" style="padding-left:18px;">

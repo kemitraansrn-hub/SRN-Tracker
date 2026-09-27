@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\LmsStep;
 use App\Models\Mitra;
+use App\Models\OneOnOne;
 use App\Models\TargetBulanan;
 use App\Models\User;
 use App\Services\AchievementStatus;
@@ -31,12 +32,16 @@ class KomitTrackerController extends Controller
 
         $rows = $this->buildRows($bulan, $tahun, $request);
 
+        $mitraSudahOneOnOne = OneOnOne::where('bulan', $bulan)->where('tahun', $tahun)
+            ->pluck('mitra_id')->flip();
+
         return view('komit-tracker.index', [
             'bulan' => $bulan,
             'tahun' => $tahun,
             'periodeLabel' => \Carbon\Carbon::create($tahun, $bulan)->translatedFormat('F Y'),
             'bulanNama' => \Carbon\Carbon::create($tahun, $bulan)->translatedFormat('F'),
             'rows' => $rows,
+            'mitraSudahOneOnOne' => $mitraSudahOneOnOne,
             'statusBelanjaOptions' => array_map(fn ($s) => AchievementStatus::label($s), ['belum-belanja', 'kurang', 'mendekati', 'tercapai', 'over-ro']),
         ]);
     }

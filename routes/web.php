@@ -143,6 +143,15 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::delete('/{mitraAssignment}', [AssignmentController::class, 'destroy'])->name('destroy');
     });
 
+    Route::prefix('one-on-one')->name('one-on-one.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\OneOnOneController::class, 'index'])->name('index');
+        Route::get('/download', [\App\Http\Controllers\OneOnOneController::class, 'download'])->name('download');
+        Route::post('/', [\App\Http\Controllers\OneOnOneController::class, 'store'])->name('store');
+        Route::post('/{oneOnOne}/reschedule', [\App\Http\Controllers\OneOnOneController::class, 'reschedule'])->name('reschedule');
+        Route::post('/{oneOnOne}/complete', [\App\Http\Controllers\OneOnOneController::class, 'complete'])->name('complete');
+        Route::delete('/{oneOnOne}', [\App\Http\Controllers\OneOnOneController::class, 'destroy'])->name('destroy');
+    });
+
     Route::middleware('role:admin')->prefix('pengaturan/minggu')->name('pengaturan.')->group(function () {
         Route::get('/', [WeekPeriodController::class, 'edit'])->name('minggu');
         Route::post('/', [WeekPeriodController::class, 'update'])->name('minggu.update');

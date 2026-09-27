@@ -84,6 +84,7 @@
                         <th rowspan="2" style="vertical-align:bottom;">Status LMS</th>
                         <th colspan="3" style="text-align:center;">{{ strtoupper($bulanNama) }}</th>
                         <th rowspan="2" style="vertical-align:bottom;">Status Belanja</th>
+                        <th rowspan="2" style="vertical-align:bottom;"></th>
                     </tr>
                     <tr>
                         <th>Komit {{ $bulanNama }}</th>
@@ -92,6 +93,7 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @php $statusBolehAssignment = ['Kurang Belanja', 'Belum Belanja', 'Over RO']; @endphp
                     @forelse ($rows as $r)
                         <tr>
                             <td><a href="{{ route('mitra.show', $r['mitra_id']) }}" style="color:var(--ink); text-decoration:none; font-weight:600;">{{ $r['nama'] }}</a></td>
@@ -102,12 +104,63 @@
                             <td class="tnum">{{ number_format($r['pencapaian'], 0, ',', '.') }}</td>
                             <td class="tnum">{{ $r['pct_ach'] !== null ? $r['pct_ach'].'%' : '—' }}</td>
                             <td><span class="chip chip-{{ $r['status_belanja_color'] }}">&#9679; {{ $r['status_belanja_label'] }}</span></td>
+                            <td>
+                                @if (in_array($r['status_belanja_label'], $statusBolehAssignment, true))
+                                    @if ($mitraSudahOneOnOne->has($r['mitra_id']))
+                                        <a href="{{ route('one-on-one.index') }}" class="link-action" style="color:var(--ink-muted); font-size:11.5px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 10px; white-space:nowrap;">Sudah Dijadwalkan</a>
+                                    @else
+                                        <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="openAssignmentModal('{{ $r['mitra_id'] }}', '{{ addslashes($r['nama']) }}', '{{ addslashes($r['status_belanja_label']) }}')">Assignment</button>
+                                    @endif
+                                @endif
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" style="color:var(--ink-muted);">Tidak ada mitra yang cocok.</td></tr>
+                        <tr><td colspan="9" style="color:var(--ink-muted);">Tidak ada mitra yang cocok.</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
     </section>
+
+    <div class="modal-overlay" id="modal-assignment" style="display:none;">
+        <div class="modal-box">
+            <div class="modal-title">Buat Assignment</div>
+            <form method="POST" action="{{ route('one-on-one.store') }}">
+                @csrf
+                <input type="hidden" name="mitra_id" id="assign-mitra-id">
+                <input type="hidden" name="status_belanja" id="assign-status-belanja-input">
+                <input type="hidden" name="bulan" value="{{ $bulan }}">
+                <input type="hidden" name="tahun" value="{{ $tahun }}">
+                <div class="field">
+                    <label>Nama Mitra</label>
+                    <input type="text" id="assign-nama-display" disabled>
+                </div>
+                <div class="field">
+                    <label>Status Bulan</label>
+                    <input type="text" id="assign-status-display" disabled>
+                </div>
+                <div class="field">
+                    <label>Jadwal Zoom</label>
+                    <input type="datetime-local" name="jadwal_zoom" required>
+                </div>
+                <div class="modal-actions" style="margin-top:16px; display:flex; gap:8px; justify-content:flex-end;">
+                    <button type="button" class="btn" style="width:auto;" onclick="closeAssignmentModal()">Batal</button>
+                    <button type="submit" class="btn btn-primary" style="width:auto;">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openAssignmentModal(mitraId, nama, statusBelanja) {
+            document.getElementById('assign-mitra-id').value = mitraId;
+            document.getElementById('assign-status-belanja-input').value = statusBelanja;
+            document.getElementById('assign-nama-display').value = nama;
+            document.getElementById('assign-status-display').value = statusBelanja;
+            document.getElementById('modal-assignment').style.display = 'flex';
+        }
+        function closeAssignmentModal() {
+            document.getElementById('modal-assignment').style.display = 'none';
+        }
+    </script>
 @endsection
