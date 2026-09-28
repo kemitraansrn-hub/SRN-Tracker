@@ -12,6 +12,9 @@
                 {{ $orders->total() }} order {{ auth()->user()->canViewAll() ? '' : 'kamu' }}
             </div>
         </div>
+        @if ($orders->total() > 0)
+            <a href="{{ route('order.export', request()->only(['q', 'dari', 'sampai', 'status_pembayaran'])) }}" class="btn" style="width:auto;">Download Excel</a>
+        @endif
     </div>
 
     <form method="GET" action="{{ route('order.index') }}" class="field-row" style="align-items:flex-end;">

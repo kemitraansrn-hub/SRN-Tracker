@@ -4,17 +4,86 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use App\Models\Order;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class OrderController extends Controller
 {
     public function index(Request $request): View
     {
+        return view('order.index', [
+            'orders' => $this->filtered($request)->latest('tanggal_order')->paginate(25)->withQueryString(),
+        ]);
+    }
+
+    /**
+     * Excel-nya kolomnya disamain persis sama sheet "Master Transaksi" di
+     * template upload Order Harian (lihat ImportTemplateService::orderHarian())
+     * biar file hasil download ini bisa langsung dipakai ulang buat upload
+     * kalau perlu — bukan sekadar laporan sekali lihat.
+     */
+    public function export(Request $request): StreamedResponse
+    {
+        $orders = $this->filtered($request)->latest('tanggal_order')->get();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Master Transaksi');
+
+        $headers = [
+            'TANGGAL', 'BULAN ORDER', 'ID TRANSAKSI (Perpack)', 'RESELLER', 'NAME', 'ADDRESS',
+            'QTY', 'TOTAL', 'DISKON', 'DISKON CLAIM', 'DISKON RETURN', 'BIAYA PENDAFTARAN', 'DISKON RETURN ID',
+            'ONGKIR', 'BIAYA PENANGANAN', 'TOTAL TRANSFER', 'STATUS PEMBAYARAN', 'STATUS',
+        ];
+        $sheet->fromArray($headers, null, 'A1', true);
+        $sheet->getStyle('A1:R1')->getFont()->setBold(true);
+
+        $r = 2;
+        foreach ($orders as $o) {
+            $sheet->fromArray([
+                $o->tanggal_order->format('Y-m-d'),
+                $o->tanggal_order->format('F'),
+                $o->no_order,
+                $o->mitra->kode_mitra ?? '—',
+                $o->mitra->nama ?? '—',
+                $o->mitra->alamat ?? null,
+                $o->qty,
+                (float) $o->total_transaksi,
+                (float) $o->diskon,
+                $o->diskon_claim !== null ? (float) $o->diskon_claim : null,
+                $o->diskon_return !== null ? (float) $o->diskon_return : null,
+                (float) $o->biaya_pendaftaran,
+                $o->diskon_return_id,
+                (float) $o->ongkir,
+                $o->biaya_penanganan !== null ? (float) $o->biaya_penanganan : null,
+                $o->total_transfer !== null ? (float) $o->total_transfer : null,
+                $o->status_pembayaran,
+                $o->status,
+            ], null, 'A'.$r, true);
+            $r++;
+        }
+
+        foreach (range('A', 'R') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, 'Order Transaksi '.now()->format('d-m-Y').'.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    private function filtered(Request $request): Builder
+    {
         $user = $request->user();
 
-        $query = Order::with('mitra')
+        return Order::with('mitra')
             ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_code', $user->kae_code))
             ->when($request->filled('q'), fn ($q) => $q->where(function ($qq) use ($request) {
                 $qq->where('no_order', 'like', '%'.$request->input('q').'%')
@@ -23,12 +92,7 @@ class OrderController extends Controller
             }))
             ->when($request->filled('dari'), fn ($q) => $q->whereDate('tanggal_order', '>=', $request->input('dari')))
             ->when($request->filled('sampai'), fn ($q) => $q->whereDate('tanggal_order', '<=', $request->input('sampai')))
-            ->when($request->filled('status_pembayaran'), fn ($q) => $q->where('status_pembayaran', $request->input('status_pembayaran')))
-            ->latest('tanggal_order');
-
-        return view('order.index', [
-            'orders' => $query->paginate(25)->withQueryString(),
-        ]);
+            ->when($request->filled('status_pembayaran'), fn ($q) => $q->where('status_pembayaran', $request->input('status_pembayaran')));
     }
 
     public function show(Request $request, Order $order): View

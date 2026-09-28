@@ -224,6 +224,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
 
     Route::prefix('order')->name('order.')->group(function () {
         Route::get('/', [OrderController::class, 'index'])->name('index');
+        Route::get('/export', [OrderController::class, 'export'])->name('export');
         Route::get('/{order}', [OrderController::class, 'show'])->name('show');
 
         Route::middleware('role:admin')->group(function () {
