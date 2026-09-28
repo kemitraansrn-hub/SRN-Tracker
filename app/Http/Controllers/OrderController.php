@@ -29,23 +29,22 @@ class OrderController extends Controller
      */
     public function export(Request $request): StreamedResponse
     {
-        $orders = $this->filtered($request)->latest('tanggal_order')->get();
+        $orders = $this->filtered($request)->with('items')->latest('tanggal_order')->get();
 
         $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Master Transaksi');
 
-        $headers = [
+        $mt = $spreadsheet->getActiveSheet();
+        $mt->setTitle('Master Transaksi');
+        $mt->fromArray([
             'TANGGAL', 'BULAN ORDER', 'ID TRANSAKSI (Perpack)', 'RESELLER', 'NAME', 'ADDRESS',
             'QTY', 'TOTAL', 'DISKON', 'DISKON CLAIM', 'DISKON RETURN', 'BIAYA PENDAFTARAN', 'DISKON RETURN ID',
             'ONGKIR', 'BIAYA PENANGANAN', 'TOTAL TRANSFER', 'STATUS PEMBAYARAN', 'STATUS',
-        ];
-        $sheet->fromArray($headers, null, 'A1', true);
-        $sheet->getStyle('A1:R1')->getFont()->setBold(true);
+        ], null, 'A1', true);
+        $mt->getStyle('A1:R1')->getFont()->setBold(true);
 
         $r = 2;
         foreach ($orders as $o) {
-            $sheet->fromArray([
+            $mt->fromArray([
                 $o->tanggal_order->format('Y-m-d'),
                 $o->tanggal_order->format('F'),
                 $o->no_order,
@@ -69,8 +68,49 @@ class OrderController extends Controller
         }
 
         foreach (range('A', 'R') as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
+            $mt->getColumnDimension($col)->setAutoSize(true);
         }
+
+        // Sheet kedua: satu baris per item/SKU di dalam tiap order, sama
+        // persis sheet "Master Detail Transaksi" di template upload — ID
+        // SALESMAN & ID CHANNEL disimpan di level Order (kae_code/id_channel),
+        // bukan per-item, jadi diulang di tiap baris item order yang sama.
+        $md = $spreadsheet->createSheet();
+        $md->setTitle('Master Detail Transaksi');
+        $md->fromArray([
+            'TANGGAL ORDER', 'BULAN ORDER', 'ID TRANSAKSI (Perpack)', 'RESELLER', 'NAME', 'ADDRESS',
+            'BRAND', 'SKU', 'NAMA PRODUK', 'HARGA', 'QTY', 'TOTAL', 'ID SALESMAN', 'ID CHANNEL',
+        ], null, 'A1', true);
+        $md->getStyle('A1:N1')->getFont()->setBold(true);
+
+        $r = 2;
+        foreach ($orders as $o) {
+            foreach ($o->items as $item) {
+                $md->fromArray([
+                    $o->tanggal_order->format('Y-m-d'),
+                    $o->tanggal_order->format('F'),
+                    $o->no_order,
+                    $o->mitra->kode_mitra ?? '—',
+                    $o->mitra->nama ?? '—',
+                    $o->mitra->alamat ?? null,
+                    $item->brand,
+                    $item->sku_raw,
+                    $item->nama_produk_raw,
+                    $item->harga !== null ? (float) $item->harga : null,
+                    $item->qty,
+                    (float) $item->subtotal,
+                    $o->kae_code,
+                    $o->id_channel,
+                ], null, 'A'.$r, true);
+                $r++;
+            }
+        }
+
+        foreach (range('A', 'N') as $col) {
+            $md->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $spreadsheet->setActiveSheetIndex(0);
 
         return response()->streamDownload(function () use ($spreadsheet) {
             (new Xlsx($spreadsheet))->save('php://output');
