@@ -320,6 +320,12 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::get('tracking-performance/template', [\App\Http\Controllers\TrackingPerformanceController::class, 'template'])->name('tracking-performance.template');
         Route::post('tracking-performance/upload', [\App\Http\Controllers\TrackingPerformanceController::class, 'upload'])->name('tracking-performance.upload');
         Route::delete('tracking-performance/{trackingPerformance}', [\App\Http\Controllers\TrackingPerformanceController::class, 'destroy'])->name('tracking-performance.destroy');
+
+        Route::get('tracking-performance/stand-in-line', [\App\Http\Controllers\StandInLineController::class, 'index'])->name('tracking-performance.stand-in-line');
+        Route::post('tracking-performance/stand-in-line/note', [\App\Http\Controllers\StandInLineController::class, 'storeNote'])->name('tracking-performance.stand-in-line.note.store');
+        Route::delete('tracking-performance/stand-in-line/note/{standInLineNote}', [\App\Http\Controllers\StandInLineController::class, 'destroyNote'])->name('tracking-performance.stand-in-line.note.destroy');
+
+        Route::post('set-up-lms/note', [\App\Http\Controllers\SetUpLmsController::class, 'storeNote'])->name('set-up-lms.note.store');
     });
 
     Route::prefix('notifications')->name('notifications.')->group(function () {

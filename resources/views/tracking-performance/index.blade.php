@@ -25,6 +25,11 @@
     <h1 class="display" style="font-size:24px; margin-bottom:4px;">Tracking Performance</h1>
     <div class="card-hint" style="margin-bottom:16px;">Upload file performa toko mitra (per mitra, per periode). CTR, CVR, dan ROAS dihitung otomatis: CTR = Produk Diklik / Total Pengunjung, CVR = Total Pesanan / Produk Diklik, ROAS = GMV / Ads Spend.</div>
 
+    <div style="display:flex; gap:4px; margin-bottom:22px; border-bottom:1px solid var(--line);">
+        <a href="{{ route('growth-specialist.tracking-performance') }}" style="padding:10px 4px; margin-right:22px; text-decoration:none; border-bottom:2px solid var(--accent); font-size:14px; font-weight:700; color:var(--ink);">Tracking Performance</a>
+        <a href="{{ route('growth-specialist.tracking-performance.stand-in-line') }}" style="padding:10px 4px; margin-right:22px; text-decoration:none; border-bottom:2px solid transparent; font-size:14px; font-weight:600; color:var(--ink-muted);">Stand in Line</a>
+    </div>
+
     @if (session('status'))
         <div class="alert-success">{{ session('status') }}</div>
     @endif

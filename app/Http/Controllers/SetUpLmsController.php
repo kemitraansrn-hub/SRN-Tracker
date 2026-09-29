@@ -6,6 +6,7 @@ use App\Models\LmsEnrollment;
 use App\Models\LmsStep;
 use App\Models\LmsStepCompletion;
 use App\Models\Mitra;
+use App\Models\SetUpLmsNote;
 use App\Models\SpecialDeal;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -64,8 +65,10 @@ class SetUpLmsController extends Controller
 
         $segmenMap = SpecialDeal::segmenByMitraId(now());
         $kaeMap = User::kaeNameMap();
+        $notesByMitra = SetUpLmsNote::where('platform', $tab)
+            ->whereIn('mitra_id', $mitraRows->pluck('id'))->get()->keyBy('mitra_id');
 
-        $rows = $mitraRows->map(function (Mitra $m) use ($completionsByMitra, $steps, $segmenMap, $kaeMap) {
+        $rows = $mitraRows->map(function (Mitra $m) use ($completionsByMitra, $steps, $segmenMap, $kaeMap, $notesByMitra) {
             $done = $completionsByMitra->get($m->id, collect());
             $pct = $steps->count() > 0 ? (int) round($done->count() / $steps->count() * 100) : 0;
 
@@ -76,6 +79,7 @@ class SetUpLmsController extends Controller
                 'completions' => $done,
                 'pct' => $pct,
                 'status' => self::statusLabel($pct),
+                'note' => $notesByMitra->get($m->id),
             ];
         });
 
@@ -182,6 +186,25 @@ class SetUpLmsController extends Controller
         LmsStepCompletion::where('mitra_id', $mitra->id)->where('lms_step_id', $step->id)->delete();
 
         return $this->backToMitra($step->platform, $mitra->id, 'Centang video '.$step->urutan.' ('.$step->judul.') dibatalkan.');
+    }
+
+    public function storeNote(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'mitra_id' => ['required', 'integer'],
+            'platform' => ['required', 'in:'.implode(',', array_keys(LmsStep::PLATFORMS))],
+            'catatan' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $mitra = $this->scopedMitra($request->user())->findOrFail($data['mitra_id']);
+
+        SetUpLmsNote::updateOrCreate(
+            ['mitra_id' => $mitra->id, 'platform' => $data['platform']],
+            ['catatan' => $data['catatan'], 'created_by' => $request->user()->id]
+        );
+
+        return redirect()->route('growth-specialist.set-up-lms', ['tab' => $data['platform']])
+            ->with('status', 'Catatan untuk '.$mitra->nama.' tersimpan.');
     }
 
     private function scopedMitra(User $user)

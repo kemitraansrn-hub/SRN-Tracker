@@ -173,13 +173,16 @@
                                 <td class="tnum" style="font-weight:700;">{{ $r->pct }}%</td>
                                 <td><span class="chip chip-{{ $statusColor[$r->status] }}">{{ $r->status }}</span></td>
                                 <td>
-                                    <form method="POST" action="{{ route('growth-specialist.set-up-lms.enroll.destroy') }}" onsubmit="return confirm('Hapus {{ addslashes($r->mitra->nama) }} dari LMS {{ $platformLabel }}? Semua centang dan link GDrive-nya ikut terhapus.');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <input type="hidden" name="mitra_id" value="{{ $r->mitra->id }}">
-                                        <input type="hidden" name="platform" value="{{ $tab }}">
-                                        <button type="submit" class="btn btn-danger" style="width:auto; font-size:11.5px; padding:5px 10px;">Hapus</button>
-                                    </form>
+                                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                        <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px; {{ $r->note ? 'border-color:var(--warn);' : '' }}" onclick="openLmsNoteModal('{{ $r->mitra->id }}', '{{ addslashes($r->mitra->nama) }}', @js($r->note->catatan ?? ''))" title="{{ $r->note ? 'Sudah ada catatan' : 'Belum ada catatan' }}">{{ $r->note ? 'Note ✎' : 'Note' }}</button>
+                                        <form method="POST" action="{{ route('growth-specialist.set-up-lms.enroll.destroy') }}" onsubmit="return confirm('Hapus {{ addslashes($r->mitra->nama) }} dari LMS {{ $platformLabel }}? Semua centang dan link GDrive-nya ikut terhapus.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <input type="hidden" name="mitra_id" value="{{ $r->mitra->id }}">
+                                            <input type="hidden" name="platform" value="{{ $tab }}">
+                                            <button type="submit" class="btn btn-danger" style="width:auto; font-size:11.5px; padding:5px 10px;">Hapus</button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -191,5 +194,35 @@
         </section>
 
         <div style="margin-top:16px;">{{ $rowsPage->links() }}</div>
+
+        <div class="modal-overlay" id="modal-lms-note" style="display:none;">
+            <div class="modal-box">
+                <div class="modal-title" id="lms-note-title">Catatan LMS</div>
+                <form method="POST" action="{{ route('growth-specialist.set-up-lms.note.store') }}">
+                    @csrf
+                    <input type="hidden" name="mitra_id" id="lms-note-mitra-id">
+                    <input type="hidden" name="platform" value="{{ $tab }}">
+                    <div class="field">
+                        <label>Alasan/kendala belum menyelesaikan LMS</label>
+                        <textarea name="catatan" id="lms-note-catatan" rows="4" required></textarea>
+                    </div>
+                    <div class="modal-actions" style="margin-top:16px; display:flex; gap:8px; justify-content:flex-end;">
+                        <button type="button" class="btn" style="width:auto;" onclick="closeLmsNoteModal()">Batal</button>
+                        <button type="submit" class="btn btn-primary" style="width:auto;">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <script>
+            function openLmsNoteModal(mitraId, nama, catatan) {
+                document.getElementById('lms-note-mitra-id').value = mitraId;
+                document.getElementById('lms-note-title').textContent = 'Catatan LMS — ' + nama;
+                document.getElementById('lms-note-catatan').value = catatan || '';
+                document.getElementById('modal-lms-note').style.display = 'flex';
+            }
+            function closeLmsNoteModal() {
+                document.getElementById('modal-lms-note').style.display = 'none';
+            }
+        </script>
     @endif
 @endsection
