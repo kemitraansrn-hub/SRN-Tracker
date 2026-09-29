@@ -21,14 +21,16 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * "Stand in Line" (Tracking Performance > tab kedua) — roster mitra yang
  * LMS-nya sudah Lengkap di minimal satu platform (kriteria sama seperti
  * Komit Tracker, TANPA syarat "sudah ada di Tracking Performance" — justru
- * tujuannya nangkep mitra yang BELUM upload laporan mingguan). Ceklis W1-W5
+ * tujuannya nangkep mitra yang BELUM upload laporan mingguan). Ceklis W1-Wn
  * di layar itu KUMULATIF (pernah upload minggu itu kapan pun, gak terikat
  * bulan) — Bulan/Tahun di filter cuma dipakai buat Download Excel (snapshot
- * laporan bulan itu spesifik).
+ * laporan bulan itu spesifik). Jumlah kolom minggu (W1, W2, ... Wn) MENGIKUTI
+ * data yang beneran di-upload — kalau ada mitra yang udah sampai W12, tabel
+ * otomatis nampilin kolom sampai W12, bukan dihardcode W1-W5.
  */
 class StandInLineController extends Controller
 {
-    public const WEEKS = ['W1', 'W2', 'W3', 'W4', 'W5'];
+    private const MIN_WEEK_COLUMNS = 5;
 
     public function index(Request $request): View
     {
@@ -37,13 +39,15 @@ class StandInLineController extends Controller
         $tahun = (int) $request->input('tahun', now()->year);
         $q = trim((string) $request->input('q'));
 
-        $rows = $this->buildRows($request, $user, $q, cumulatif: true, bulan: $bulan, tahun: $tahun);
+        $mitraIds = $this->rosterMitraIds();
+        $weeks = $this->weekColumns($mitraIds);
+        $rows = $this->buildRows($request, $user, $q, $mitraIds, cumulatif: true, bulan: $bulan, tahun: $tahun);
 
         return view('stand-in-line.index', [
             'bulan' => $bulan,
             'tahun' => $tahun,
             'q' => $q,
-            'weeks' => self::WEEKS,
+            'weeks' => $weeks,
             'rows' => $rows,
         ]);
     }
@@ -55,30 +59,33 @@ class StandInLineController extends Controller
         $tahun = (int) $request->input('tahun', now()->year);
         $bulanNama = \Carbon\Carbon::create($tahun, $bulan)->translatedFormat('F');
 
-        $rows = $this->buildRows($request, $user, trim((string) $request->input('q')), cumulatif: false, bulan: $bulan, tahun: $tahun);
+        $mitraIds = $this->rosterMitraIds();
+        $weeks = $this->weekColumns($mitraIds);
+        $rows = $this->buildRows($request, $user, trim((string) $request->input('q')), $mitraIds, cumulatif: false, bulan: $bulan, tahun: $tahun);
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Stand in Line');
 
-        $weekHeaders = array_map(fn ($w) => $w.' ('.$bulanNama.' '.$tahun.')', self::WEEKS);
+        $weekHeaders = array_map(fn ($w) => $w.' ('.$bulanNama.' '.$tahun.')', $weeks);
         $headers = array_merge(['ID Mitra', 'Nama Mitra', 'KAE', 'Segmen'], $weekHeaders, ['Catatan']);
         $sheet->fromArray($headers, null, 'A1', true);
-        $lastCol = chr(ord('A') + count($headers) - 1);
+        $lastColIndex = count($headers);
+        $lastCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($lastColIndex);
         $sheet->getStyle('A1:'.$lastCol.'1')->getFont()->setBold(true);
 
         $r = 2;
         foreach ($rows as $row) {
             $sheet->fromArray(array_merge(
                 [$row['kode_mitra'], $row['nama'], $row['kae'], $row['segmen']],
-                array_map(fn ($w) => in_array($w, $row['weeks'], true) ? 'Sudah' : 'Belum', self::WEEKS),
+                array_map(fn ($w) => in_array($w, $row['weeks'], true) ? 'Sudah' : 'Belum', $weeks),
                 [$row['note']->catatan ?? '']
             ), null, 'A'.$r, true);
             $r++;
         }
 
-        foreach (range('A', $lastCol) as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
+        foreach (range(1, $lastColIndex) as $colIndex) {
+            $sheet->getColumnDimension(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex))->setAutoSize(true);
         }
 
         return response()->streamDownload(function () use ($spreadsheet) {
@@ -119,15 +126,13 @@ class StandInLineController extends Controller
     /**
      * @return Collection<int, array>
      *
-     * $cumulatif true (layar): ceklis W1-W5 dari SELURUH riwayat Tracking
+     * $cumulatif true (layar): ceklis W1-Wn dari SELURUH riwayat Tracking
      * Performance mitra, gak peduli bulan. $cumulatif false (download):
      * ceklis cuma dari laporan yang tanggal_selesai-nya jatuh di bulan/tahun
      * yang dipilih — snapshot laporan bulan itu spesifik.
      */
-    private function buildRows(Request $request, User $user, string $q, bool $cumulatif, int $bulan, int $tahun): Collection
+    private function buildRows(Request $request, User $user, string $q, Collection $mitraIds, bool $cumulatif, int $bulan, int $tahun): Collection
     {
-        $mitraIds = $this->rosterMitraIds();
-
         $mitraRows = Mitra::whereIn('id', $mitraIds)
             ->when($user->role === 'kae', fn ($qr) => $qr->where('kae_code', $user->kae_code))
             ->when($q !== '', fn ($w) => $w->where(fn ($x) => $x->where('nama', 'like', "%{$q}%")->orWhere('kode_mitra', 'like', "%{$q}%")))
@@ -157,6 +162,27 @@ class StandInLineController extends Controller
             'weeks' => $weeksByMitra->get($m->id, []),
             'note' => $notesByMitra->get($m->id),
         ]);
+    }
+
+    /**
+     * Kolom minggu (W1, W2, ... Wn) MENGIKUTI data Tracking Performance yang
+     * beneran ada — bukan dihardcode. Minimal tetap tampil W1-W5 (baseline)
+     * biar tabel gak kosong pas belum ada yang upload sama sekali.
+     *
+     * @return string[]
+     */
+    private function weekColumns(Collection $mitraIds): array
+    {
+        $maxWeek = TrackingPerformance::whereIn('mitra_id', $mitraIds)
+            ->whereNotNull('week')
+            ->pluck('week')
+            ->map(fn ($w) => (int) preg_replace('/\D+/', '', (string) $w))
+            ->filter(fn ($n) => $n > 0)
+            ->max();
+
+        $maxWeek = max((int) $maxWeek, self::MIN_WEEK_COLUMNS);
+
+        return array_map(fn ($i) => 'W'.$i, range(1, $maxWeek));
     }
 
     /** Mitra id yang Lengkap LMS-nya di minimal satu platform (lihat KomitTrackerController::rosterMitraIds() — sama, tanpa syarat Tracking Performance). */
