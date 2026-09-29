@@ -2,7 +2,7 @@
 
 @section('content')
     <h1 class="display" style="font-size:24px; margin-bottom:4px;">Stand in Line</h1>
-    <div class="card-hint" style="margin-bottom:16px;">Mitra yang LMS-nya sudah Lengkap di minimal satu platform, tapi belum tentu upload laporan Tracking Performance mingguannya. Centang muncul kalau ada laporan minggu itu di bulan/tahun yang dipilih.</div>
+    <div class="card-hint" style="margin-bottom:16px;">Mitra yang LMS-nya sudah Lengkap di minimal satu platform, tapi belum tentu upload laporan Tracking Performance mingguannya. Centang W1-W5 kumulatif (pernah upload minggu itu kapan pun, gak terikat bulan). Filter Bulan/Tahun dipakai khusus buat Download Excel (snapshot laporan bulan itu).</div>
 
     <div style="display:flex; gap:4px; margin-bottom:22px; border-bottom:1px solid var(--line);">
         <a href="{{ route('growth-specialist.tracking-performance') }}" style="padding:10px 4px; margin-right:22px; text-decoration:none; border-bottom:2px solid transparent; font-size:14px; font-weight:600; color:var(--ink-muted);">Tracking Performance</a>
@@ -44,9 +44,14 @@
     </form>
 
     <section class="card table-card" style="padding:0; margin-top:16px;">
-        <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px;">
-            <div class="card-title">Stand in Line</div>
-            <div class="card-hint">{{ $rows->count() }} mitra</div>
+        <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px; flex-wrap:wrap; gap:12px;">
+            <div>
+                <div class="card-title">Stand in Line</div>
+                <div class="card-hint">{{ $rows->count() }} mitra</div>
+            </div>
+            @if ($rows->isNotEmpty())
+                <a href="{{ route('growth-specialist.tracking-performance.stand-in-line.download', ['bulan' => $bulan, 'tahun' => $tahun, 'q' => $q]) }}" class="btn" style="width:auto;">Download Excel</a>
+            @endif
         </div>
         <div class="table-scroll">
             <table>

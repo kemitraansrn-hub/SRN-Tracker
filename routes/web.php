@@ -322,6 +322,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::delete('tracking-performance/{trackingPerformance}', [\App\Http\Controllers\TrackingPerformanceController::class, 'destroy'])->name('tracking-performance.destroy');
 
         Route::get('tracking-performance/stand-in-line', [\App\Http\Controllers\StandInLineController::class, 'index'])->name('tracking-performance.stand-in-line');
+        Route::get('tracking-performance/stand-in-line/download', [\App\Http\Controllers\StandInLineController::class, 'download'])->name('tracking-performance.stand-in-line.download');
         Route::post('tracking-performance/stand-in-line/note', [\App\Http\Controllers\StandInLineController::class, 'storeNote'])->name('tracking-performance.stand-in-line.note.store');
         Route::delete('tracking-performance/stand-in-line/note/{standInLineNote}', [\App\Http\Controllers\StandInLineController::class, 'destroyNote'])->name('tracking-performance.stand-in-line.note.destroy');
 
