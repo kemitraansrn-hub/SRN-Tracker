@@ -203,6 +203,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::get('/', [ImportController::class, 'index'])->name('index');
         Route::post('/', [ImportController::class, 'store'])->name('store');
         Route::get('/template/{jenis}', [ImportController::class, 'downloadTemplate'])->name('template');
+        Route::get('/target-bulanan/preview/{token}', [ImportController::class, 'previewTargetBulanan'])->name('target-bulanan.preview');
         Route::delete('/{importBatch}', [ImportController::class, 'destroy'])->name('destroy');
     });
 

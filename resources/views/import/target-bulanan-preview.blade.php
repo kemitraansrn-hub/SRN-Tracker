@@ -20,7 +20,7 @@
     <div class="card" style="margin-bottom:20px; display:flex; gap:24px; flex-wrap:wrap;">
         <div>
             <div class="info-label">Total Baris</div>
-            <div class="tnum" style="font-size:20px; font-weight:700;">{{ count($rows) }}</div>
+            <div class="tnum" style="font-size:20px; font-weight:700;">{{ $rowsPage->total() }}</div>
         </div>
         <div>
             <div class="info-label">Cocok Mitra Existing</div>
@@ -48,7 +48,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($rows as $r)
+                    @foreach ($rowsPage as $r)
                         <tr>
                             <td class="tnum">{{ $r['_baris'] }}</td>
                             <td>
@@ -70,6 +70,8 @@
             </table>
         </div>
     </section>
+
+    <div style="margin-top:16px;">{{ $rowsPage->links() }}</div>
 
     <div style="display:flex; gap:10px; margin-top:20px;">
         <a href="{{ route('import.index') }}" class="btn" style="width:auto;">Batal</a>

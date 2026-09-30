@@ -155,8 +155,10 @@ class ImportController extends Controller
 
     /**
      * Target Bulanan sekarang 2 tahap: parse dulu (cocokkan tiap baris ke
-     * mitra yang ada, TANPA nulis apa-apa), tampilkan preview-nya, baru
-     * ditulis ke database setelah user konfirmasi di handleConfirmedReplace().
+     * mitra yang ada, TANPA nulis apa-apa), redirect ke halaman preview
+     * (GET, biar bisa di-refresh/dipaginasi normal — bukan render langsung
+     * dari response POST), baru ditulis ke database setelah user konfirmasi
+     * di handleConfirmedReplace().
      */
     private function storeTargetBulanan(Request $request): View|RedirectResponse
     {
@@ -173,28 +175,59 @@ class ImportController extends Controller
             return back()->withErrors(['file' => implode(' ', $parsed['errors'])]);
         }
 
-        $bulan = (int) $request->input('bulan');
-        $tahun = (int) $request->input('tahun');
-
         $token = (string) \Illuminate\Support\Str::uuid();
         Cache::put('import_pending_'.$token, [
             'jenis' => 'target_bulanan',
             'rows' => $parsed['rows'],
             'has_kode_column' => $parsed['has_kode_column'],
-            'bulan' => $bulan,
-            'tahun' => $tahun,
+            'bulan' => (int) $request->input('bulan'),
+            'tahun' => (int) $request->input('tahun'),
             'filename' => $file->getClientOriginalName(),
         ], now()->addMinutes(30));
 
+        return redirect()->route('import.target-bulanan.preview', $token);
+    }
+
+    /**
+     * Halaman preview Target Bulanan — GET murni (bukan hasil langsung dari
+     * POST upload) biar link paginasi ke-2/3/dst bisa jalan normal dan
+     * halamannya bisa di-refresh tanpa "kirim ulang form?". Datanya diambil
+     * dari cache token, bukan dari request.
+     */
+    public function previewTargetBulanan(string $token, Request $request): View|RedirectResponse
+    {
+        $cached = Cache::get('import_pending_'.$token);
+
+        if (! $cached || ($cached['jenis'] ?? null) !== 'target_bulanan') {
+            return redirect()->route('import.index')
+                ->withErrors(['file' => 'Sesi preview import sudah kedaluwarsa. Silakan upload ulang file-nya.']);
+        }
+
+        // Preview-nya dipaginasi 20/halaman (pola sama kayak
+        // SegmentasiController) biar upload ratusan baris gak bikin satu
+        // halaman superpanjang — data yang dikirim pas konfirmasi tetap
+        // SEMUA baris (diambil dari cache token, bukan dari halaman yang
+        // lagi ditampilkan).
+        $perPage = 20;
+        $page = (int) $request->input('page', 1);
+        $rowsCollection = collect($cached['rows']);
+        $rowsPage = new \Illuminate\Pagination\LengthAwarePaginator(
+            $rowsCollection->forPage($page, $perPage)->values(),
+            $rowsCollection->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
         return view('import.target-bulanan-preview', [
             'token' => $token,
-            'rows' => $parsed['rows'],
-            'hasKodeColumn' => $parsed['has_kode_column'],
-            'bulan' => $bulan,
-            'tahun' => $tahun,
-            'periodeLabel' => \Carbon\Carbon::create($tahun, $bulan)->translatedFormat('F Y'),
-            'jumlahBaru' => collect($parsed['rows'])->where('match_status', 'baru')->count(),
-            'jumlahCocok' => collect($parsed['rows'])->where('match_status', '!=', 'baru')->count(),
+            'rowsPage' => $rowsPage,
+            'hasKodeColumn' => $cached['has_kode_column'],
+            'bulan' => $cached['bulan'],
+            'tahun' => $cached['tahun'],
+            'periodeLabel' => \Carbon\Carbon::create($cached['tahun'], $cached['bulan'])->translatedFormat('F Y'),
+            'jumlahBaru' => $rowsCollection->where('match_status', 'baru')->count(),
+            'jumlahCocok' => $rowsCollection->where('match_status', '!=', 'baru')->count(),
         ]);
     }
 
