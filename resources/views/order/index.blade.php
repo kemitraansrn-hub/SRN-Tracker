@@ -42,7 +42,7 @@
     </form>
 
     <section class="card table-card" style="padding:0; margin-top:16px;">
-        <div class="table-scroll">
+        <div class="table-scroll" style="max-height:none; overflow-y:visible;">
             <table>
                 <thead>
                     <tr>

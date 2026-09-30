@@ -28,7 +28,7 @@
     </form>
 
     <section class="card table-card" style="padding:0;">
-        <div class="table-scroll">
+        <div class="table-scroll" style="max-height:none; overflow-y:visible;">
             <table>
                 <thead><tr><th>Brand</th><th>Nama Produk</th><th>Status</th><th></th></tr></thead>
                 <tbody>

@@ -56,7 +56,7 @@
     </form>
 
     <section class="card table-card" style="padding:0;">
-        <div class="table-scroll">
+        <div class="table-scroll" style="max-height:none; overflow-y:visible;">
             <table>
                 <thead>
                     <tr>
