@@ -105,7 +105,11 @@
                         <tr>
                             <td>
                                 <div style="font-weight:600;">{{ $m->nama }}</div>
-                                <div style="font-size:11.5px; color:var(--ink-muted);">{{ $m->kode_mitra }}</div>
+                                @if ($m->kode_mitra)
+                                    <div style="font-size:11.5px; color:var(--ink-muted);">{{ $m->kode_mitra }}</div>
+                                @else
+                                    <div style="font-size:11px; color:var(--warn); font-weight:600;">Belum ada kode mitra</div>
+                                @endif
                             </td>
                             <td>{{ $m->no_wa ?: '—' }}</td>
                             <td>

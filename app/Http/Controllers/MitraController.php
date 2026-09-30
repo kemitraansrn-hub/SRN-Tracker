@@ -58,7 +58,14 @@ class MitraController extends Controller
                 $q->whereYear('tanggal_order', $prevMonthRef->year)->whereMonth('tanggal_order', $prevMonthRef->month);
             }], 'total_transaksi')
             ->when($request->boolean('omset_nol'), fn ($q) => $q->havingRaw('(omset_bulan_ini IS NULL OR omset_bulan_ini = 0)'))
+            // Mitra yang dibuat otomatis dari upload Target Bulanan (nama gak
+            // ketemu persis di Data Mitra) — belum ada kode_mitra-nya.
+            ->when($request->boolean('kode_kosong'), fn ($q) => $q->whereNull('kode_mitra'))
             ->orderBy('nama');
+
+        if ($request->boolean('kode_kosong')) {
+            \App\Services\NotificationCenter::dismiss($user, 'mitra_kode_kosong');
+        }
 
         // Pagination manual (bukan ->paginate() bawaan Eloquent) — pola
         // yang sama dengan SegmentasiController, biar konsisten dan gak

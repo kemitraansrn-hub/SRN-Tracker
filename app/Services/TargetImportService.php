@@ -15,6 +15,20 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 /**
  * Parses the monthly Target Bulanan export (per-mitra Komit/Target/Stretch)
  * and upserts target_bulanan rows for the chosen bulan/tahun.
+ *
+ * Dua tahap: parse() cuma baca file + cocokkan tiap baris ke mitra yang ada
+ * (buat ditampilkan sebagai preview "baris X akan masuk ke mitra Y" sebelum
+ * disimpan beneran) — TIDAK nulis apa-apa ke database. commit() yang baru
+ * nulis, dipanggil setelah user konfirmasi preview-nya.
+ *
+ * Sejak kolom ID/Kode Mitra dihapus dari template, pencocokan default-nya
+ * berdasarkan Nama Mitra persis (exact match, case-insensitive) ke
+ * mitra.nama. File lama yang masih punya kolom ID/Kode Mitra tetap
+ * didukung (dicocokkan by kode, lebih akurat, diprioritaskan kalau ada).
+ * Nama yang gak ketemu SAMA SEKALI tetap masuk sebagai mitra baru tanpa
+ * kode_mitra (kolom itu sekarang nullable) — bukan di-skip — supaya gak
+ * ada data target yang hilang; admin tinggal diingetkan lewat notifikasi
+ * buat isi kode_mitra-nya belakangan.
  */
 class TargetImportService
 {
@@ -52,9 +66,12 @@ class TargetImportService
     ];
 
     /**
-     * @return array{ok: bool, errors: array<int, string>, jumlah_baris?: int, batch?: ImportBatch}
+     * Baca file, cocokkan tiap baris ke mitra yang ada (by kode kalau ada
+     * kolomnya, kalau enggak by nama persis) — TIDAK menyimpan apa pun.
+     *
+     * @return array{ok: bool, errors: array<int, string>, rows?: array<int, array>, has_kode_column?: bool}
      */
-    public function import(UploadedFile $file, int $bulan, int $tahun, User $user, string $namaFile): array
+    public function parse(UploadedFile $file): array
     {
         try {
             $spreadsheet = IOFactory::load($file->getRealPath());
@@ -75,11 +92,13 @@ class TargetImportService
             }
         }
 
-        if (! $sheet || ! isset($columnMap['kode_mitra'], $columnMap['target'])) {
+        if (! $sheet || ! isset($columnMap['nama'], $columnMap['target'])) {
             return ['ok' => false, 'errors' => [
-                'Format file tidak dikenali. File harus punya kolom Kode Mitra (RESELLER) dan Target (Rp), idealnya juga Komit dan Stretch.',
+                'Format file tidak dikenali. File harus punya kolom Nama Mitra dan Target (Rp), idealnya juga Komit dan Stretch.',
             ]];
         }
+
+        $hasKodeColumn = isset($columnMap['kode_mitra']);
 
         $rows = [];
         $highestRow = $sheet->getHighestDataRow();
@@ -123,10 +142,86 @@ class TargetImportService
             return ['ok' => false, 'errors' => ['Sheet tidak berisi data.']];
         }
 
+        $this->resolveMatches($rows, $hasKodeColumn);
+
+        return ['ok' => true, 'errors' => [], 'rows' => $rows, 'has_kode_column' => $hasKodeColumn];
+    }
+
+    /**
+     * Nempelin hasil pencocokan ke tiap baris (mutasi langsung): match_status
+     * ('kode'|'nama'|'baru'), matched_mitra_id, matched_nama, matched_kode.
+     *
+     * @param  array<int, array>  $rows
+     */
+    private function resolveMatches(array &$rows, bool $hasKodeColumn): void
+    {
+        if ($hasKodeColumn) {
+            $kodeList = collect($rows)->pluck('kode_mitra')->filter()->unique();
+            $mitraByKode = Mitra::whereIn('kode_mitra', $kodeList)->get()->keyBy('kode_mitra');
+
+            foreach ($rows as &$row) {
+                $kode = $row['kode_mitra'] ?? null;
+                $mitra = $kode ? $mitraByKode->get($kode) : null;
+
+                if ($mitra) {
+                    $row['match_status'] = 'kode';
+                    $row['matched_mitra_id'] = $mitra->id;
+                    $row['matched_nama'] = $mitra->nama;
+                    $row['matched_kode'] = $mitra->kode_mitra;
+                } else {
+                    $row['match_status'] = 'baru';
+                    $row['matched_mitra_id'] = null;
+                    $row['matched_nama'] = null;
+                    $row['matched_kode'] = $kode;
+                }
+            }
+
+            return;
+        }
+
+        // PENTING: Eloquent Collection::only() di-override buat filter
+        // berdasarkan PRIMARY KEY model, bukan array key biasa kayak
+        // Illuminate\Support\Collection — jadi ->only($namaLower) di sini
+        // SELALU balik kosong (nama bukan primary key). ->collect() dulu
+        // buat downgrade ke base Collection sebelum filter by nama.
+        $namaList = collect($rows)->pluck('nama')->filter()->map(fn ($n) => mb_strtolower(trim($n)))->unique();
+        $mitraByNamaLower = Mitra::get(['id', 'nama', 'kode_mitra'])
+            ->keyBy(fn ($m) => mb_strtolower(trim($m->nama)))
+            ->toBase()
+            ->only($namaList->all());
+
+        foreach ($rows as &$row) {
+            $namaLower = mb_strtolower(trim((string) ($row['nama'] ?? '')));
+            $mitra = $mitraByNamaLower->get($namaLower);
+
+            if ($mitra) {
+                $row['match_status'] = 'nama';
+                $row['matched_mitra_id'] = $mitra->id;
+                $row['matched_nama'] = $mitra->nama;
+                $row['matched_kode'] = $mitra->kode_mitra;
+            } else {
+                $row['match_status'] = 'baru';
+                $row['matched_mitra_id'] = null;
+                $row['matched_nama'] = null;
+                $row['matched_kode'] = null;
+            }
+        }
+    }
+
+    /**
+     * Simpan beneran ke database — dipanggil setelah user konfirmasi hasil
+     * parse()+resolveMatches() di halaman preview.
+     *
+     * @param  array<int, array>  $rows  hasil parse()['rows'] (sudah ada match_status dkk)
+     * @return array{ok: bool, errors: array<int, string>, jumlah_baris?: int, jumlah_tersimpan?: int, jumlah_mitra_baru?: int, skipped?: array, batch?: ImportBatch}
+     */
+    public function commit(array $rows, int $bulan, int $tahun, User $user, string $namaFile): array
+    {
         $kaeCodeByName = User::where('role', 'kae')->get()->keyBy(fn ($u) => mb_strtolower($u->name));
         $skipped = [];
+        $mitraBaruCount = 0;
 
-        $batch = DB::transaction(function () use ($rows, $bulan, $tahun, $user, $namaFile, $kaeCodeByName, &$skipped) {
+        $batch = DB::transaction(function () use ($rows, $bulan, $tahun, $user, $namaFile, $kaeCodeByName, &$skipped, &$mitraBaruCount) {
             $batch = ImportBatch::create([
                 'jenis' => 'target_bulanan',
                 'bulan' => $bulan,
@@ -138,26 +233,33 @@ class TargetImportService
             ]);
 
             foreach ($rows as $row) {
-                if (! $row['kode_mitra']) {
-                    $skipped[] = 'Baris '.$row['_baris'].': Kode Mitra kosong.';
-
-                    continue;
-                }
-
                 if ($row['target'] === null) {
-                    $rawTarget = $row['_raw_target'];
+                    $rawTarget = $row['_raw_target'] ?? null;
                     $tampil = $rawTarget === null || $rawTarget === '' ? '(kosong)' : (is_string($rawTarget) ? $rawTarget : json_encode($rawTarget));
-                    $skipped[] = 'Baris '.$row['_baris'].' ('.$row['kode_mitra'].'): kolom Target bukan angka, nilainya: '.$tampil;
+                    $skipped[] = 'Baris '.$row['_baris'].' ('.($row['nama'] ?? '?').'): kolom Target bukan angka, nilainya: '.$tampil;
 
                     continue;
                 }
 
-                $mitra = Mitra::firstOrNew(['kode_mitra' => $row['kode_mitra']]);
-                $isNew = ! $mitra->exists;
+                if (($row['match_status'] ?? 'baru') !== 'baru' && $row['matched_mitra_id']) {
+                    $mitra = Mitra::find($row['matched_mitra_id']);
+                    if (! $mitra) {
+                        $skipped[] = 'Baris '.$row['_baris'].': mitra yang tadinya cocok udah gak ada (mungkin kehapus).';
 
-                if ($isNew) {
-                    $mitra->nama = $row['nama'] ?: $row['kode_mitra'];
+                        continue;
+                    }
+                } else {
+                    if (! $row['nama']) {
+                        $skipped[] = 'Baris '.$row['_baris'].': Nama Mitra kosong, gak bisa dibuat mitra baru.';
+
+                        continue;
+                    }
+
+                    $mitra = new Mitra();
+                    $mitra->nama = $row['nama'];
+                    $mitra->kode_mitra = $row['kode_mitra'] ?? null;
                     $mitra->status = 'aktif';
+                    $mitraBaruCount++;
                 }
 
                 // Order import (ID SALESMAN) is the authoritative KAE binding.
@@ -170,7 +272,7 @@ class TargetImportService
                     }
                 }
 
-                if ($isNew || $mitra->isDirty()) {
+                if (! $mitra->exists || $mitra->isDirty()) {
                     $mitra->save();
                 }
 
@@ -208,6 +310,7 @@ class TargetImportService
             'errors' => [],
             'jumlah_baris' => count($rows),
             'jumlah_tersimpan' => count($rows) - count($skipped),
+            'jumlah_mitra_baru' => $mitraBaruCount,
             'skipped' => $skipped,
             'batch' => $batch,
         ];

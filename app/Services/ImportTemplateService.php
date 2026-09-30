@@ -52,12 +52,12 @@ class ImportTemplateService
         $ss = new Spreadsheet();
         $sheet = $ss->getActiveSheet();
         $sheet->setTitle('Target Bulanan');
-        $sheet->fromArray(['ID', 'Nama Mitra', 'KAE', 'Segmen', 'Komit (Rp)', 'Target (Rp)', 'Stretch (Rp)', 'Target MOU (Rp)', 'Tier Dipakai', 'Kategori', 'Keterangan'], null, 'A1');
+        $sheet->fromArray(['Nama Mitra', 'KAE', 'Segmen', 'Komit (Rp)', 'Target (Rp)', 'Stretch (Rp)', 'Target MOU (Rp)', 'Tier Dipakai', 'Kategori', 'Keterangan'], null, 'A1');
         $sheet->fromArray([[
-            'REB2025080001', 'Contoh Nama Mitra', 'DITA', 'REGULER', 25000000, 28000000, 31000000, 26000000, 'Target', 'Reguler', 'Contoh catatan tambahan (opsional)',
+            'Contoh Nama Mitra', 'DITA', 'REGULER', 25000000, 28000000, 31000000, 26000000, 'Target', 'Reguler', 'Contoh catatan tambahan (opsional)',
         ]], null, 'A2');
-        $this->styleHeader($sheet, 11);
-        $this->styleExampleRow($sheet, 2, 11);
+        $this->styleHeader($sheet, 10);
+        $this->styleExampleRow($sheet, 2, 10);
 
         return $ss;
     }

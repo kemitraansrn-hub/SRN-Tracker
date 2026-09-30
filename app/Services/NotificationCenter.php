@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\CpCase;
+use App\Models\Mitra;
 use App\Models\NotificationDismissal;
 use App\Models\PriceAdjustmentRequest;
 use App\Models\Produk;
@@ -39,6 +40,19 @@ class NotificationCenter
                 Produk::pendingReview()->max('created_at'),
                 $dismissals,
                 route('produk.notifications')
+            );
+
+            // Mitra yang dibuat otomatis dari upload Target Bulanan (nama
+            // gak ketemu persis di Data Mitra) — belum punya kode_mitra,
+            // perlu diisi manual.
+            $query = Mitra::whereNull('kode_mitra');
+            $items[] = self::buildItem(
+                'mitra_kode_kosong',
+                'Mitra baru belum ada kode mitra',
+                (clone $query)->count(),
+                (clone $query)->max('created_at'),
+                $dismissals,
+                route('mitra.index', ['kode_kosong' => 1])
             );
         }
 

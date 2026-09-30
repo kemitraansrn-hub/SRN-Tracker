@@ -153,7 +153,12 @@ class ImportController extends Controller
             ->with('status', 'Import historis berhasil: '.$batch->jumlah_baris.' baris, periode '.\Carbon\Carbon::parse($parsed['tanggal_mulai'])->format('d/m/Y').' s/d '.\Carbon\Carbon::parse($parsed['tanggal_selesai'])->format('d/m/Y').'.');
     }
 
-    private function storeTargetBulanan(Request $request): RedirectResponse
+    /**
+     * Target Bulanan sekarang 2 tahap: parse dulu (cocokkan tiap baris ke
+     * mitra yang ada, TANPA nulis apa-apa), tampilkan preview-nya, baru
+     * ditulis ke database setelah user konfirmasi di handleConfirmedReplace().
+     */
+    private function storeTargetBulanan(Request $request): View|RedirectResponse
     {
         $request->validate([
             'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:10240'],
@@ -162,29 +167,35 @@ class ImportController extends Controller
         ], [], ['file' => 'File']);
 
         $file = $request->file('file');
-        $result = $this->targetImporter->import(
-            $file,
-            (int) $request->input('bulan'),
-            (int) $request->input('tahun'),
-            $request->user(),
-            $file->getClientOriginalName(),
-        );
+        $parsed = $this->targetImporter->parse($file);
 
-        if (! $result['ok']) {
-            return back()->withErrors(['file' => implode(' ', $result['errors'])]);
+        if (! $parsed['ok']) {
+            return back()->withErrors(['file' => implode(' ', $parsed['errors'])]);
         }
 
-        $periode = \Carbon\Carbon::create((int) $request->input('tahun'), (int) $request->input('bulan'))->translatedFormat('F Y');
-        $jumlahSkip = count($result['skipped']);
+        $bulan = (int) $request->input('bulan');
+        $tahun = (int) $request->input('tahun');
 
-        $redirect = redirect()->route('import.index')
-            ->with('status', 'Import target bulanan: '.$result['jumlah_tersimpan'].' dari '.$result['jumlah_baris'].' baris tersimpan untuk periode '.$periode.($jumlahSkip > 0 ? '. '.$jumlahSkip.' baris dilewati.' : '.'));
+        $token = (string) \Illuminate\Support\Str::uuid();
+        Cache::put('import_pending_'.$token, [
+            'jenis' => 'target_bulanan',
+            'rows' => $parsed['rows'],
+            'has_kode_column' => $parsed['has_kode_column'],
+            'bulan' => $bulan,
+            'tahun' => $tahun,
+            'filename' => $file->getClientOriginalName(),
+        ], now()->addMinutes(30));
 
-        if ($jumlahSkip > 0) {
-            $redirect->with('import_skipped', $result['skipped']);
-        }
-
-        return $redirect;
+        return view('import.target-bulanan-preview', [
+            'token' => $token,
+            'rows' => $parsed['rows'],
+            'hasKodeColumn' => $parsed['has_kode_column'],
+            'bulan' => $bulan,
+            'tahun' => $tahun,
+            'periodeLabel' => \Carbon\Carbon::create($tahun, $bulan)->translatedFormat('F Y'),
+            'jumlahBaru' => collect($parsed['rows'])->where('match_status', 'baru')->count(),
+            'jumlahCocok' => collect($parsed['rows'])->where('match_status', '!=', 'baru')->count(),
+        ]);
     }
 
     public function destroy(ImportBatch $importBatch): RedirectResponse
@@ -219,6 +230,28 @@ class ImportController extends Controller
         if (! $cached) {
             return redirect()->route('import.index')
                 ->withErrors(['file' => 'Sesi konfirmasi import sudah kedaluwarsa. Silakan upload ulang file-nya.']);
+        }
+
+        if (($cached['jenis'] ?? 'order_harian') === 'target_bulanan') {
+            $result = $this->targetImporter->commit($cached['rows'], $cached['bulan'], $cached['tahun'], $request->user(), $cached['filename']);
+            Cache::forget($cacheKey);
+
+            $periode = \Carbon\Carbon::create($cached['tahun'], $cached['bulan'])->translatedFormat('F Y');
+            $jumlahSkip = count($result['skipped']);
+            $status = 'Import target bulanan: '.$result['jumlah_tersimpan'].' dari '.$result['jumlah_baris'].' baris tersimpan untuk periode '.$periode.'.';
+            if ($result['jumlah_mitra_baru'] > 0) {
+                $status .= ' '.$result['jumlah_mitra_baru'].' mitra baru dibuat (belum ada kode mitra — isi manual di Data Mitra).';
+            }
+            if ($jumlahSkip > 0) {
+                $status .= ' '.$jumlahSkip.' baris dilewati.';
+            }
+
+            $redirect = redirect()->route('import.index')->with('status', $status);
+            if ($jumlahSkip > 0) {
+                $redirect->with('import_skipped', $result['skipped']);
+            }
+
+            return $redirect;
         }
 
         if (($cached['jenis'] ?? 'order_harian') === 'order_historis') {
