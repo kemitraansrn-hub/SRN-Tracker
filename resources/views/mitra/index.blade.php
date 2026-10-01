@@ -24,6 +24,9 @@
     @if (session('status'))
         <div class="alert-success">{{ session('status') }}</div>
     @endif
+    @if ($errors->any())
+        <div class="alert-error">{{ $errors->first() }}</div>
+    @endif
 
     @if (session('import_skipped'))
         <div class="card" style="margin-bottom:20px; border-color:var(--warn);">
@@ -146,7 +149,18 @@
                                     <span style="color:{{ $growth >= 0 ? 'var(--good)' : 'var(--critical)' }}; font-weight:600;">{{ $growth >= 0 ? '+' : '' }}{{ $growth }}%</span>
                                 @endif
                             </td>
-                            <td style="white-space:nowrap;"><a href="{{ route('mitra.show', $m) }}" class="link-action" style="color:var(--accent-ink); font-size:12.5px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 10px; white-space:nowrap; display:inline-block;">Lihat detail</a></td>
+                            <td style="white-space:nowrap;">
+                                <div style="display:flex; gap:6px;">
+                                    <a href="{{ route('mitra.show', $m) }}" class="link-action" style="color:var(--accent-ink); font-size:12.5px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 10px; white-space:nowrap; display:inline-block;">Lihat detail</a>
+                                    @if (auth()->user()->hasAdminAccess())
+                                        <form method="POST" action="{{ route('mitra.destroy', $m) }}" onsubmit="return confirm('Hapus mitra {{ addslashes($m->nama) }}? Cuma bisa dihapus kalau belum ada Order/Target/Special Deal/dll yang terhubung. Tindakan ini gak bisa dibatalkan.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger" style="width:auto; font-size:11.5px; padding:5px 10px;">Hapus</button>
+                                        </form>
+                                    @endif
+                                </div>
+                            </td>
                         </tr>
                     @empty
                         <tr><td colspan="11" style="color:var(--ink-muted);">Belum ada mitra.</td></tr>

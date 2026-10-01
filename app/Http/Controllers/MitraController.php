@@ -254,6 +254,50 @@ class MitraController extends Controller
         return redirect()->route('mitra.show', $mitra)->with('status', 'Data mitra berhasil diperbarui.');
     }
 
+    /**
+     * Beberapa tabel transaksi inti (orders, target_bulanan, special_deals,
+     * dll) SENGAJA gak cascade delete ke mitra (lihat
+     * information_schema.REFERENTIAL_CONSTRAINTS — DELETE_RULE = NO ACTION)
+     * biar data histori gak bisa kehapus gak sengaja lewat sini. Dicek
+     * manual dulu di sini biar errornya jelas (nama tabel + jumlah baris),
+     * bukan cuma pesan SQL constraint violation yang mentah. Tabel lain
+     * (Tracking Performance, Assignment, 1 on 1, LMS, dst) memang didesain
+     * cascade — boleh ikut kehapus karena itu cuma data tracking/follow-up,
+     * bukan catatan transaksi.
+     */
+    private const BLOCKING_TABLES = [
+        'orders' => 'Order',
+        'target_bulanan' => 'Target Bulanan',
+        'special_deals' => 'Special Deal',
+        'followup_logs' => 'Follow-up Log',
+        'sales_drafts' => 'Input Penjualan',
+        'buyback_requests' => 'Pengajuan Buy Back',
+        'poin_redemptions' => 'Penukaran Poin',
+        'price_adjustment_requests' => 'Price Adjustment',
+    ];
+
+    public function destroy(Mitra $mitra): RedirectResponse
+    {
+        $blockers = [];
+        foreach (self::BLOCKING_TABLES as $table => $label) {
+            $count = DB::table($table)->where('mitra_id', $mitra->id)->count();
+            if ($count > 0) {
+                $blockers[] = $label.' ('.$count.')';
+            }
+        }
+
+        if (! empty($blockers)) {
+            return back()->withErrors([
+                'mitra' => 'Mitra "'.$mitra->nama.'" gak bisa dihapus karena masih punya data: '.implode(', ', $blockers).'. Hapus/pindahkan data itu dulu kalau memang mau menghapus mitra ini.',
+            ]);
+        }
+
+        $nama = $mitra->nama;
+        $mitra->delete();
+
+        return redirect()->route('mitra.index')->with('status', 'Mitra "'.$nama.'" berhasil dihapus.');
+    }
+
     private function validated(Request $request, ?Mitra $mitra = null): array
     {
         return $request->validate([

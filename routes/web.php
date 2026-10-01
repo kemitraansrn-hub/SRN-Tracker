@@ -218,6 +218,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
             Route::post('/master-upload', [MitraController::class, 'masterUpload'])->name('master-upload.store');
             Route::get('/{mitra}/edit', [MitraController::class, 'edit'])->name('edit');
             Route::put('/{mitra}', [MitraController::class, 'update'])->name('update');
+            Route::delete('/{mitra}', [MitraController::class, 'destroy'])->name('destroy');
         });
 
         Route::get('/{mitra}', [MitraController::class, 'show'])->name('show');
