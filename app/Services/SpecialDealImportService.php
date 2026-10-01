@@ -147,8 +147,11 @@ class SpecialDealImportService
                     continue;
                 }
 
-                if ($row['budget_persen'] === null || $row['budget_persen'] < 0 || $row['budget_persen'] > 100) {
-                    $skipped[] = $label.': Budget (%) bukan angka 0-100 yang valid.';
+                // Kosong = gak ada budget buat deal ini (dianggap 0%), bukan
+                // baris error — cuma angka di luar 0-100 yang beneran invalid.
+                $budgetPersen = $row['budget_persen'] ?? 0.0;
+                if ($budgetPersen < 0 || $budgetPersen > 100) {
+                    $skipped[] = $label.': Budget (%) harus di antara 0-100.';
 
                     continue;
                 }
@@ -176,7 +179,7 @@ class SpecialDealImportService
                         'segmen' => $segmen,
                         'deskripsi' => $row['deskripsi'] ?: 'Special Deal Q'.$kuartal.' '.$tahun,
                         'target_kuartal' => $row['target_kuartal'],
-                        'budget_persen' => $row['budget_persen'],
+                        'budget_persen' => $budgetPersen,
                         'subsidi' => $row['subsidi'],
                         'status' => $status,
                     ]
