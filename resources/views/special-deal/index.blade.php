@@ -32,6 +32,17 @@
         <div class="alert-success">{{ session('status') }}</div>
     @endif
 
+    @if (session('import_skipped'))
+        <div class="card" style="margin-bottom:20px; border-color:var(--warn);">
+            <div class="card-title" style="color:var(--warn); margin-bottom:10px;">{{ count(session('import_skipped')) }} baris dilewati saat upload</div>
+            <div style="max-height:220px; overflow-y:auto; font-size:12px; color:var(--ink-muted); line-height:1.7;">
+                @foreach (session('import_skipped') as $reason)
+                    <div>{{ $reason }}</div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     <form method="GET" action="{{ route('special-deal.index') }}" class="field-row" style="align-items:flex-end;">
         <div class="field" style="margin-bottom:0;">
             <label>Cari Mitra</label>
