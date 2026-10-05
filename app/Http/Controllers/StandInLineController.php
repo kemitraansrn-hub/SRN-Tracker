@@ -198,7 +198,7 @@ class StandInLineController extends Controller
             ->groupBy('lms_step_completions.mitra_id', 'lms_steps.platform')
             ->selectRaw('lms_step_completions.mitra_id, lms_steps.platform, count(*) as done')
             ->get()
-            ->filter(fn ($row) => ($stepCountByPlatform[$row->platform] ?? 0) > 0 && $row->done >= $stepCountByPlatform[$row->platform])
+            ->filter(fn ($row) => ($stepCountByPlatform[$row->platform] ?? 0) > 0 && $row->done >= $stepCountByPlatform[$row->platform] * LmsStep::LENGKAP_THRESHOLD_PCT / 100)
             ->pluck('mitra_id')
             ->unique()
             ->values();

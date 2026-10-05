@@ -172,7 +172,7 @@ class KomitTrackerController extends Controller
             ->groupBy('lms_step_completions.mitra_id', 'lms_steps.platform')
             ->selectRaw('lms_step_completions.mitra_id, lms_steps.platform, count(*) as done')
             ->get()
-            ->filter(fn ($row) => ($stepCountByPlatform[$row->platform] ?? 0) > 0 && $row->done >= $stepCountByPlatform[$row->platform])
+            ->filter(fn ($row) => ($stepCountByPlatform[$row->platform] ?? 0) > 0 && $row->done >= $stepCountByPlatform[$row->platform] * LmsStep::LENGKAP_THRESHOLD_PCT / 100)
             ->pluck('mitra_id')
             ->unique();
 
@@ -209,7 +209,7 @@ class KomitTrackerController extends Controller
                 $total = $stepCountByPlatform[$p->platform] ?? 0;
                 $done = $doneForMitra[$p->platform]->done ?? 0;
                 $pct = $total > 0 ? (int) round($done / $total * 100) : 0;
-                $label = $pct >= 100 ? 'Lengkap' : ($pct > 0 ? 'Proses' : 'Awal');
+                $label = $pct >= LmsStep::LENGKAP_THRESHOLD_PCT ? 'Lengkap' : ($pct > 0 ? 'Proses' : 'Awal');
 
                 return (LmsStep::PLATFORMS[$p->platform] ?? $p->platform).': '.$label;
             });

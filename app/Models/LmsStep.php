@@ -14,6 +14,15 @@ class LmsStep extends Model
 {
     public const PLATFORMS = ['shopee' => 'Shopee', 'meta' => 'Meta', 'tiktok' => 'TikTok', 'wa_sales_machine' => 'WA Sales Machine'];
 
+    /**
+     * % video selesai minimal biar status LMS mitra per platform dianggap
+     * "Lengkap" — dipakai bareng-bareng di SetUpLmsController (status per
+     * baris), KomitTrackerController & StandInLineController (roster
+     * "sudah Lengkap LMS-nya di minimal satu platform"), satu tempat biar
+     * gak ketinggalan kalau diubah lagi.
+     */
+    public const LENGKAP_THRESHOLD_PCT = 80;
+
     protected function casts(): array
     {
         return ['aktif' => 'boolean'];

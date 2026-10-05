@@ -219,6 +219,6 @@ class SetUpLmsController extends Controller
 
     private static function statusLabel(int $pct): string
     {
-        return $pct >= 100 ? 'Lengkap' : ($pct > 0 ? 'Proses' : 'Awal');
+        return $pct >= LmsStep::LENGKAP_THRESHOLD_PCT ? 'Lengkap' : ($pct > 0 ? 'Proses' : 'Awal');
     }
 }
