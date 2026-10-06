@@ -67,6 +67,9 @@
                 <div class="card-title">Hasil Upload</div>
                 <div class="card-hint">{{ $rowsPage->total() }} baris &middot; {{ $jumlahMitraUnik }} mitra unik{{ $adaFilter ? ' (hasil filter)' : '' }}</div>
             </div>
+            @if ($jumlahMitraUnik > 0)
+                <a href="{{ route('growth-specialist.tracking-performance.export', request()->query()) }}" class="btn" style="width:auto;">Download Excel (Mitra Unik)</a>
+            @endif
             <form method="GET" action="{{ route('growth-specialist.tracking-performance') }}" class="field-row" style="margin-bottom:0; align-items:flex-end;">
                 <div class="field" style="margin-bottom:0; min-width:260px;">
                     <label>Cari Mitra</label>

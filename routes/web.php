@@ -320,6 +320,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
 
         Route::get('tracking-performance', [\App\Http\Controllers\TrackingPerformanceController::class, 'index'])->name('tracking-performance');
         Route::get('tracking-performance/template', [\App\Http\Controllers\TrackingPerformanceController::class, 'template'])->name('tracking-performance.template');
+        Route::get('tracking-performance/export', [\App\Http\Controllers\TrackingPerformanceController::class, 'export'])->name('tracking-performance.export');
         Route::post('tracking-performance/upload', [\App\Http\Controllers\TrackingPerformanceController::class, 'upload'])->name('tracking-performance.upload');
         Route::delete('tracking-performance/{trackingPerformance}', [\App\Http\Controllers\TrackingPerformanceController::class, 'destroy'])->name('tracking-performance.destroy');
 

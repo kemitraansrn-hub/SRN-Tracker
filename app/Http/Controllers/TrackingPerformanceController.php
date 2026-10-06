@@ -35,6 +35,88 @@ class TrackingPerformanceController extends Controller
         $weekOptions = (clone $base)->whereNotNull('week')->distinct()->orderBy('week')->pluck('week');
         $tahunOptions = (clone $base)->selectRaw('YEAR(tanggal_selesai) as t')->distinct()->orderByDesc('t')->pluck('t');
 
+        $rows = $this->filteredRows($request, $user, $base);
+
+        // Baris = satu mitra per periode (bisa beberapa baris per mitra
+        // kalau udah upload banyak minggu), jadi ditampilkan terpisah dari
+        // jumlah mitra unik-nya biar gak ketuker.
+        $jumlahMitraUnik = $rows->pluck('mitra_id')->unique()->count();
+
+        $perPage = 20;
+        $page = (int) $request->input('page', 1);
+        $rowsPage = new LengthAwarePaginator(
+            $rows->forPage($page, $perPage)->values(),
+            $rows->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
+        return view('tracking-performance.index', [
+            'rowsPage' => $rowsPage,
+            'jumlahMitraUnik' => $jumlahMitraUnik,
+            'mitraOptions' => Mitra::query()
+                ->when($user->role === 'kae', fn ($qr) => $qr->where('kae_code', $user->kae_code))
+                ->orderBy('nama')->get(['id', 'nama', 'kode_mitra'])
+                ->map(fn ($m) => (object) ['id' => $m->id, 'label' => $m->nama.' ('.$m->kode_mitra.')']),
+            'weekOptions' => $weekOptions,
+            'tahunOptions' => $tahunOptions,
+            'growthOptions' => TrackingPerformance::STATUS_GROWTH_OPTIONS,
+            'kaeMap' => User::kaeNameMap(),
+        ]);
+    }
+
+    /**
+     * Excel-nya cuma mitra unik (ID + Nama, satu baris per mitra) — bukan
+     * satu baris per periode kayak tabelnya, karena tujuannya daftar mitra
+     * yang pernah upload, bukan laporan performa. Ikut filter yang lagi
+     * aktif di layar (mitra/bulan/tahun/week/growth).
+     */
+    public function export(Request $request): StreamedResponse
+    {
+        $user = $request->user();
+
+        $base = TrackingPerformance::query()
+            ->when($user->role === 'kae', fn ($qr) => $qr->whereHas('mitra', fn ($m) => $m->where('kae_code', $user->kae_code)));
+
+        $rows = $this->filteredRows($request, $user, $base);
+
+        $mitraUnik = $rows->unique('mitra_id')
+            ->map(fn ($r) => $r->mitra)
+            ->filter()
+            ->sortBy('nama')
+            ->values();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Mitra Unik');
+        $sheet->fromArray(['ID Mitra', 'Nama Mitra'], null, 'A1', true);
+        $sheet->getStyle('A1:B1')->getFont()->setBold(true);
+
+        $r = 2;
+        foreach ($mitraUnik as $m) {
+            $sheet->fromArray([$m->kode_mitra, $m->nama], null, 'A'.$r, true);
+            $r++;
+        }
+
+        foreach (['A', 'B'] as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, 'Mitra Unik Tracking Performance '.now()->format('d-m-Y').'.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * Logika filter + hitungan delta/growth yang sama dipakai index() (buat
+     * tabel) dan export() (buat Excel mitra unik) — satu tempat biar gak
+     * dobel dan gak ketinggalan kalau salah satu diubah.
+     */
+    private function filteredRows(Request $request, User $user, \Illuminate\Database\Eloquent\Builder $base): \Illuminate\Support\Collection
+    {
         $rows = (clone $base)->with('mitra')
             ->when($request->filled('mitra_id'), fn ($qr) => $qr->where('mitra_id', $request->integer('mitra_id')))
             ->when($request->filled('bulan'), fn ($qr) => $qr->whereMonth('tanggal_selesai', $request->integer('bulan')))
@@ -69,33 +151,7 @@ class TrackingPerformanceController extends Controller
             $rows = $rows->where('status_growth', $request->input('growth'))->values();
         }
 
-        // Baris = satu mitra per periode (bisa beberapa baris per mitra
-        // kalau udah upload banyak minggu), jadi ditampilkan terpisah dari
-        // jumlah mitra unik-nya biar gak ketuker.
-        $jumlahMitraUnik = $rows->pluck('mitra_id')->unique()->count();
-
-        $perPage = 20;
-        $page = (int) $request->input('page', 1);
-        $rowsPage = new LengthAwarePaginator(
-            $rows->forPage($page, $perPage)->values(),
-            $rows->count(),
-            $perPage,
-            $page,
-            ['path' => $request->url(), 'query' => $request->query()]
-        );
-
-        return view('tracking-performance.index', [
-            'rowsPage' => $rowsPage,
-            'jumlahMitraUnik' => $jumlahMitraUnik,
-            'mitraOptions' => Mitra::query()
-                ->when($user->role === 'kae', fn ($qr) => $qr->where('kae_code', $user->kae_code))
-                ->orderBy('nama')->get(['id', 'nama', 'kode_mitra'])
-                ->map(fn ($m) => (object) ['id' => $m->id, 'label' => $m->nama.' ('.$m->kode_mitra.')']),
-            'weekOptions' => $weekOptions,
-            'tahunOptions' => $tahunOptions,
-            'growthOptions' => TrackingPerformance::STATUS_GROWTH_OPTIONS,
-            'kaeMap' => User::kaeNameMap(),
-        ]);
+        return $rows;
     }
 
     public function upload(Request $request, TrackingPerformanceImportService $importer): RedirectResponse
