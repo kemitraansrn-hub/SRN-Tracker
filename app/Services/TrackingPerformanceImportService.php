@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\LmsStep;
 use App\Models\Mitra;
 use App\Models\TrackingPerformance;
 use App\Models\User;
@@ -112,12 +113,13 @@ class TrackingPerformanceImportService
         $mitraAll = Mitra::get(['id', 'kode_mitra', 'nama', 'kae_code']);
         $byKode = $mitraAll->keyBy(fn ($m) => mb_strtolower(trim($m->kode_mitra)));
         $byNama = $mitraAll->groupBy(fn ($m) => mb_strtolower(trim($m->nama)));
+        $mitraIdsLengkap = LmsStep::mitraIdsLengkap();
 
         $skipped = [];
         $created = 0;
         $updated = 0;
 
-        DB::transaction(function () use ($rows, $user, $byKode, $byNama, &$skipped, &$created, &$updated) {
+        DB::transaction(function () use ($rows, $user, $byKode, $byNama, $mitraIdsLengkap, &$skipped, &$created, &$updated) {
             foreach ($rows as $row) {
                 $kode = trim((string) ($row['kode_mitra'] ?? ''));
                 $nama = trim((string) ($row['nama'] ?? ''));
@@ -151,6 +153,12 @@ class TrackingPerformanceImportService
 
                 if ($user->role === 'kae' && $mitra->kae_code !== $user->kae_code) {
                     $skipped[] = $label.': bukan mitra Anda.';
+
+                    continue;
+                }
+
+                if (! $mitraIdsLengkap->contains($mitra->id)) {
+                    $skipped[] = $label.': LMS mitra ini belum Lengkap (minimal '.LmsStep::LENGKAP_THRESHOLD_PCT.'% di salah satu platform) — selesaikan dulu di menu Set Up LMS sebelum upload Tracking Performance.';
 
                     continue;
                 }

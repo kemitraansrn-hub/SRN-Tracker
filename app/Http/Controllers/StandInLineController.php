@@ -11,7 +11,6 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -188,19 +187,6 @@ class StandInLineController extends Controller
     /** Mitra id yang Lengkap LMS-nya di minimal satu platform (lihat KomitTrackerController::rosterMitraIds() — sama, tanpa syarat Tracking Performance). */
     private function rosterMitraIds(): Collection
     {
-        $stepCountByPlatform = LmsStep::where('aktif', true)
-            ->select('platform', DB::raw('count(*) as total'))
-            ->groupBy('platform')->pluck('total', 'platform');
-
-        return DB::table('lms_step_completions')
-            ->join('lms_steps', 'lms_steps.id', '=', 'lms_step_completions.lms_step_id')
-            ->where('lms_steps.aktif', true)
-            ->groupBy('lms_step_completions.mitra_id', 'lms_steps.platform')
-            ->selectRaw('lms_step_completions.mitra_id, lms_steps.platform, count(*) as done')
-            ->get()
-            ->filter(fn ($row) => ($stepCountByPlatform[$row->platform] ?? 0) > 0 && $row->done >= $stepCountByPlatform[$row->platform] * LmsStep::LENGKAP_THRESHOLD_PCT / 100)
-            ->pluck('mitra_id')
-            ->unique()
-            ->values();
+        return LmsStep::mitraIdsLengkap();
     }
 }

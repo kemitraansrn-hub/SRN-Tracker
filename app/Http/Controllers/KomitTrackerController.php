@@ -162,23 +162,9 @@ class KomitTrackerController extends Controller
     /** Mitra id yang Lengkap LMS-nya di minimal satu platform DAN pernah punya data di Tracking Performance. */
     private function rosterMitraIds(): Collection
     {
-        $stepCountByPlatform = LmsStep::where('aktif', true)
-            ->select('platform', DB::raw('count(*) as total'))
-            ->groupBy('platform')->pluck('total', 'platform');
-
-        $lengkapMitraIds = DB::table('lms_step_completions')
-            ->join('lms_steps', 'lms_steps.id', '=', 'lms_step_completions.lms_step_id')
-            ->where('lms_steps.aktif', true)
-            ->groupBy('lms_step_completions.mitra_id', 'lms_steps.platform')
-            ->selectRaw('lms_step_completions.mitra_id, lms_steps.platform, count(*) as done')
-            ->get()
-            ->filter(fn ($row) => ($stepCountByPlatform[$row->platform] ?? 0) > 0 && $row->done >= $stepCountByPlatform[$row->platform] * LmsStep::LENGKAP_THRESHOLD_PCT / 100)
-            ->pluck('mitra_id')
-            ->unique();
-
         $trackingMitraIds = DB::table('tracking_performances')->distinct()->pluck('mitra_id');
 
-        return $lengkapMitraIds->intersect($trackingMitraIds)->values();
+        return LmsStep::mitraIdsLengkap()->intersect($trackingMitraIds)->values();
     }
 
     /** @return array<int, string> teks status LMS per mitra, misal "Shopee: Lengkap, Meta: Proses". */
