@@ -240,9 +240,13 @@
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="14" height="18" rx="2" transform="translate(3 1)"/><path d="M9 8h4M9 12h4M9 16h2" stroke-linecap="round"/></svg>
                             <span class="nav-label">Kartu Profil Mitra</span>
                         </a>
-                        <a href="{{ route('growth-specialist.set-up-lms') }}" class="nav-item {{ request()->routeIs('growth-specialist.set-up-lms*') ? 'active' : '' }}" title="Set Up LMS" style="padding-left:18px;">
+                        <a href="{{ route('growth-specialist.set-up-lms') }}" class="nav-item {{ request()->routeIs('growth-specialist.set-up-lms*') && ! request()->routeIs('growth-specialist.set-up-lms.issue*') ? 'active' : '' }}" title="Set Up LMS" style="padding-left:18px;">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M10 9l4 2-4 2z" stroke-linejoin="round"/><path d="M8 21h8" stroke-linecap="round"/></svg>
                             <span class="nav-label">Set Up LMS</span>
+                        </a>
+                        <a href="{{ route('growth-specialist.set-up-lms.issue') }}" class="nav-item {{ request()->routeIs('growth-specialist.set-up-lms.issue*') ? 'active' : '' }}" title="Issue" style="padding-left:18px;">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5" stroke-linecap="round"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/></svg>
+                            <span class="nav-label">Issue</span>
                         </a>
                         <a href="{{ route('growth-specialist.komit-tracker') }}" class="nav-item {{ request()->routeIs('growth-specialist.komit-tracker*') ? 'active' : '' }}" title="Komit Tracker" style="padding-left:18px;">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
@@ -412,9 +416,13 @@
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="14" height="18" rx="2" transform="translate(3 1)"/><path d="M9 8h4M9 12h4M9 16h2" stroke-linecap="round"/></svg>
                         <span class="nav-label">Kartu Profil Mitra</span>
                     </a>
-                    <a href="{{ route('growth-specialist.set-up-lms') }}" class="nav-item {{ request()->routeIs('growth-specialist.set-up-lms*') ? 'active' : '' }}" title="Set Up LMS" style="padding-left:18px;">
+                    <a href="{{ route('growth-specialist.set-up-lms') }}" class="nav-item {{ request()->routeIs('growth-specialist.set-up-lms*') && ! request()->routeIs('growth-specialist.set-up-lms.issue*') ? 'active' : '' }}" title="Set Up LMS" style="padding-left:18px;">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M10 9l4 2-4 2z" stroke-linejoin="round"/><path d="M8 21h8" stroke-linecap="round"/></svg>
                         <span class="nav-label">Set Up LMS</span>
+                    </a>
+                    <a href="{{ route('growth-specialist.set-up-lms.issue') }}" class="nav-item {{ request()->routeIs('growth-specialist.set-up-lms.issue*') ? 'active' : '' }}" title="Issue" style="padding-left:18px;">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5" stroke-linecap="round"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/></svg>
+                        <span class="nav-label">Issue</span>
                     </a>
                     <a href="{{ route('growth-specialist.komit-tracker') }}" class="nav-item {{ request()->routeIs('growth-specialist.komit-tracker*') ? 'active' : '' }}" title="Komit Tracker" style="padding-left:18px;">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
