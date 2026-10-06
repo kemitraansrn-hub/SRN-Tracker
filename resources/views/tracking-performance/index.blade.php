@@ -65,7 +65,7 @@
         <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px; flex-wrap:wrap; gap:12px;">
             <div>
                 <div class="card-title">Hasil Upload</div>
-                <div class="card-hint">{{ $rowsPage->total() }} baris{{ $adaFilter ? ' (hasil filter)' : '' }}</div>
+                <div class="card-hint">{{ $rowsPage->total() }} baris &middot; {{ $jumlahMitraUnik }} mitra unik{{ $adaFilter ? ' (hasil filter)' : '' }}</div>
             </div>
             <form method="GET" action="{{ route('growth-specialist.tracking-performance') }}" class="field-row" style="margin-bottom:0; align-items:flex-end;">
                 <div class="field" style="margin-bottom:0; min-width:260px;">

@@ -69,6 +69,11 @@ class TrackingPerformanceController extends Controller
             $rows = $rows->where('status_growth', $request->input('growth'))->values();
         }
 
+        // Baris = satu mitra per periode (bisa beberapa baris per mitra
+        // kalau udah upload banyak minggu), jadi ditampilkan terpisah dari
+        // jumlah mitra unik-nya biar gak ketuker.
+        $jumlahMitraUnik = $rows->pluck('mitra_id')->unique()->count();
+
         $perPage = 20;
         $page = (int) $request->input('page', 1);
         $rowsPage = new LengthAwarePaginator(
@@ -81,6 +86,7 @@ class TrackingPerformanceController extends Controller
 
         return view('tracking-performance.index', [
             'rowsPage' => $rowsPage,
+            'jumlahMitraUnik' => $jumlahMitraUnik,
             'mitraOptions' => Mitra::query()
                 ->when($user->role === 'kae', fn ($qr) => $qr->where('kae_code', $user->kae_code))
                 ->orderBy('nama')->get(['id', 'nama', 'kode_mitra'])
