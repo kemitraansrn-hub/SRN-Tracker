@@ -21,6 +21,11 @@ use Illuminate\View\View;
  * Sengaja TIDAK ada blokir otomatis ke Tracking CP: keputusan final soal
  * "ini pelanggaran atau bukan" tetap di tangan Compliance secara manual,
  * cuma dibantu visibility data dari halaman Price Adjustment Monitoring.
+ *
+ * Jenis Pengajuan (2026-10-07): "SKU Slow Moving" (default/perilaku lama,
+ * wajib isi minimal 1 SKU) vs "Traffic" (gak ada SKU sama sekali, cuma
+ * wajib isi Link Toko — izin turun harga buat dorong traffic toko, bukan
+ * SKU spesifik).
  */
 class PriceAdjustmentRequestController extends Controller
 {
@@ -29,6 +34,12 @@ class PriceAdjustmentRequestController extends Controller
     ];
 
     public const STATUS_OPTIONS = ['Pending', 'Approved', 'Rejected'];
+
+    public const JENIS_TRAFFIC = 'Traffic';
+
+    public const JENIS_SKU_SLOW_MOVING = 'SKU Slow Moving';
+
+    public const JENIS_OPTIONS = [self::JENIS_TRAFFIC, self::JENIS_SKU_SLOW_MOVING];
 
     public function index(Request $request): View
     {
@@ -177,6 +188,7 @@ class PriceAdjustmentRequestController extends Controller
         return [
             'mitraOptions' => Mitra::where('status', 'aktif')->orderBy('nama')->get(['id', 'nama', 'kode_mitra']),
             'marketplaceOptions' => self::MARKETPLACE_OPTIONS,
+            'jenisOptions' => self::JENIS_OPTIONS,
             'produkOptions' => Produk::where('status', 'aktif')->orderBy('nama')->get(['id', 'nama', 'brand', 'harga_het']),
         ];
     }
@@ -199,15 +211,18 @@ class PriceAdjustmentRequestController extends Controller
         })->all();
         $request->merge(['items' => $items]);
 
+        $isTraffic = $request->input('jenis_pengajuan') === self::JENIS_TRAFFIC;
+
         $validated = $request->validate([
             'mitra_id' => ['required', 'exists:mitra,id'],
             'toko' => ['required', 'string', 'max:255'],
             'marketplace' => ['required', 'string', 'in:'.implode(',', self::MARKETPLACE_OPTIONS)],
-            'link_toko' => ['nullable', 'url', 'max:500'],
+            'jenis_pengajuan' => ['required', 'string', 'in:'.implode(',', self::JENIS_OPTIONS)],
+            'link_toko' => [$isTraffic ? 'required' : 'nullable', 'url', 'max:500'],
             'tanggal_mulai' => ['required', 'date'],
             'tanggal_selesai' => ['required', 'date', 'after_or_equal:tanggal_mulai'],
             'catatan' => ['nullable', 'string'],
-            'items' => ['required', 'array', 'min:1'],
+            'items' => [$isTraffic ? 'nullable' : 'required', 'array', $isTraffic ? 'min:0' : 'min:1'],
             'items.*.produk_id' => ['nullable', 'required_without:items.*.nama_produk_manual', 'exists:produk,id'],
             'items.*.nama_produk_manual' => ['nullable', 'required_without:items.*.produk_id', 'string', 'max:255'],
             'items.*.harga_het' => ['required', 'numeric', 'min:0'],
@@ -215,7 +230,9 @@ class PriceAdjustmentRequestController extends Controller
             'items.*.link_etalase' => ['required', 'url', 'max:500'],
         ]);
 
-        $items = array_values($validated['items']);
+        // Traffic gak ada SKU sama sekali — abaikan item apa pun yang
+        // nyangkut dari state form lama, jangan percaya kiriman client.
+        $items = $isTraffic ? [] : array_values($validated['items'] ?? []);
         unset($validated['items']);
 
         return [$validated, $items];

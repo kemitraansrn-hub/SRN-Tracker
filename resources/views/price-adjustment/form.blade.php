@@ -2,6 +2,7 @@
 
 @php
     $isEdit = isset($priceAdjustmentRequest);
+    $jenisTerpilih = old('jenis_pengajuan', $isEdit ? $priceAdjustmentRequest->jenis_pengajuan : 'SKU Slow Moving');
     $existingItemsJson = $isEdit ? $priceAdjustmentRequest->items->map(fn ($i) => [
         'produk_id' => $i->produk_id,
         'nama_produk_manual' => $i->nama_produk_manual,
@@ -36,6 +37,16 @@
             ])
         </div>
 
+        <div class="field">
+            <label>Jenis Pengajuan</label>
+            <select name="jenis_pengajuan" id="jenisPengajuanSelect" onchange="toggleJenisPengajuan()" required>
+                @foreach ($jenisOptions as $j)
+                    <option value="{{ $j }}" {{ $jenisTerpilih === $j ? 'selected' : '' }}>{{ $j }}</option>
+                @endforeach
+            </select>
+            <div style="font-size:11px; color:var(--ink-muted); margin-top:4px;">Traffic: izin turun harga buat dorong traffic toko, cukup Link Toko, gak perlu SKU. SKU Slow Moving: izin turun harga buat SKU tertentu, minimal 1 SKU.</div>
+        </div>
+
         <div class="field-row">
             <div class="field" style="flex:1;">
                 <label>Nama Toko</label>
@@ -53,8 +64,8 @@
         </div>
 
         <div class="field">
-            <label>Link Toko (opsional)</label>
-            <input type="text" name="link_toko" value="{{ old('link_toko', $isEdit ? $priceAdjustmentRequest->link_toko : '') }}" placeholder="https://... (link etalase toko secara umum)">
+            <label id="linkTokoLabel">Link Toko</label>
+            <input type="text" name="link_toko" id="linkTokoInput" value="{{ old('link_toko', $isEdit ? $priceAdjustmentRequest->link_toko : '') }}" placeholder="https://... (link etalase toko secara umum)">
         </div>
 
         <div class="field-row">
@@ -68,7 +79,7 @@
             </div>
         </div>
 
-        <div class="field" style="margin-bottom:10px;">
+        <div class="field" id="skuSection" style="margin-bottom:10px;">
             <label>SKU yang Diajukan Turun Harga</label>
             <div style="font-size:11px; color:var(--ink-muted); margin-bottom:10px;">Tiap SKU punya link etalase Shopee-nya sendiri — kalau ada lebih dari 1 produk yang mau didiskon, tambahkan barisnya satu-satu.</div>
             <div id="skuItemsContainer"></div>
@@ -133,6 +144,24 @@
 
     <script>
         let skuRowIndex = 0;
+
+        function toggleJenisPengajuan() {
+            const isTraffic = document.getElementById('jenisPengajuanSelect').value === 'Traffic';
+            const skuSection = document.getElementById('skuSection');
+            const linkTokoInput = document.getElementById('linkTokoInput');
+            const linkTokoLabel = document.getElementById('linkTokoLabel');
+
+            skuSection.style.display = isTraffic ? 'none' : '';
+            // Disabled (bukan cuma disembunyikan) biar: (1) gak ke-submit ke
+            // server sama sekali, (2) gak kena validasi HTML5 "required"
+            // bawaan browser padahal lagi disembunyikan.
+            skuSection.querySelectorAll('input, select').forEach(function (el) {
+                el.disabled = isTraffic;
+            });
+
+            linkTokoInput.required = isTraffic;
+            linkTokoLabel.textContent = isTraffic ? 'Link Toko' : 'Link Toko (opsional)';
+        }
 
         function tambahSkuRow(prefill) {
             const template = document.getElementById('skuRowTemplate');
@@ -217,6 +246,8 @@
             } else {
                 tambahSkuRow();
             }
+
+            toggleJenisPengajuan();
         });
     </script>
 @endsection

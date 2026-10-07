@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
-    'mitra_id', 'toko', 'marketplace', 'link_toko', 'tanggal_mulai', 'tanggal_selesai',
+    'mitra_id', 'toko', 'marketplace', 'jenis_pengajuan', 'link_toko', 'tanggal_mulai', 'tanggal_selesai',
     'status_approval', 'diajukan_oleh', 'disetujui_oleh', 'catatan',
 ])]
 class PriceAdjustmentRequest extends Model

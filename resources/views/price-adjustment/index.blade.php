@@ -48,7 +48,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Mitra</th><th>Toko / Marketplace</th><th>Link Toko</th><th>SKU</th><th>Periode</th>
+                        <th>Mitra</th><th>Toko / Marketplace</th><th>Jenis</th><th>Link Toko</th><th>SKU</th><th>Periode</th>
                         <th>Diajukan Oleh</th><th>Status</th><th>Diputuskan Oleh</th><th></th>
                     </tr>
                 </thead>
@@ -60,6 +60,7 @@
                                 <div style="font-weight:600;">{{ $r->toko }}</div>
                                 <div style="font-size:11px; color:var(--ink-muted);">{{ $r->marketplace }}</div>
                             </td>
+                            <td><span class="chip {{ $r->jenis_pengajuan === 'Traffic' ? 'chip-warn' : '' }}">{{ $r->jenis_pengajuan }}</span></td>
                             <td>
                                 @if ($r->link_toko)
                                     <a href="{{ $r->link_toko }}" target="_blank" rel="noopener" class="link-chip" title="Link Toko / Marketplace">
@@ -93,7 +94,7 @@
                             </td>
                         </tr>
                         <tr id="items-{{ $r->id }}" style="display:none;">
-                            <td colspan="9" style="background:var(--surface-alt);">
+                            <td colspan="10" style="background:var(--surface-alt);">
                                 <table style="width:100%;">
                                     <thead>
                                         <tr>
@@ -129,7 +130,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="9" style="color:var(--ink-muted);">Belum ada pengajuan tercatat.</td></tr>
+                        <tr><td colspan="10" style="color:var(--ink-muted);">Belum ada pengajuan tercatat.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -144,7 +145,10 @@
                 <div class="modal-box">
                     <div class="modal-title">Putuskan Pengajuan — {{ $r->mitra->nama ?? '—' }}</div>
                     <div class="modal-body">
-                        {{ $r->toko }} ({{ $r->marketplace }}) &mdash; {{ $r->tanggal_mulai->format('d/m/Y') }} s/d {{ $r->tanggal_selesai->format('d/m/Y') }}.
+                        {{ $r->toko }} ({{ $r->marketplace }}) &mdash; {{ $r->tanggal_mulai->format('d/m/Y') }} s/d {{ $r->tanggal_selesai->format('d/m/Y') }}. Jenis: <b>{{ $r->jenis_pengajuan }}</b>.
+                        @if ($r->jenis_pengajuan === 'Traffic')
+                            <div style="margin-top:6px; font-size:12.5px; color:var(--ink-muted);">Pengajuan Traffic — gak ada SKU spesifik, link toko: {{ $r->link_toko ?? '—' }}</div>
+                        @endif
                         <div style="margin-top:10px; display:flex; flex-direction:column; gap:4px;">
                             @foreach ($r->items as $it)
                                 <div style="font-size:12.5px;">
