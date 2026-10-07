@@ -22,8 +22,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * Komit Tracker, TANPA syarat "sudah ada di Tracking Performance" — justru
  * tujuannya nangkep mitra yang BELUM upload laporan mingguan). Ceklis W1-Wn
  * di layar itu KUMULATIF (pernah upload minggu itu kapan pun, gak terikat
- * bulan) — Bulan/Tahun di filter cuma dipakai buat Download Excel (snapshot
- * laporan bulan itu spesifik). Jumlah kolom minggu (W1, W2, ... Wn) MENGIKUTI
+ * periode) — Bulan/Tahun di filter dipakai buat Download Excel, tapi
+ * Download men-snapshot SATU KUARTAL PENUH (3 bulan) yang memuat bulan
+ * terpilih, bukan cuma bulan itu sendiri — W1, W2, dst reset tiap kuartal
+ * (lihat StandInLineController::quarterBoundsFor()). Jumlah kolom minggu (W1, W2, ... Wn) MENGIKUTI
  * data yang beneran di-upload — kalau ada mitra yang udah sampai W12, tabel
  * otomatis nampilin kolom sampai W12, bukan dihardcode W1-W5.
  */
@@ -56,17 +58,19 @@ class StandInLineController extends Controller
         $user = $request->user();
         $bulan = (int) $request->input('bulan', now()->month);
         $tahun = (int) $request->input('tahun', now()->year);
-        $bulanNama = \Carbon\Carbon::create($tahun, $bulan)->translatedFormat('F');
+
+        [$kuartalKe] = $this->quarterBoundsFor($bulan, $tahun);
+        $kuartalLabel = 'Q'.$kuartalKe;
 
         $mitraIds = $this->rosterMitraIds();
         $weeks = $this->weekColumns($mitraIds);
-        $rows = $this->buildRows($request, $user, trim((string) $request->input('q')), $mitraIds, cumulatif: true, bulan: $bulan, tahun: $tahun);
+        $rows = $this->buildRows($request, $user, trim((string) $request->input('q')), $mitraIds, cumulatif: false, bulan: $bulan, tahun: $tahun);
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Stand in Line');
 
-        $weekHeaders = $weeks;
+        $weekHeaders = array_map(fn ($w) => $w.' ('.$kuartalLabel.' '.$tahun.')', $weeks);
         $headers = array_merge(['ID Mitra', 'Nama Mitra', 'KAE', 'Segmen'], $weekHeaders, ['Catatan']);
         $sheet->fromArray($headers, null, 'A1', true);
         $lastColIndex = count($headers);
@@ -89,7 +93,7 @@ class StandInLineController extends Controller
 
         return response()->streamDownload(function () use ($spreadsheet) {
             (new Xlsx($spreadsheet))->save('php://output');
-        }, 'Stand in Line '.$bulanNama.' '.$tahun.'.xlsx', [
+        }, 'Stand in Line '.$kuartalLabel.' '.$tahun.'.xlsx', [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
     }
@@ -125,12 +129,16 @@ class StandInLineController extends Controller
     /**
      * @return Collection<int, array>
      *
-     * $cumulatif selalu true (layar maupun download) sejak 2026-10-07 — ceklis
-     * W1-Wn dari SELURUH riwayat Tracking Performance mitra, gak peduli bulan,
-     * supaya Download Excel selalu cocok dengan yang terlihat di layar.
-     * Parameter $cumulatif dipertahankan (bukan dihapus) buat kemungkinan
-     * dipakai lagi nanti; bulan/tahun sekarang cuma dipakai buat scope
-     * Catatan dan nama file Excel-nya, bukan buat filter ceklis.
+     * $cumulatif true (layar): ceklis W1-Wn dari SELURUH riwayat Tracking
+     * Performance mitra, gak peduli periode — tracker "pernah selesai kapan
+     * pun" sejak LMS Lengkap. $cumulatif false (download): ceklis cuma dari
+     * laporan yang tanggal_selesai-nya jatuh di SATU KUARTAL PENUH (3 bulan)
+     * yang memuat bulan/tahun terpilih — snapshot laporan kuartal itu,
+     * BUKAN cuma 1 bulan. Wajib per-kuartal (bukan per-bulan) karena
+     * penomoran W1, W2, dst reset tiap kuartal (lihat kalender kuartal yang
+     * user kasih 2026-10-07) — W1 di Juli (Q3) dan W1 di Oktober (Q4) adalah
+     * minggu yang beda sama sekali walau labelnya sama, jadi filter 1 bulan
+     * saja dulu salah motong data kuartal yang sama.
      */
     private function buildRows(Request $request, User $user, string $q, Collection $mitraIds, bool $cumulatif, int $bulan, int $tahun): Collection
     {
@@ -144,7 +152,10 @@ class StandInLineController extends Controller
         $segmenMap = SpecialDeal::segmenByMitraId(now());
 
         $weeksByMitra = TrackingPerformance::whereIn('mitra_id', $mitraRows->pluck('id'))
-            ->when(! $cumulatif, fn ($qr) => $qr->whereMonth('tanggal_selesai', $bulan)->whereYear('tanggal_selesai', $tahun))
+            ->when(! $cumulatif, function ($qr) use ($bulan, $tahun) {
+                [, $start, $end] = $this->quarterBoundsFor($bulan, $tahun);
+                $qr->whereBetween('tanggal_selesai', [$start->toDateString(), $end->toDateString()]);
+            })
             ->whereNotNull('week')
             ->get(['mitra_id', 'week'])
             ->groupBy('mitra_id')
@@ -190,5 +201,22 @@ class StandInLineController extends Controller
     private function rosterMitraIds(): Collection
     {
         return LmsStep::mitraIdsLengkap();
+    }
+
+    /**
+     * Kuartal kalender standar (Q1 Jan-Mar, Q2 Apr-Jun, Q3 Jul-Sep, Q4
+     * Okt-Des) yang memuat $bulan/$tahun, dipakai buat nge-scope Download
+     * Excel Stand in Line ke satu kuartal penuh, bukan satu bulan.
+     *
+     * @return array{0: int, 1: \Illuminate\Support\Carbon, 2: \Illuminate\Support\Carbon}
+     */
+    private function quarterBoundsFor(int $bulan, int $tahun): array
+    {
+        $kuartalKe = (int) ceil($bulan / 3);
+        $startMonth = ($kuartalKe - 1) * 3 + 1;
+        $start = \Carbon\Carbon::create($tahun, $startMonth, 1)->startOfDay();
+        $end = $start->copy()->addMonths(2)->endOfMonth();
+
+        return [$kuartalKe, $start, $end];
     }
 }
