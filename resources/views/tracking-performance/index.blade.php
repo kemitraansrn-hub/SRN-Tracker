@@ -4,7 +4,7 @@
     $rp = fn ($v) => 'Rp'.number_format((float) $v, 0, ',', '.');
     $pct = fn ($v) => $v === null ? '—' : number_format($v, 2, ',', '.').'%';
     $bulanNama = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-    $adaFilter = request('mitra_id') || request('bulan') || request('tahun') || request('week') || request('growth');
+    $adaFilter = request('mitra_id') || request('bulan') || request('tahun') || request('week') || request('growth') || request('kuartal');
     $ikonDelta = function (?string $arah) {
         return match ($arah) {
             'naik' => '<span title="Naik dibanding minggu lalu" style="color:var(--good); font-size:15px;">&#9650;</span>',
@@ -101,6 +101,15 @@
                     </select>
                 </div>
                 <div class="field" style="margin-bottom:0;">
+                    <label>Kuartal</label>
+                    <select name="kuartal" class="select-pill" onchange="this.form.submit()">
+                        <option value="">Semua Kuartal</option>
+                        @foreach ($kuartalOptions as $label)
+                            <option value="{{ $label }}" {{ request('kuartal') === $label ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="field" style="margin-bottom:0;">
                     <label>Week</label>
                     <select name="week" class="select-pill" onchange="this.form.submit()">
                         <option value="">Semua Week</option>
@@ -124,7 +133,7 @@
                 @endif
             </form>
         </div>
-        <div class="card-hint" style="padding:0 20px 12px;">Filter bulan/tahun mengikuti tanggal akhir periode. Kolom &Delta; membandingkan dengan periode sebelumnya mitra yang sama: <span style="color:var(--good);">&#9650;</span> naik, <span style="color:var(--critical);">&#9660;</span> turun, = sama, &mdash; belum ada pembanding (Baseline).</div>
+        <div class="card-hint" style="padding:0 20px 12px;">Filter bulan/tahun/kuartal mengikuti tanggal akhir periode. Penomoran Week (W1, W2, dst) reset tiap kuartal — pakai filter Kuartal (bukan cuma Week) buat lihat satu kuartal penuh tanpa ketukar sama kuartal lain yang kebetulan punya label week yang sama. Kolom &Delta; membandingkan dengan periode sebelumnya mitra yang sama: <span style="color:var(--good);">&#9650;</span> naik, <span style="color:var(--critical);">&#9660;</span> turun, = sama, &mdash; belum ada pembanding (Baseline).</div>
 
         <div class="table-scroll" style="max-height:none; overflow-y:visible;">
             <table>

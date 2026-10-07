@@ -6,6 +6,7 @@ use App\Models\Mitra;
 use App\Models\TrackingPerformance;
 use App\Models\User;
 use App\Services\TrackingPerformanceImportService;
+use App\Support\Quarter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -22,6 +23,12 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * Traffic/CTR/CVR membandingkan tiap periode dengan periode sebelumnya milik
  * mitra yang sama (ikon naik/turun); upload pertama = Baseline. Growth
  * Stagnan/Growth/Turun dan Catatan KAE masih kosong — menunggu aturan KPI.
+ * Filter Kuartal (selain Bulan/Tahun/Week yang sudah ada) ditambahkan
+ * 2026-10-07 karena penomoran Week (W1, W2, dst) reset tiap kuartal, bukan
+ * tiap bulan — filter Week sendirian (tanpa Bulan/Tahun/Kuartal) masih bisa
+ * nyampur W1-nya kuartal berbeda karena cuma cocokin teks "W1" apa adanya;
+ * pilih Kuartal buat lihat satu kuartal penuh tanpa ambigu. Lihat
+ * App\Support\Quarter (dipakai bareng StandInLineController).
  */
 class TrackingPerformanceController extends Controller
 {
@@ -62,6 +69,7 @@ class TrackingPerformanceController extends Controller
             'weekOptions' => $weekOptions,
             'tahunOptions' => $tahunOptions,
             'growthOptions' => TrackingPerformance::STATUS_GROWTH_OPTIONS,
+            'kuartalOptions' => Quarter::LABELS,
             'kaeMap' => User::kaeNameMap(),
         ]);
     }
@@ -122,6 +130,12 @@ class TrackingPerformanceController extends Controller
             ->when($request->filled('bulan'), fn ($qr) => $qr->whereMonth('tanggal_selesai', $request->integer('bulan')))
             ->when($request->filled('tahun'), fn ($qr) => $qr->whereYear('tanggal_selesai', $request->integer('tahun')))
             ->when($request->filled('week'), fn ($qr) => $qr->where('week', $request->input('week')))
+            ->when($request->filled('kuartal'), function ($qr) use ($request) {
+                $kuartalKe = (int) str_replace('Q', '', $request->input('kuartal'));
+                $tahunKuartal = $request->filled('tahun') ? $request->integer('tahun') : now()->year;
+                [$start, $end] = Quarter::bounds($kuartalKe, $tahunKuartal);
+                $qr->whereBetween('tanggal_selesai', [$start->toDateString(), $end->toDateString()]);
+            })
             ->get()
             ->sort(fn ($a, $b) => [$b->tanggal_selesai, $a->mitra->nama ?? ''] <=> [$a->tanggal_selesai, $b->mitra->nama ?? ''])
             ->values();
