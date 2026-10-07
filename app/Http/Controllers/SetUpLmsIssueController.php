@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\LmsEnrollment;
 use App\Models\LmsStep;
 use App\Models\Mitra;
 use App\Models\SetUpLmsIssue;
@@ -14,8 +13,9 @@ use Illuminate\View\View;
 /**
  * Issue (Growth Specialist > Set Up LMS) — log kendala mitra selama
  * mengerjakan LMS (device, tidak respon, waktu, dll), per platform. Mitra
- * yang bisa dipilih cuma yang sudah terdaftar di Set Up LMS (ada di
- * lms_enrollments), bukan semua mitra.
+ * yang bisa dipilih sama seperti picker di halaman Set Up LMS sendiri —
+ * semua mitra aktif (scoped KAE), baik yang sudah Lengkap, masih proses,
+ * maupun belum mulai sama sekali (belum punya baris lms_enrollments).
  */
 class SetUpLmsIssueController extends Controller
 {
@@ -25,8 +25,7 @@ class SetUpLmsIssueController extends Controller
         $q = trim((string) $request->input('q'));
         $platformFilter = trim((string) $request->input('platform'));
 
-        $enrolledMitraIds = LmsEnrollment::distinct()->pluck('mitra_id');
-        $mitraOptions = $this->scopedMitra($user)->whereIn('id', $enrolledMitraIds)->orderBy('nama')
+        $mitraOptions = $this->scopedMitra($user)->where('status', 'aktif')->orderBy('nama')
             ->get(['id', 'nama', 'kode_mitra'])
             ->map(fn ($m) => (object) ['id' => $m->id, 'label' => $m->nama.' ('.$m->kode_mitra.')']);
 
@@ -58,8 +57,6 @@ class SetUpLmsIssueController extends Controller
         ]);
 
         $mitra = $this->scopedMitra($request->user())->findOrFail($data['mitra_id']);
-
-        abort_unless(LmsEnrollment::where('mitra_id', $mitra->id)->exists(), 422, 'Mitra ini belum terdaftar di Set Up LMS.');
 
         SetUpLmsIssue::create([
             'mitra_id' => $mitra->id,

@@ -2,7 +2,7 @@
 
 @section('content')
     <h1 class="display" style="font-size:24px; margin-bottom:4px;">Issue</h1>
-    <div class="card-hint" style="margin-bottom:16px;">Catat kendala mitra selama mengerjakan LMS (device, tidak respon, waktu, dll) per platform. Mitra yang bisa dipilih cuma yang sudah terdaftar di Set Up LMS.</div>
+    <div class="card-hint" style="margin-bottom:16px;">Catat kendala mitra selama mengerjakan LMS (device, tidak respon, waktu, dll) per platform. Mitra yang bisa dipilih sama seperti Set Up LMS — baik yang sudah Lengkap, masih proses, maupun belum mulai sama sekali.</div>
 
     @if (session('status'))
         <div class="alert-success">{{ session('status') }}</div>
@@ -20,7 +20,7 @@
                 'name' => 'mitra_id',
                 'options' => $mitraOptions,
                 'selectedId' => old('mitra_id'),
-                'placeholder' => 'Ketik buat cari mitra yang sudah terdaftar di Set Up LMS...',
+                'placeholder' => 'Ketik buat cari mitra...',
             ])
         </div>
 
