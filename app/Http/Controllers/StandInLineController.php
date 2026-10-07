@@ -60,13 +60,13 @@ class StandInLineController extends Controller
 
         $mitraIds = $this->rosterMitraIds();
         $weeks = $this->weekColumns($mitraIds);
-        $rows = $this->buildRows($request, $user, trim((string) $request->input('q')), $mitraIds, cumulatif: false, bulan: $bulan, tahun: $tahun);
+        $rows = $this->buildRows($request, $user, trim((string) $request->input('q')), $mitraIds, cumulatif: true, bulan: $bulan, tahun: $tahun);
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Stand in Line');
 
-        $weekHeaders = array_map(fn ($w) => $w.' ('.$bulanNama.' '.$tahun.')', $weeks);
+        $weekHeaders = $weeks;
         $headers = array_merge(['ID Mitra', 'Nama Mitra', 'KAE', 'Segmen'], $weekHeaders, ['Catatan']);
         $sheet->fromArray($headers, null, 'A1', true);
         $lastColIndex = count($headers);
@@ -125,10 +125,12 @@ class StandInLineController extends Controller
     /**
      * @return Collection<int, array>
      *
-     * $cumulatif true (layar): ceklis W1-Wn dari SELURUH riwayat Tracking
-     * Performance mitra, gak peduli bulan. $cumulatif false (download):
-     * ceklis cuma dari laporan yang tanggal_selesai-nya jatuh di bulan/tahun
-     * yang dipilih — snapshot laporan bulan itu spesifik.
+     * $cumulatif selalu true (layar maupun download) sejak 2026-10-07 — ceklis
+     * W1-Wn dari SELURUH riwayat Tracking Performance mitra, gak peduli bulan,
+     * supaya Download Excel selalu cocok dengan yang terlihat di layar.
+     * Parameter $cumulatif dipertahankan (bukan dihapus) buat kemungkinan
+     * dipakai lagi nanti; bulan/tahun sekarang cuma dipakai buat scope
+     * Catatan dan nama file Excel-nya, bukan buat filter ceklis.
      */
     private function buildRows(Request $request, User $user, string $q, Collection $mitraIds, bool $cumulatif, int $bulan, int $tahun): Collection
     {
