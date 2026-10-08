@@ -203,7 +203,17 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $growthSpecialist = $this->growthSpecialistData($canViewAll, $kaeCode, $now->month, $now->year);
+        // Scoping Growth Specialist SENGAJA beda dari $canViewAll yang
+        // dipakai bagian Sales di atas — $canViewAll berbasis
+        // admin/head/finance/compliance/supervisor/manager (buat data
+        // Sales), sedangkan semua halaman Growth Specialist asli (Set Up
+        // LMS, Komit Tracker, dst — lihat scopedMitra() di controllernya
+        // masing-masing) cuma nge-scope buat role 'kae' secara eksplisit,
+        // role lain (termasuk 'growth_specialist', yang gak masuk
+        // $canViewAll() sama sekali) lihat semua mitra. Pakai $canViewAll
+        // di sini bikin akun role growth_specialist (gak punya kae_code)
+        // jatuh ke scope kosong — bug yang dilaporkan user 2026-10-08.
+        $growthSpecialist = $this->growthSpecialistData($user->role !== 'kae', $user->kae_code, $now->month, $now->year);
 
         return view('dashboard', [
             'trendCard' => $trendCard,
@@ -247,22 +257,32 @@ class DashboardController extends Controller
     }
 
     /**
-     * Dashboard > Development > Growth Specialist (2026-10-08). Set Up LMS &
-     * Tracking Performance mitra unik = snapshot all-time (progress/status,
-     * bukan transaksi bulanan, jadi gak ikut filter Bulan/Tahun) — Komit
-     * Tracker & Status Belanja TETAP ikut $bulan/$tahun (bulan berjalan)
-     * sesuai permintaan user. Semua dilingkupi mitraAktifIds biar KAE cuma
-     * lihat mitra sendiri (sama seperti bagian Sales di atas) dan funnel-nya
-     * nested konsisten (tiap tahap adalah subset tahap sebelumnya).
+     * Dashboard > Development > Growth Specialist (2026-10-08, scoping
+     * diperbaiki 2026-10-08). Set Up LMS & Tracking Performance mitra unik =
+     * snapshot all-time (progress/status, bukan transaksi bulanan, jadi gak
+     * ikut filter Bulan/Tahun) — Komit Tracker & Status Belanja TETAP ikut
+     * $bulan/$tahun (bulan berjalan) sesuai permintaan user. Semua
+     * dilingkupi mitraAktifIds biar funnel-nya nested konsisten (tiap tahap
+     * adalah subset tahap sebelumnya).
+     *
+     * $scopeBebas = TRUE berarti lihat SEMUA mitra (gak di-scope KAE).
+     * SENGAJA bukan $canViewAll() milik bagian Sales (admin/head/finance/
+     * compliance/supervisor/manager) — semua halaman Growth Specialist asli
+     * (SetUpLmsController::scopedMitra(), StandInLineController,
+     * TrackingPerformanceController) cuma nge-scope KAE buat role 'kae'
+     * secara eksplisit, role lain (termasuk 'growth_specialist', yang gak
+     * masuk canViewAll() sama sekali) lihat semua mitra. Pakai canViewAll()
+     * di sini bikin akun role growth_specialist (gak punya kae_code) jatuh
+     * ke scope kosong — itu bug yang dilaporkan user, sudah diperbaiki.
      *
      * Formula roster Komit Tracker & status belanja SENGAJA diduplikasi dari
      * KomitTrackerController::rosterMitraIds()/buildRows() (keduanya
      * private) — kalau formula di sana berubah, update juga di sini.
      */
-    private function growthSpecialistData(bool $canViewAll, ?string $kaeCode, int $bulan, int $tahun): array
+    private function growthSpecialistData(bool $scopeBebas, ?string $kaeCode, int $bulan, int $tahun): array
     {
         $mitraAktifIds = Mitra::where('status', 'aktif')
-            ->when(! $canViewAll, fn ($q) => $q->where('kae_code', $kaeCode))
+            ->when(! $scopeBebas, fn ($q) => $q->where('kae_code', $kaeCode))
             ->pluck('id');
 
         // --- Set Up LMS: status ringkas per mitra + breakdown ---
