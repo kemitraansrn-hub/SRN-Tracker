@@ -867,7 +867,7 @@
                     </div>
                     <div class="card-title">Funnel Konversi Growth Specialist</div>
                 </div>
-                <div class="card-hint">Total Mitra Aktif &rarr; Tercapai Target</div>
+                <div class="card-hint">Masuk Set Up LMS &rarr; Tercapai Target</div>
             </div>
             @php $funnelTotal = $gs['funnelStages'][0]['count'] ?: 1; @endphp
             <div style="display:flex; flex-direction:column;">

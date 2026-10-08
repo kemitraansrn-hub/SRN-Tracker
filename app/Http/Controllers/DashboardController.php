@@ -316,7 +316,6 @@ class DashboardController extends Controller
         $funnelTercapai = $statusBelanjaCounts->get('tercapai', 0) + $statusBelanjaCounts->get('over-ro', 0);
 
         $funnelStages = [
-            ['label' => 'Total Mitra Aktif', 'count' => $mitraAktifIds->count(), 'url' => route('mitra.index'), 'drop_off_label' => 'belum masuk Set Up LMS', 'drop_off_url' => route('growth-specialist.set-up-lms')],
             ['label' => 'Masuk Set Up LMS', 'count' => $totalMitraLms, 'url' => route('growth-specialist.set-up-lms'), 'drop_off_label' => 'belum Lengkap LMS', 'drop_off_url' => route('growth-specialist.set-up-lms')],
             ['label' => 'LMS Lengkap', 'count' => $lmsStatusCounts->get('Lengkap', 0), 'url' => route('growth-specialist.set-up-lms'), 'drop_off_label' => 'belum upload Tracking Performance', 'drop_off_url' => route('growth-specialist.tracking-performance.stand-in-line')],
             ['label' => 'Upload Tracking Performance', 'count' => $totalMitraUnikTp, 'url' => route('growth-specialist.tracking-performance'), 'drop_off_label' => 'belum tercapai target bulan ini', 'drop_off_url' => route('growth-specialist.komit-tracker')],
