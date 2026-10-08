@@ -39,6 +39,17 @@
         </div>
     @endif
 
+    @if (session('merge_report'))
+        <div class="card" style="margin-bottom:20px;">
+            <div class="card-title" style="margin-bottom:10px;">Rincian data yang dipindah</div>
+            <div style="max-height:220px; overflow-y:auto; font-size:12px; color:var(--ink-muted); line-height:1.7;">
+                @foreach (session('merge_report') as $line)
+                    <div>{{ $line }}</div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     <form method="GET" action="{{ route('mitra.index') }}" class="field-row" style="align-items:flex-end;">
         <div class="field" style="margin-bottom:0; flex:1; min-width:180px;">
             <label>Cari</label>
@@ -153,6 +164,7 @@
                                 <div style="display:flex; gap:6px;">
                                     <a href="{{ route('mitra.show', $m) }}" class="link-action" style="color:var(--accent-ink); font-size:12.5px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 10px; white-space:nowrap; display:inline-block;">Lihat detail</a>
                                     @if (auth()->user()->hasAdminAccess())
+                                        <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="openMergeModal('{{ $m->id }}', '{{ addslashes($m->nama) }}')">Gabung</button>
                                         <form method="POST" action="{{ route('mitra.destroy', $m) }}" onsubmit="return confirm('Hapus mitra {{ addslashes($m->nama) }}? Cuma bisa dihapus kalau belum ada Order/Target/Special Deal/dll yang terhubung. Tindakan ini gak bisa dibatalkan.');">
                                             @csrf
                                             @method('DELETE')
@@ -171,4 +183,48 @@
     </section>
 
     <div style="margin-top:16px;">{{ $mitraList->links() }}</div>
+
+    @if (auth()->user()->hasAdminAccess())
+        @php
+            $mergeMitraOptionsFmt = $mergeMitraOptions->map(fn ($m) => (object) ['id' => $m->id, 'label' => $m->nama.' ('.($m->kode_mitra ?: 'Belum ada kode').')']);
+        @endphp
+        <div class="modal-overlay" id="modal-merge-mitra" style="display:none;">
+            <div class="modal-box">
+                <div class="modal-title" id="merge-mitra-title">Gabung Mitra</div>
+                <form method="POST" action="{{ route('mitra.merge') }}">
+                    @csrf
+                    <input type="hidden" name="source_id" id="merge-mitra-source-id">
+                    <div class="field">
+                        <label>Gabung ke mitra mana?</label>
+                        @include('partials.searchable-select', [
+                            'id' => 'mergeMitraTargetSelect',
+                            'name' => 'target_id',
+                            'options' => $mergeMitraOptionsFmt,
+                            'selectedId' => '',
+                            'placeholder' => 'Ketik buat cari mitra tujuan...',
+                        ])
+                    </div>
+                    <div style="font-size:11.5px; color:var(--ink-muted); background:var(--surface-alt); border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin:10px 0 16px; line-height:1.6;">
+                        Semua data (Order, Target Bulanan, Special Deal, Tracking Performance, dll) milik <b id="merge-mitra-source-nama">mitra ini</b> akan dipindah ke mitra tujuan, lalu <b id="merge-mitra-source-nama-2">mitra ini</b> dihapus. Kalau kebetulan ada data di periode yang sama (misal sama-sama punya Target Bulanan bulan yang sama), punya mitra tujuan yang dipertahankan, punya mitra ini dibuang. Tindakan ini gak bisa dibatalkan.
+                    </div>
+                    <div class="modal-actions" style="display:flex; gap:8px; justify-content:flex-end;">
+                        <button type="button" class="btn" style="width:auto;" onclick="closeMergeModal()">Batal</button>
+                        <button type="submit" class="btn btn-primary" style="width:auto;" onclick="return confirm('Yakin gabung mitra ini? Tindakan gak bisa dibatalkan.');">Gabung</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <script>
+            function openMergeModal(mitraId, nama) {
+                document.getElementById('merge-mitra-source-id').value = mitraId;
+                document.getElementById('merge-mitra-title').textContent = 'Gabung Mitra — ' + nama;
+                document.getElementById('merge-mitra-source-nama').textContent = nama;
+                document.getElementById('merge-mitra-source-nama-2').textContent = nama;
+                document.getElementById('modal-merge-mitra').style.display = 'flex';
+            }
+            function closeMergeModal() {
+                document.getElementById('modal-merge-mitra').style.display = 'none';
+            }
+        </script>
+    @endif
 @endsection

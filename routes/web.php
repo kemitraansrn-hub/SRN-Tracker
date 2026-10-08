@@ -219,6 +219,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
             Route::get('/{mitra}/edit', [MitraController::class, 'edit'])->name('edit');
             Route::put('/{mitra}', [MitraController::class, 'update'])->name('update');
             Route::delete('/{mitra}', [MitraController::class, 'destroy'])->name('destroy');
+            Route::post('/merge', [MitraController::class, 'merge'])->name('merge');
         });
 
         Route::get('/{mitra}', [MitraController::class, 'show'])->name('show');

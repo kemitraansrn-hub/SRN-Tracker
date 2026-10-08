@@ -6,6 +6,7 @@ use App\Models\Mitra;
 use App\Models\SpecialDeal;
 use App\Models\User;
 use App\Services\MasterMitraImportService;
+use App\Services\MitraMergeService;
 use App\Services\StabilitasService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -93,6 +94,11 @@ class MitraController extends Controller
             'segmenOptions' => SpecialDeal::SEGMEN_OPTIONS,
             'blnAktifLabel' => 'Bln Aktif Q'.$quarterRange['kuartal'],
             'lmLabel' => 'LM ('.$prevMonthRef->translatedFormat('M').')',
+            // Dipakai dropdown "Gabung Mitra" (admin-only) — seluruh mitra,
+            // bukan cuma hasil filter/paginasi halaman ini.
+            'mergeMitraOptions' => $user->hasAdminAccess()
+                ? Mitra::orderBy('nama')->get(['id', 'nama', 'kode_mitra'])
+                : collect(),
         ]);
     }
 
@@ -296,6 +302,82 @@ class MitraController extends Controller
         $mitra->delete();
 
         return redirect()->route('mitra.index')->with('status', 'Mitra "'.$nama.'" berhasil dihapus.');
+    }
+
+    /**
+     * Label Indonesia buat laporan hasil Gabung Mitra — daftar tabelnya
+     * HARUS sinkron dengan MitraMergeService::SIMPLE_TABLES +
+     * CONFLICT_AWARE_TABLES (lihat catatan 21-tabel di situ).
+     */
+    private const MERGE_TABLE_LABELS = [
+        'buyback_requests' => 'Pengajuan Buy Back',
+        'cp_cases' => 'Tracking CP',
+        'followup_logs' => 'Follow-up Log',
+        'forecast_ros' => 'Forecast RO',
+        'mitra_assignments' => 'Assignment',
+        'mitra_snapshots' => 'Snapshot Data Development',
+        'one_on_ones' => '1 on 1',
+        'orders' => 'Order',
+        'poin_redemptions' => 'Penukaran Poin',
+        'price_adjustment_requests' => 'Price Adjustment',
+        'sales_drafts' => 'Input Penjualan',
+        'set_up_lms_issues' => 'Issue (Set Up LMS)',
+        'special_deals' => 'Special Deal',
+        'lms_enrollments' => 'Pendaftaran LMS',
+        'lms_step_completions' => 'Centang Video LMS',
+        'mitra_profil_growth' => 'Profiling Mitra',
+        'new_mitra_flags' => 'Tanda Mitra Baru',
+        'set_up_lms_notes' => 'Catatan LMS',
+        'stand_in_line_notes' => 'Catatan Stand in Line',
+        'target_bulanan' => 'Target Bulanan',
+        'tracking_performances' => 'Tracking Performance',
+    ];
+
+    /**
+     * "Gabung Mitra" — buat kejadian 1 mitra ke-input 2x sebagai baris
+     * berbeda (biasanya karena nama gak persis cocok pas upload). 'source_id'
+     * = mitra DUPLIKAT yang mau dihapus, 'target_id' = mitra ASLI yang mau
+     * dipertahankan. Semua data mitra duplikat dipindah ke target, duplikat
+     * dihapus di akhir. Lihat MitraMergeService buat aturan lengkapnya
+     * (kalau ada tabrakan data di periode yang sama, punya target yang
+     * menang). Dua ID dikirim lewat body (bukan route-model-binding) biar
+     * form modal-nya bisa pakai action tetap + hidden input, sama kayak
+     * pola modal LMS Note.
+     */
+    public function merge(Request $request, MitraMergeService $mergeService): RedirectResponse
+    {
+        $data = $request->validate([
+            'source_id' => ['required', 'integer', 'exists:mitra,id'],
+            'target_id' => ['required', 'integer', 'exists:mitra,id'],
+        ]);
+
+        if ($data['target_id'] === $data['source_id']) {
+            return back()->withErrors(['merge' => 'Mitra tujuan gabung gak boleh mitra yang sama.']);
+        }
+
+        $mitra = Mitra::findOrFail($data['source_id']);
+        $target = Mitra::findOrFail($data['target_id']);
+
+        $namaDuplikat = $mitra->nama;
+        $namaTarget = $target->nama;
+        $report = $mergeService->merge($mitra, $target);
+
+        $ringkasan = collect($report)->map(function ($r, $table) {
+            $label = self::MERGE_TABLE_LABELS[$table] ?? $table;
+            $text = $label.': '.$r['dipindah'].' dipindah';
+            if ($r['dilewati'] > 0) {
+                $text .= ', '.$r['dilewati'].' dilewati (tabrakan periode, data mitra tujuan dipertahankan)';
+            }
+
+            return $text;
+        })->values();
+
+        $status = 'Mitra "'.$namaDuplikat.'" berhasil digabung ke "'.$namaTarget.'".';
+        $status .= $ringkasan->isEmpty() ? ' Mitra duplikat ini gak punya data apa pun.' : '';
+
+        return redirect()->route('mitra.index')
+            ->with('status', $status)
+            ->with('merge_report', $ringkasan->isNotEmpty() ? $ringkasan->all() : null);
     }
 
     private function validated(Request $request, ?Mitra $mitra = null): array
