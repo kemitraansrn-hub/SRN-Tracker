@@ -124,9 +124,9 @@
                                                 <td style="padding:8px 10px; font-weight:600; vertical-align:top;">{{ $sesi->label() }}</td>
                                                 <td style="padding:8px 10px; vertical-align:top;" class="tnum">{{ $sesi->jadwal_zoom?->format('d/m/Y H:i') }}</td>
                                                 <td style="padding:8px 10px; vertical-align:top;">{{ $sesi->status === 'selesai' ? 'Selesai' : 'Terjadwal' }}</td>
-                                                <td style="padding:8px 10px; vertical-align:top; white-space:normal; word-break:break-word; overflow-wrap:anywhere;">{{ $sesi->problem ?: '—' }}</td>
-                                                <td style="padding:8px 10px; vertical-align:top; white-space:normal; word-break:break-word; overflow-wrap:anywhere;">{{ $sesi->solusi ?: '—' }}</td>
-                                                <td style="padding:8px 10px; vertical-align:top; white-space:normal; word-break:break-word; overflow-wrap:anywhere;">{{ $sesi->action_plan ?: '—' }}</td>
+                                                <td style="padding:8px 10px; vertical-align:top; white-space:pre-line; word-break:break-word; overflow-wrap:anywhere;">{{ $sesi->problem ?: '—' }}</td>
+                                                <td style="padding:8px 10px; vertical-align:top; white-space:pre-line; word-break:break-word; overflow-wrap:anywhere;">{{ $sesi->solusi ?: '—' }}</td>
+                                                <td style="padding:8px 10px; vertical-align:top; white-space:pre-line; word-break:break-word; overflow-wrap:anywhere;">{{ $sesi->action_plan ?: '—' }}</td>
                                             </tr>
                                         @endforeach
                                     </tbody>
