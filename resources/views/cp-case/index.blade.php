@@ -55,6 +55,15 @@
             </select>
         </div>
         <div class="field" style="margin-bottom:0;">
+            <label>Keterangan</label>
+            <select class="select-pill" name="keterangan" onchange="this.form.submit()">
+                <option value="">Semua</option>
+                @foreach ($keteranganOptions as $k)
+                    <option value="{{ $k }}" {{ request('keterangan') === $k ? 'selected' : '' }}>{{ $k === '—' ? 'Belum Ada Keterangan' : $k }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="field" style="margin-bottom:0;">
             <label>Dari Tanggal</label>
             <input type="date" name="dari" value="{{ request('dari') }}">
         </div>
@@ -63,7 +72,7 @@
             <input type="date" name="sampai" value="{{ request('sampai') }}">
         </div>
         <button type="submit" class="btn" style="width:auto;">Cari</button>
-        @if (request('q') || request('status_kasus') || request('platform') || request('dari') || request('sampai'))
+        @if (request('q') || request('status_kasus') || request('platform') || request('keterangan') || request('dari') || request('sampai'))
             <a href="{{ route('tracking-cp.index') }}" class="btn" style="width:auto;">Reset</a>
         @endif
     </form>
@@ -104,17 +113,9 @@
                                 @endif
                             </td>
                             <td>
-                                @if ($c->status_kasus === 'Case Closed')
-                                    <span style="font-size:12.5px;">Mitra menaikan harga</span>
-                                @elseif ($c->takedownBanding)
-                                    <span style="font-size:12.5px;">Take Down</span>
-                                    @if ($c->takedownBanding->status_banding)
-                                        <div style="font-size:11px; color:var(--ink-muted); margin-top:3px;">Banding: {{ $c->takedownBanding->status_banding }}</div>
-                                    @endif
-                                @elseif ($c->status_takedown)
-                                    <span style="font-size:12.5px;">{{ $c->status_takedown }}</span>
-                                @else
-                                    <span style="color:var(--ink-faint); font-size:12px;">—</span>
+                                <span style="{{ $c->keterangan() === '—' ? 'color:var(--ink-faint); font-size:12px;' : 'font-size:12.5px;' }}">{{ $c->keterangan() }}</span>
+                                @if ($c->takedownBanding && $c->takedownBanding->status_banding)
+                                    <div style="font-size:11px; color:var(--ink-muted); margin-top:3px;">Banding: {{ $c->takedownBanding->status_banding }}</div>
                                 @endif
                             </td>
                             <td>

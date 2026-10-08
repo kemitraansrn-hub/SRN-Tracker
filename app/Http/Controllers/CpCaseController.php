@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
@@ -46,6 +47,16 @@ class CpCaseController extends Controller
         'Menunggu Approval', 'Approved', 'Rejected', 'Listed ke Shopee', 'Take Down',
     ];
 
+    /**
+     * Opsi filter/tampilan kolom "Keterangan" (lihat CpCase::keterangan()) —
+     * "Mitra menaikan harga" khusus Case Closed, sisanya mengikuti
+     * STATUS_TAKEDOWN_OPTIONS apa adanya (Take Down di situ juga mencakup
+     * kasus yang udah punya CpTakedownBanding). "—" buat kasus yang belum
+     * ada keterangan sama sekali (masih Baru Ditemukan/Progres/Pengajuan
+     * Takedown tanpa status_takedown).
+     */
+    public const KETERANGAN_OPTIONS = ['Mitra menaikan harga', ...self::STATUS_TAKEDOWN_OPTIONS, '—'];
+
     public function index(Request $request): View
     {
         $user = $request->user();
@@ -59,10 +70,38 @@ class CpCaseController extends Controller
         $query = $this->filteredQuery($request);
 
         return view('cp-case.index', [
-            'cases' => $query->paginate(20)->withQueryString(),
+            'cases' => $this->paginateWithKeterangan($request, $query),
             'statusOptions' => self::STATUS_KASUS_OPTIONS,
             'platformOptions' => self::PLATFORM_OPTIONS,
+            'keteranganOptions' => self::KETERANGAN_OPTIONS,
         ]);
+    }
+
+    /**
+     * Keterangan itu nilai turunan (CpCase::keterangan()), bukan kolom asli
+     * — gak bisa di-WHERE langsung di query. Kalau filter Keterangan aktif,
+     * ambil semua baris (yang udah lolos filter lain), hitung Keterangan
+     * tiap baris di PHP, baru paginate manual. Kalau filter Keterangan gak
+     * aktif, tetap paginate di level DB seperti biasa (lebih efisien).
+     */
+    private function paginateWithKeterangan(Request $request, Builder $query): LengthAwarePaginator
+    {
+        if (! $request->filled('keterangan')) {
+            return $query->paginate(20)->withQueryString();
+        }
+
+        $cases = $query->get()->filter(fn ($c) => $c->keterangan() === $request->input('keterangan'))->values();
+
+        $perPage = 20;
+        $page = (int) $request->input('page', 1);
+
+        return new LengthAwarePaginator(
+            $cases->forPage($page, $perPage)->values(),
+            $cases->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
     }
 
     private function filteredQuery(Request $request): Builder
@@ -86,6 +125,9 @@ class CpCaseController extends Controller
     public function export(Request $request): StreamedResponse
     {
         $cases = $this->filteredQuery($request)->get();
+        if ($request->filled('keterangan')) {
+            $cases = $cases->filter(fn ($c) => $c->keterangan() === $request->input('keterangan'))->values();
+        }
 
         $headers = [
             'Kode', 'Tanggal Temuan', 'Mitra', 'Nama Toko', 'Platform', 'Kota',
@@ -105,12 +147,10 @@ class CpCaseController extends Controller
 
         $row = 2;
         foreach ($cases as $c) {
-            $keterangan = match (true) {
-                $c->status_kasus === 'Case Closed' => 'Mitra menaikan harga',
-                (bool) $c->takedownBanding => 'Take Down'.($c->takedownBanding->status_banding ? ' — Banding: '.$c->takedownBanding->status_banding : ''),
-                (bool) $c->status_takedown => $c->status_takedown,
-                default => '—',
-            };
+            $keterangan = $c->keterangan();
+            if ($keterangan === 'Take Down' && $c->takedownBanding?->status_banding) {
+                $keterangan .= ' — Banding: '.$c->takedownBanding->status_banding;
+            }
 
             $sheet->fromArray([
                 $c->kode,

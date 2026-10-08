@@ -93,4 +93,21 @@ class CpCase extends Model
 
         return $this->terlaris >= 1000 ? 'Toko Besar' : 'Toko Kecil';
     }
+
+    /**
+     * Kategori ringkas buat kolom & filter "Keterangan" di index() — beda
+     * dari status_kasus mentah, ini udah memperhitungkan Take Down/banding.
+     * Satu-satunya tempat logika ini dihitung (sebelumnya ditulis ulang di
+     * CpCaseController::export() dan view index), dipakai juga buat filter
+     * dropdown Keterangan (lihat CpCaseController::KETERANGAN_OPTIONS).
+     */
+    public function keterangan(): string
+    {
+        return match (true) {
+            $this->status_kasus === 'Case Closed' => 'Mitra menaikan harga',
+            (bool) $this->takedownBanding => 'Take Down',
+            (bool) $this->status_takedown => $this->status_takedown,
+            default => '—',
+        };
+    }
 }
