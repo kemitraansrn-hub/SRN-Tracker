@@ -716,12 +716,198 @@
             </section>
         @endif
 
-        <h2 style="font-size:16px; font-weight:700; margin:28px 0 14px;">Growth Specialist</h2>
-        <div class="card" style="text-align:center; padding:60px 20px; color:var(--ink-muted);">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="margin:0 auto 16px; opacity:0.5;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <div style="font-size:15px; font-weight:600; color:var(--ink); margin-bottom:6px;">Segera Hadir</div>
-            <div style="font-size:13px;">Dashboard Growth Specialist masih dalam tahap perencanaan.</div>
-        </div>
+        <h2 style="font-size:16px; font-weight:700; margin:28px 0 4px;">Growth Specialist</h2>
+        <div style="font-size:12px; color:var(--ink-muted); margin-bottom:14px;">Set Up LMS &amp; Tracking Performance: snapshot terkini (gak terikat filter Bulan/Tahun). Komit Tracker &amp; Status Belanja: {{ $periodeLabel }}.</div>
+
+        <section style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-bottom:16px; align-items:stretch;">
+            <a href="{{ route('growth-specialist.set-up-lms') }}" class="card" style="min-width:0; text-decoration:none; color:inherit; display:block;" title="Lihat Set Up LMS">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:8px;">
+                    <div class="info-label" style="margin-bottom:0;">Mitra Progress Set Up LMS</div>
+                    <div style="width:34px; height:34px; border-radius:10px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-ink)" stroke-width="2"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M10 9l4 2-4 2z" stroke-linejoin="round"/><path d="M8 21h8" stroke-linecap="round"/></svg>
+                    </div>
+                </div>
+                <div class="tnum" style="font-size:25px; font-weight:700;">{{ $gs['totalMitraLms'] }}</div>
+                <div style="font-size:11.5px; color:var(--ink-muted); margin-top:4px;">mitra terdaftar di LMS</div>
+            </a>
+
+            <a href="{{ route('growth-specialist.tracking-performance') }}" class="card" style="min-width:0; text-decoration:none; color:inherit; display:block;" title="Lihat Tracking Performance">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:8px;">
+                    <div class="info-label" style="margin-bottom:0;">Mitra Unik Tracking Performance</div>
+                    <div style="width:34px; height:34px; border-radius:10px; background:var(--good-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--good)" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+                    </div>
+                </div>
+                <div class="tnum" style="font-size:25px; font-weight:700;">{{ $gs['totalMitraUnikTp'] }}</div>
+                <div style="font-size:11.5px; color:var(--ink-muted); margin-top:4px;">pernah upload laporan</div>
+            </a>
+
+            @php
+                $gsDonutR = 40; $gsDonutCirc = 2 * M_PI * $gsDonutR;
+                $gsDonutFilled = $gs['totalPctAchGs'] !== null ? min($gs['totalPctAchGs'], 100) / 100 * $gsDonutCirc : 0;
+            @endphp
+            <a href="{{ route('growth-specialist.komit-tracker') }}" class="card" style="min-width:0; text-decoration:none; color:inherit; display:block;" title="Lihat Komit Tracker">
+                <div class="info-label" style="margin-bottom:10px;">Komit Tracker — Ach vs Target ({{ $periodeLabel }})</div>
+                <div style="display:flex; align-items:center; gap:14px;">
+                    <svg width="80" height="80" viewBox="0 0 100 100" style="flex-shrink:0;">
+                        <circle cx="50" cy="50" r="{{ $gsDonutR }}" fill="none" stroke="var(--line)" stroke-width="11"/>
+                        <circle cx="50" cy="50" r="{{ $gsDonutR }}" fill="none" stroke="var(--accent)" stroke-width="11"
+                            stroke-linecap="round" transform="rotate(-90 50 50)"
+                            stroke-dasharray="{{ $gsDonutFilled }} {{ $gsDonutCirc }}"/>
+                        <text x="50" y="50" text-anchor="middle" dominant-baseline="central" class="tnum" style="font-size:15px; font-weight:700; fill:var(--ink);">{{ $gs['totalPctAchGs'] !== null ? $gs['totalPctAchGs'].'%' : '—' }}</text>
+                    </svg>
+                    <div style="flex:1; min-width:0;">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="width:8px; height:8px; border-radius:50%; background:var(--accent); flex-shrink:0;"></span>
+                            <span style="font-size:11px; color:var(--ink-muted);">Pencapaian</span>
+                        </div>
+                        <div class="tnum" style="font-size:12.5px; font-weight:700; margin:2px 0 7px 14px;">{{ $rp($gs['totalAchGs']) }}</div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="width:8px; height:8px; border-radius:50%; background:var(--line); flex-shrink:0;"></span>
+                            <span style="font-size:11px; color:var(--ink-muted);">Target</span>
+                        </div>
+                        <div class="tnum" style="font-size:12.5px; font-weight:700; margin:2px 0 0 14px;">{{ $rp($gs['totalKomitGs']) }}</div>
+                    </div>
+                </div>
+            </a>
+        </section>
+
+        <section style="display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; margin-bottom:16px; align-items:stretch;">
+            <div class="card" style="min-width:0;">
+                <div class="card-head">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="width:28px; height:28px; border-radius:8px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-ink)" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83" stroke-linecap="round"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                        </div>
+                        <div class="card-title">Set Up LMS berdasarkan Status</div>
+                    </div>
+                    <div class="card-hint">{{ $gs['totalMitraLms'] }} mitra</div>
+                </div>
+                @if ($gs['totalMitraLms'] === 0)
+                    <div style="color:var(--ink-faint); font-size:12.5px; text-align:center; padding:20px 0;">Belum ada mitra yang masuk Set Up LMS.</div>
+                @else
+                    @php
+                        $lmsDonutR = 42; $lmsDonutCirc = 2 * M_PI * $lmsDonutR;
+                        $lmsColorVar = ['Lengkap' => 'good', 'Proses' => 'warn', 'Awal' => 'critical'];
+                        $lmsOffset = 0;
+                    @endphp
+                    <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+                        <svg width="104" height="104" viewBox="0 0 100 100" style="flex-shrink:0;">
+                            <circle cx="50" cy="50" r="{{ $lmsDonutR }}" fill="none" stroke="var(--line)" stroke-width="12"/>
+                            @foreach (['Lengkap', 'Proses', 'Awal'] as $statusKey)
+                                @php $cnt = $gs['lmsStatusCounts']->get($statusKey, 0); @endphp
+                                @if ($cnt > 0)
+                                    @php $len = $cnt / $gs['totalMitraLms'] * $lmsDonutCirc; @endphp
+                                    <circle cx="50" cy="50" r="{{ $lmsDonutR }}" fill="none" stroke="var(--{{ $lmsColorVar[$statusKey] }})" stroke-width="12" stroke-dasharray="{{ $len }} {{ $lmsDonutCirc }}" stroke-dashoffset="{{ -$lmsOffset }}" transform="rotate(-90 50 50)"><title>{{ $statusKey }}: {{ $cnt }} mitra</title></circle>
+                                    @php $lmsOffset += $len; @endphp
+                                @endif
+                            @endforeach
+                            <text x="50" y="50" text-anchor="middle" dominant-baseline="central" class="tnum" style="font-size:18px; font-weight:700; fill:var(--ink);">{{ $gs['totalMitraLms'] }}</text>
+                        </svg>
+                        <div style="flex:1; min-width:140px;">
+                            @foreach (['Lengkap', 'Proses', 'Awal'] as $statusKey)
+                                @php $cnt = $gs['lmsStatusCounts']->get($statusKey, 0); @endphp
+                                <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+                                    <span style="width:8px; height:8px; border-radius:50%; background:var(--{{ $lmsColorVar[$statusKey] }}); flex-shrink:0;"></span>
+                                    <span style="font-size:12px; color:var(--ink-muted); flex:1;">{{ $statusKey }}</span>
+                                    <span class="tnum" style="font-size:12.5px; font-weight:700;">{{ $cnt }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            <div class="card" style="min-width:0;">
+                <div class="card-head">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="width:28px; height:28px; border-radius:8px; background:var(--highlight-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--highlight)" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2v10l7 4"/></svg>
+                        </div>
+                        <div class="card-title">Komit Tracker berdasarkan Status Belanja</div>
+                    </div>
+                    <div class="card-hint">{{ $periodeLabel }}</div>
+                </div>
+                @if ($gs['statusBelanjaTotal'] === 0)
+                    <div style="color:var(--ink-faint); font-size:12.5px; text-align:center; padding:20px 0;">Belum ada data Komit Tracker di {{ $periodeLabel }}.</div>
+                @else
+                    @php
+                        $sbDonutR = 42; $sbDonutCirc = 2 * M_PI * $sbDonutR; $sbOffset = 0;
+                        $sbColorVar = fn ($c) => $c === 'neutral' ? 'ink-faint' : $c;
+                    @endphp
+                    <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+                        <svg width="104" height="104" viewBox="0 0 100 100" style="flex-shrink:0;">
+                            <circle cx="50" cy="50" r="{{ $sbDonutR }}" fill="none" stroke="var(--line)" stroke-width="12"/>
+                            @foreach ($gs['statusBelanjaLegend'] as $s)
+                                @php $len = $s['count'] / $gs['statusBelanjaTotal'] * $sbDonutCirc; @endphp
+                                <circle cx="50" cy="50" r="{{ $sbDonutR }}" fill="none" stroke="var(--{{ $sbColorVar($s['color']) }})" stroke-width="12" stroke-dasharray="{{ $len }} {{ $sbDonutCirc }}" stroke-dashoffset="{{ -$sbOffset }}" transform="rotate(-90 50 50)"><title>{{ $s['label'] }}: {{ $s['count'] }} mitra</title></circle>
+                                @php $sbOffset += $len; @endphp
+                            @endforeach
+                            <text x="50" y="50" text-anchor="middle" dominant-baseline="central" class="tnum" style="font-size:18px; font-weight:700; fill:var(--ink);">{{ $gs['statusBelanjaTotal'] }}</text>
+                        </svg>
+                        <div style="flex:1; min-width:140px;">
+                            @foreach ($gs['statusBelanjaLegend'] as $s)
+                                <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+                                    <span style="width:8px; height:8px; border-radius:50%; background:var(--{{ $sbColorVar($s['color']) }}); flex-shrink:0;"></span>
+                                    <span style="font-size:12px; color:var(--ink-muted); flex:1;">{{ $s['label'] }}</span>
+                                    <span class="tnum" style="font-size:12.5px; font-weight:700;">{{ $s['count'] }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </section>
+
+        <section class="card" style="min-width:0; margin-bottom:16px;">
+            <div class="card-head">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="width:28px; height:28px; border-radius:8px; background:var(--surface-alt); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" stroke-linejoin="round"/></svg>
+                    </div>
+                    <div class="card-title">Funnel Konversi Growth Specialist</div>
+                </div>
+                <div class="card-hint">Total Mitra Aktif &rarr; Tercapai Target</div>
+            </div>
+            @php $funnelTotal = $gs['funnelStages'][0]['count'] ?: 1; @endphp
+            <div style="display:flex; flex-direction:column;">
+                @foreach ($gs['funnelStages'] as $i => $stage)
+                    @php
+                        $pctOfTotal = round($stage['count'] / $funnelTotal * 100, 1);
+                        $prevCount = $i > 0 ? $gs['funnelStages'][$i - 1]['count'] : null;
+                        $pctOfPrev = $prevCount ? round($stage['count'] / $prevCount * 100, 1) : null;
+
+                        // drop_off_label pada $stage menjelaskan celah KE stage BERIKUTNYA
+                        // (mis. stage 'LMS Lengkap' -> 'belum upload Tracking Performance'
+                        // menjelaskan kenapa gak semua lanjut ke stage 'Upload Tracking
+                        // Performance' sesudahnya) — jadi dibandingkan ke stage [$i+1],
+                        // bukan ke stage sebelumnya.
+                        $nextStage = $gs['funnelStages'][$i + 1] ?? null;
+                        $dropOff = $nextStage ? max(0, $stage['count'] - $nextStage['count']) : null;
+                        $dropOffPct = ($nextStage && $stage['count'] > 0) ? round($dropOff / $stage['count'] * 100, 1) : null;
+                    @endphp
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div style="width:170px; flex-shrink:0; font-size:12px; color:var(--ink-muted); text-align:right;">{{ $stage['label'] }}</div>
+                        <a href="{{ $stage['url'] }}" style="flex:1; min-width:0; text-decoration:none;" title="Lihat {{ $stage['label'] }}">
+                            <div style="background:var(--line); border-radius:6px; height:36px; overflow:hidden;">
+                                <div style="height:100%; width:{{ max($pctOfTotal, $stage['count'] > 0 ? 6 : 0) }}%; background:var(--accent); display:flex; align-items:center; padding-left:12px; min-width:0; transition:width .3s ease;">
+                                    <span class="tnum" style="color:#fff; font-weight:700; font-size:13px; white-space:nowrap;">{{ $stage['count'] }}</span>
+                                </div>
+                            </div>
+                        </a>
+                        <div style="width:150px; flex-shrink:0; font-size:11.5px; color:var(--ink-muted);">{{ $pctOfTotal }}% dari total{{ $pctOfPrev !== null ? ' · '.$pctOfPrev.'% dari sebelumnya' : '' }}</div>
+                    </div>
+                    @if ($stage['drop_off_label'] && $dropOff > 0)
+                        <div style="margin:4px 0 12px 182px; font-size:11.5px; color:var(--critical);">
+                            &#9660; {{ $dropOff }} {{ $stage['drop_off_label'] }} ({{ $dropOffPct }}%)
+                            <a href="{{ $stage['drop_off_url'] }}" style="color:var(--critical); text-decoration:underline; margin-left:4px;">lihat daftar</a>
+                        </div>
+                    @elseif (! $loop->last)
+                        <div style="margin:4px 0 12px 182px; font-size:11.5px; color:var(--ink-faint);">&#9660;</div>
+                    @endif
+                @endforeach
+            </div>
+        </section>
     </div>
 
     <script>

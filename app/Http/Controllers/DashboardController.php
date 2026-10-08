@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\CpCase;
+use App\Models\LmsStep;
 use App\Models\Mitra;
 use App\Models\NewMitraFlag;
 use App\Models\Order;
 use App\Models\RunRateTarget;
 use App\Models\TargetBulanan;
 use App\Models\TrendSetting;
+use App\Services\AchievementStatus;
 use App\Services\RunRateService;
 use App\Services\SpecialDealPerformanceService;
 use Carbon\Carbon;
@@ -201,6 +203,8 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        $growthSpecialist = $this->growthSpecialistData($canViewAll, $kaeCode, $now->month, $now->year);
+
         return view('dashboard', [
             'trendCard' => $trendCard,
             'companyTarget' => $companyTarget,
@@ -238,7 +242,99 @@ class DashboardController extends Controller
             'platformBreakdownCp' => $platformBreakdownCp,
             'topPlatformCp' => $topPlatformCp,
             'topSkuCp' => $topSkuCp,
+            'gs' => $growthSpecialist,
         ]);
+    }
+
+    /**
+     * Dashboard > Development > Growth Specialist (2026-10-08). Set Up LMS &
+     * Tracking Performance mitra unik = snapshot all-time (progress/status,
+     * bukan transaksi bulanan, jadi gak ikut filter Bulan/Tahun) — Komit
+     * Tracker & Status Belanja TETAP ikut $bulan/$tahun (bulan berjalan)
+     * sesuai permintaan user. Semua dilingkupi mitraAktifIds biar KAE cuma
+     * lihat mitra sendiri (sama seperti bagian Sales di atas) dan funnel-nya
+     * nested konsisten (tiap tahap adalah subset tahap sebelumnya).
+     *
+     * Formula roster Komit Tracker & status belanja SENGAJA diduplikasi dari
+     * KomitTrackerController::rosterMitraIds()/buildRows() (keduanya
+     * private) — kalau formula di sana berubah, update juga di sini.
+     */
+    private function growthSpecialistData(bool $canViewAll, ?string $kaeCode, int $bulan, int $tahun): array
+    {
+        $mitraAktifIds = Mitra::where('status', 'aktif')
+            ->when(! $canViewAll, fn ($q) => $q->where('kae_code', $kaeCode))
+            ->pluck('id');
+
+        // --- Set Up LMS: status ringkas per mitra + breakdown ---
+        $lmsStatusByMitra = LmsStep::statusByMitra()->only($mitraAktifIds->all());
+        $totalMitraLms = $lmsStatusByMitra->count();
+        $lmsStatusCounts = $lmsStatusByMitra->countBy();
+
+        // --- Tracking Performance: mitra unik (all-time) ---
+        $totalMitraUnikTp = DB::table('tracking_performances')
+            ->whereIn('mitra_id', $mitraAktifIds)
+            ->pluck('mitra_id')->unique()->count();
+
+        // --- Komit Tracker: roster = Lengkap LMS DAN pernah ada di Tracking Performance ---
+        $trackingMitraIdsAll = DB::table('tracking_performances')->distinct()->pluck('mitra_id');
+        $komitRosterIds = LmsStep::mitraIdsLengkap()->intersect($trackingMitraIdsAll)->intersect($mitraAktifIds)->values();
+
+        $totalKomitGs = (float) TargetBulanan::where('bulan', $bulan)->where('tahun', $tahun)
+            ->whereIn('mitra_id', $komitRosterIds)->sum('komit');
+        $totalAchGs = (float) DB::table('orders')->whereIn('mitra_id', $komitRosterIds)
+            ->whereYear('tanggal_order', $tahun)->whereMonth('tanggal_order', $bulan)
+            ->sum('total_transaksi');
+        $totalPctAchGs = $totalKomitGs > 0 ? round($totalAchGs / $totalKomitGs * 100, 1) : null;
+
+        $targetByMitraGs = TargetBulanan::where('bulan', $bulan)->where('tahun', $tahun)
+            ->whereIn('mitra_id', $komitRosterIds)->get()->keyBy('mitra_id');
+        $realisasiByMitraGs = DB::table('orders')
+            ->whereIn('mitra_id', $komitRosterIds)
+            ->whereYear('tanggal_order', $tahun)->whereMonth('tanggal_order', $bulan)
+            ->groupBy('mitra_id')->selectRaw('mitra_id, SUM(total_transaksi) as total')
+            ->pluck('total', 'mitra_id');
+
+        $statusBelanjaCounts = $komitRosterIds->countBy(function ($mitraId) use ($targetByMitraGs, $realisasiByMitraGs) {
+            $target = $targetByMitraGs->get($mitraId);
+            $effectiveTarget = $target ? $target->effectiveTarget() : 0.0;
+            $pencapaian = (float) ($realisasiByMitraGs[$mitraId] ?? 0);
+            $pctVsEffective = $effectiveTarget > 0 ? round($pencapaian / $effectiveTarget * 100, 1) : 0.0;
+
+            return AchievementStatus::resolveWeeklyPlan($pencapaian, $effectiveTarget, $pctVsEffective);
+        });
+
+        $statusBelanjaLegend = collect(['belum-belanja', 'kurang', 'mendekati', 'tercapai', 'over-ro'])
+            ->map(fn ($key) => [
+                'key' => $key,
+                'label' => AchievementStatus::label($key),
+                'color' => AchievementStatus::color($key),
+                'count' => $statusBelanjaCounts->get($key, 0),
+            ])
+            ->filter(fn ($s) => $s['count'] > 0)
+            ->values();
+
+        $funnelTercapai = $statusBelanjaCounts->get('tercapai', 0) + $statusBelanjaCounts->get('over-ro', 0);
+
+        $funnelStages = [
+            ['label' => 'Total Mitra Aktif', 'count' => $mitraAktifIds->count(), 'url' => route('mitra.index'), 'drop_off_label' => 'belum masuk Set Up LMS', 'drop_off_url' => route('growth-specialist.set-up-lms')],
+            ['label' => 'Masuk Set Up LMS', 'count' => $totalMitraLms, 'url' => route('growth-specialist.set-up-lms'), 'drop_off_label' => 'belum Lengkap LMS', 'drop_off_url' => route('growth-specialist.set-up-lms')],
+            ['label' => 'LMS Lengkap', 'count' => $lmsStatusCounts->get('Lengkap', 0), 'url' => route('growth-specialist.set-up-lms'), 'drop_off_label' => 'belum upload Tracking Performance', 'drop_off_url' => route('growth-specialist.tracking-performance.stand-in-line')],
+            ['label' => 'Upload Tracking Performance', 'count' => $totalMitraUnikTp, 'url' => route('growth-specialist.tracking-performance'), 'drop_off_label' => 'belum tercapai target bulan ini', 'drop_off_url' => route('growth-specialist.komit-tracker')],
+            ['label' => 'Tercapai Target', 'count' => $funnelTercapai, 'url' => route('growth-specialist.komit-tracker', ['status_belanja' => AchievementStatus::label('tercapai')]), 'drop_off_label' => null, 'drop_off_url' => null],
+        ];
+
+        return [
+            'totalMitraLms' => $totalMitraLms,
+            'lmsStatusCounts' => $lmsStatusCounts,
+            'totalMitraUnikTp' => $totalMitraUnikTp,
+            'komitRosterCount' => $komitRosterIds->count(),
+            'totalKomitGs' => $totalKomitGs,
+            'totalAchGs' => $totalAchGs,
+            'totalPctAchGs' => $totalPctAchGs,
+            'statusBelanjaLegend' => $statusBelanjaLegend,
+            'statusBelanjaTotal' => $komitRosterIds->count(),
+            'funnelStages' => $funnelStages,
+        ];
     }
 
     public function toggleNewMitra(Request $request, Mitra $mitra): RedirectResponse
