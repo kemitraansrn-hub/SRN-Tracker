@@ -66,13 +66,15 @@
                 @endforeach
             </select>
         </div>
-        <div class="field" style="margin-bottom:0;">
-            <label>Dari Tanggal</label>
-            <input type="date" name="dari" value="{{ request('dari') }}">
-        </div>
-        <div class="field" style="margin-bottom:0;">
-            <label>Sampai Tanggal</label>
-            <input type="date" name="sampai" value="{{ request('sampai') }}">
+        <div style="display:flex; gap:12px;">
+            <div class="field" style="margin-bottom:0;">
+                <label>Dari Tanggal</label>
+                <input type="date" name="dari" value="{{ request('dari') }}">
+            </div>
+            <div class="field" style="margin-bottom:0;">
+                <label>Sampai Tanggal</label>
+                <input type="date" name="sampai" value="{{ request('sampai') }}">
+            </div>
         </div>
         <button type="submit" class="btn" style="width:auto;">Cari</button>
         @if (request('kae_code') || request('status_followup') || request('status_belanja') || request('alasan_kendala') || request('dari') || request('sampai'))
