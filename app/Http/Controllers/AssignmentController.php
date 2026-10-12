@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\MitraAssignment;
 use App\Models\MitraAssignmentSesi;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,6 +37,7 @@ class AssignmentController extends Controller
         return view('assignment.index', [
             'assignments' => $assignments,
             'statusBulanOptions' => $statusBulanOptions,
+            'kaeOptions' => $request->user()->canViewAll() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
         ]);
     }
 
@@ -85,7 +87,13 @@ class AssignmentController extends Controller
     /** Query dasar + semua filter yang sama dipakai index() dan download(), biar Excel selalu selaras dengan yang lagi ditampilkan di layar. */
     private function filtered(Request $request): Builder
     {
+        $user = $request->user();
+
         return MitraAssignment::query()
+            // 2026-10-12: sebelumnya gak ada pembatasan KAE sama sekali —
+            // dibenerin konsisten sama menu lain.
+            ->when(! $user->canViewAll(), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $user->kae_code)))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $request->input('kae_code'))))
             ->when($request->filled('bulan'), fn ($q) => $q->where('bulan', (int) $request->input('bulan')))
             ->when($request->filled('tahun'), fn ($q) => $q->where('tahun', (int) $request->input('tahun')))
             ->when($request->filled('status_bulan'), fn ($q) => $q->where('status_bulan', $request->input('status_bulan')))

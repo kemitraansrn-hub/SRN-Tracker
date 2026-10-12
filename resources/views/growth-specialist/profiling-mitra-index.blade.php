@@ -31,15 +31,17 @@
                     <option value="belum" @selected(($filters['tipe_mitra'] ?? '') === 'belum')>Belum Lengkap</option>
                 </select>
             </div>
-            <div class="field" style="flex:1;">
-                <label>KAE RO</label>
-                <select name="kae_code">
-                    <option value="">— semua —</option>
-                    @foreach ($kaeOptions as $code => $nama)
-                        <option value="{{ $code }}" @selected(($filters['kae_code'] ?? '') === $code)>{{ $nama }}</option>
-                    @endforeach
-                </select>
-            </div>
+            @if (auth()->user()->canViewAll())
+                <div class="field" style="flex:1;">
+                    <label>KAE RO</label>
+                    <select name="kae_code">
+                        <option value="">— semua —</option>
+                        @foreach ($kaeOptions as $code => $nama)
+                            <option value="{{ $code }}" @selected(($filters['kae_code'] ?? '') === $code)>{{ $nama }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
             <div class="field" style="flex:1;">
                 <label>Status LMS</label>
                 <select name="lms_status">

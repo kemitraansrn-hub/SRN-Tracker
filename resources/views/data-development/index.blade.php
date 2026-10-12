@@ -28,10 +28,21 @@
                     @endfor
                 </select>
             </div>
+            @if (auth()->user()->canViewAll())
+                <div class="field" style="margin-bottom:0;">
+                    <label>KAE</label>
+                    <select class="select-pill" name="kae_code" onchange="this.form.submit()">
+                        <option value="">Semua KAE</option>
+                        @foreach ($kaeOptions as $kae)
+                            <option value="{{ $kae->kae_code }}" {{ request('kae_code') === $kae->kae_code ? 'selected' : '' }}>{{ $kae->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
         </form>
         <div style="margin-left:auto; display:flex; gap:8px; align-items:flex-end;">
             @if ($kurang->isNotEmpty() || $warning->isNotEmpty())
-                <a href="{{ route('data-development.download', ['bulan' => $bulan, 'tahun' => $tahun]) }}" class="btn" style="width:auto;">Download Excel</a>
+                <a href="{{ route('data-development.download', ['bulan' => $bulan, 'tahun' => $tahun, 'kae_code' => request('kae_code')]) }}" class="btn" style="width:auto;">Download Excel</a>
             @endif
             @if (auth()->user()->hasAdminAccess())
                 <form method="POST" action="{{ route('data-development.store') }}" onsubmit="return confirm('Simpan snapshot untuk {{ $periodeLabel }}? Snapshot lama untuk periode ini (jika ada) akan ditimpa.');">

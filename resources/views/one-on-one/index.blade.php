@@ -10,7 +10,7 @@
         </div>
         <div style="display:flex; gap:10px;">
             @if ($items->isNotEmpty())
-                <a href="{{ route('one-on-one.download', request()->only(['q', 'bulan', 'tahun', 'status_belanja', 'status'])) }}" class="btn" style="width:auto;">Download Excel</a>
+                <a href="{{ route('one-on-one.download', request()->only(['q', 'bulan', 'tahun', 'status_belanja', 'status', 'kae_code'])) }}" class="btn" style="width:auto;">Download Excel</a>
             @endif
             <a href="{{ route('growth-specialist.komit-tracker') }}" class="btn" style="width:auto;">Kembali ke Komit Tracker</a>
         </div>
@@ -60,8 +60,19 @@
                 <option value="selesai" {{ request('status') === 'selesai' ? 'selected' : '' }}>Selesai</option>
             </select>
         </div>
+        @if (auth()->user()->canViewAll())
+            <div class="field" style="margin-bottom:0;">
+                <label>KAE</label>
+                <select name="kae_code" class="select-pill" onchange="this.form.submit()">
+                    <option value="">Semua KAE</option>
+                    @foreach ($kaeOptions as $kae)
+                        <option value="{{ $kae->kae_code }}" {{ request('kae_code') === $kae->kae_code ? 'selected' : '' }}>{{ $kae->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        @endif
         <button type="submit" class="btn" style="width:auto;">Cari</button>
-        @if (request()->anyFilled(['q', 'bulan', 'tahun', 'status_belanja', 'status']))
+        @if (request()->anyFilled(['q', 'bulan', 'tahun', 'status_belanja', 'status', 'kae_code']))
             <a href="{{ route('one-on-one.index') }}" class="btn" style="width:auto;">Reset</a>
         @endif
     </form>

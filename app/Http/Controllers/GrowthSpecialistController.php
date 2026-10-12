@@ -31,6 +31,7 @@ class GrowthSpecialistController extends Controller
 
     public function index(Request $request): View
     {
+        $user = $request->user();
         $now = now();
 
         $segmenMap = TargetBulanan::where('bulan', $now->month)
@@ -42,6 +43,11 @@ class GrowthSpecialistController extends Controller
 
         $rows = Mitra::with('profilGrowth')
             ->whereHas('profilGrowth')
+            // 2026-10-12: sebelumnya gak ada pembatasan KAE sama sekali di
+            // sini — akun KAE bisa lihat profil SEMUA mitra, bukan cuma
+            // mitra sendiri. Dibenerin konsisten sama menu Growth
+            // Specialist lain (SetUpLmsController::scopedMitra() dkk).
+            ->when($user->role === 'kae', fn ($q) => $q->where('kae_code', $user->kae_code))
             ->orderBy('nama')
             ->get()
             ->map(function (Mitra $m) use ($segmenMap, $kaeMap) {

@@ -28,11 +28,18 @@ class DataDevelopmentController extends Controller
 {
     public function index(Request $request): View
     {
+        $user = $request->user();
         $bulan = (int) $request->input('bulan', now()->month);
         $tahun = (int) $request->input('tahun', now()->year);
 
         $snapshots = MitraSnapshot::with('mitra')
             ->where('bulan', $bulan)->where('tahun', $tahun)
+            // 2026-10-12: sebelumnya gak ada pembatasan KAE sama sekali —
+            // dibenerin konsisten sama menu lain. KAE live dari mitra
+            // (bukan kae_code beku di snapshot), sama kayak download() di
+            // bawah.
+            ->when(! $user->canViewAll(), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $user->kae_code)))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $request->input('kae_code'))))
             ->orderBy('pct')
             ->get();
 
@@ -47,11 +54,13 @@ class DataDevelopmentController extends Controller
             'warning' => $snapshots->where('status', 'warning')->values(),
             'lastSnapshot' => $snapshots->max('created_at'),
             'mitraSudahAssignment' => $mitraSudahAssignment,
+            'kaeOptions' => $user->canViewAll() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
         ]);
     }
 
     public function download(Request $request): StreamedResponse
     {
+        $user = $request->user();
         $bulan = (int) $request->input('bulan', now()->month);
         $tahun = (int) $request->input('tahun', now()->year);
         $periodeLabel = \Carbon\Carbon::create($tahun, $bulan)->translatedFormat('F Y');
@@ -60,7 +69,10 @@ class DataDevelopmentController extends Controller
         // frozen in the snapshot — a mitra's KAE can get reassigned after
         // a snapshot was saved (e.g. a correction), and the report should
         // reflect who owns them now, not a stale code from save-time.
-        $snapshots = MitraSnapshot::with('mitra:id,kae_code')->where('bulan', $bulan)->where('tahun', $tahun)->orderBy('pct')->get();
+        $snapshots = MitraSnapshot::with('mitra:id,kae_code')->where('bulan', $bulan)->where('tahun', $tahun)
+            ->when(! $user->canViewAll(), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $user->kae_code)))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $request->input('kae_code'))))
+            ->orderBy('pct')->get();
         $kaeNameMap = User::kaeNameMap();
 
         $spreadsheet = new Spreadsheet();

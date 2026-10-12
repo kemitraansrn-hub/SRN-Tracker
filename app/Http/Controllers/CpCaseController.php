@@ -8,6 +8,7 @@ use App\Models\KotaKabupaten;
 use App\Models\Mitra;
 use App\Models\PriceAdjustmentItem;
 use App\Models\Produk;
+use App\Models\User;
 use App\Services\NotificationCenter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -74,6 +75,7 @@ class CpCaseController extends Controller
             'statusOptions' => self::STATUS_KASUS_OPTIONS,
             'platformOptions' => self::PLATFORM_OPTIONS,
             'keteranganOptions' => self::KETERANGAN_OPTIONS,
+            'kaeOptions' => $user->canViewAll() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
         ]);
     }
 
@@ -106,7 +108,16 @@ class CpCaseController extends Controller
 
     private function filteredQuery(Request $request): Builder
     {
+        $user = $request->user();
+
         return CpCase::with(['mitra', 'kotaKabupaten', 'produk', 'takedownBanding'])
+            // 2026-10-12: sebelumnya gak ada pembatasan KAE sama sekali di
+            // sini. mitra_id nullable (kasus "nama manual" belum ketemu
+            // mitranya di Data Mitra) sengaja GAK ikut muncul buat akun KAE
+            // begitu di-scope — gak bisa dipastikan itu mitra dia atau
+            // bukan, whereHas('mitra', ...) otomatis mengecualikannya.
+            ->when(! $user->canViewAll(), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $user->kae_code)))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $request->input('kae_code'))))
             ->when($request->filled('q'), fn ($q) => $q->where(function ($qq) use ($request) {
                 $qq->where('nama_toko', 'like', '%'.$request->input('q').'%')
                     ->orWhere('kode', 'like', '%'.$request->input('q').'%')

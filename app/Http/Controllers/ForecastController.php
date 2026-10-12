@@ -7,6 +7,7 @@ use App\Models\Mitra;
 use App\Models\RunRateTarget;
 use App\Models\SpecialDeal;
 use App\Models\TargetBulanan;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,7 @@ class ForecastController extends Controller
 
     public function index(Request $request): View
     {
+        $user = $request->user();
         $bulan = (int) $request->input('bulan', now()->month);
         $tahun = (int) $request->input('tahun', now()->year);
         $targetSql = TargetBulanan::effectiveTargetSql();
@@ -46,6 +48,11 @@ class ForecastController extends Controller
             })
             ->where('mitra.status', 'aktif')
             ->whereIn('mitra.id', $segmenByMitraId->keys())
+            // 2026-10-12: sebelumnya gak ada pembatasan KAE sama sekali di
+            // tabel utama Forecast RO — dibenerin konsisten sama menu lain
+            // (picker mitra di modal "+ Tambah Plan RO" udah benar duluan).
+            ->when(! $user->canViewAll(), fn ($q) => $q->where('mitra.kae_code', $user->kae_code))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($q) => $q->where('mitra.kae_code', $request->input('kae_code')))
             ->groupBy('mitra.id', 'mitra.nama', 'mitra.kae_code', 'target_bulanan.komit', 'target_bulanan.target', 'target_bulanan.stretch', 'target_bulanan.tier_dipakai')
             ->selectRaw("mitra.id as mitra_id, mitra.nama, mitra.kae_code, COALESCE($targetSql, 0) as target, COALESCE(SUM(orders.total_transaksi), 0) as omset")
             ->get()
@@ -56,6 +63,8 @@ class ForecastController extends Controller
             });
 
         $entries = ForecastRo::where('bulan', $bulan)->where('tahun', $tahun)
+            ->when(! $user->canViewAll(), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $user->kae_code)))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $request->input('kae_code'))))
             ->with('mitra:id,nama,kode_mitra')
             ->orderBy('segmen')
             ->orderBy('tanggal_plan_ro')
@@ -190,7 +199,6 @@ class ForecastController extends Controller
             'best_estimate_pct' => $summary->sum('target') > 0 ? round($summary->sum('best_estimate') / $summary->sum('target') * 100, 1) : null,
         ];
 
-        $user = $request->user();
         $mitraOptionsBySegmen = collect(self::MITRA_LEVEL_SEGMEN)->mapWithKeys(fn ($seg) => [
             $seg => $mitraRows->where('segmen', $seg)
                 ->when(! $user->canViewAll(), fn ($rows) => $rows->where('kae_code', $user->kae_code))
@@ -216,6 +224,7 @@ class ForecastController extends Controller
             'mitraOptionsBySegmen' => $mitraOptionsBySegmen,
             'segmenList' => self::SEGMEN_LIST,
             'bestEstimateVsCompany' => $bestEstimateVsCompany,
+            'kaeOptions' => $user->canViewAll() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
         ]);
     }
 

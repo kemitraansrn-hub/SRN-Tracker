@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\OneOnOne;
 use App\Models\OneOnOneSesi;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,6 +38,7 @@ class OneOnOneController extends Controller
         return view('one-on-one.index', [
             'items' => $items,
             'statusBelanjaOptions' => $statusBelanjaOptions,
+            'kaeOptions' => $request->user()->canViewAll() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
         ]);
     }
 
@@ -86,7 +88,13 @@ class OneOnOneController extends Controller
     /** Query dasar + semua filter yang sama dipakai index() dan download(). */
     private function filtered(Request $request): Builder
     {
+        $user = $request->user();
+
         return OneOnOne::query()
+            // 2026-10-12: sebelumnya gak ada pembatasan KAE sama sekali —
+            // dibenerin konsisten sama menu lain.
+            ->when(! $user->canViewAll(), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $user->kae_code)))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $request->input('kae_code'))))
             ->when($request->filled('bulan'), fn ($q) => $q->where('bulan', (int) $request->input('bulan')))
             ->when($request->filled('tahun'), fn ($q) => $q->where('tahun', (int) $request->input('tahun')))
             ->when($request->filled('status_belanja'), fn ($q) => $q->where('status_belanja', $request->input('status_belanja')))

@@ -71,8 +71,19 @@
             <label>Sampai Tanggal</label>
             <input type="date" name="sampai" value="{{ request('sampai') }}">
         </div>
+        @if (auth()->user()->canViewAll())
+            <div class="field" style="margin-bottom:0;">
+                <label>KAE</label>
+                <select class="select-pill" name="kae_code" onchange="this.form.submit()">
+                    <option value="">Semua KAE</option>
+                    @foreach ($kaeOptions as $kae)
+                        <option value="{{ $kae->kae_code }}" {{ request('kae_code') === $kae->kae_code ? 'selected' : '' }}>{{ $kae->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        @endif
         <button type="submit" class="btn" style="width:auto;">Cari</button>
-        @if (request('q') || request('status_kasus') || request('platform') || request('keterangan') || request('dari') || request('sampai'))
+        @if (request('q') || request('status_kasus') || request('platform') || request('keterangan') || request('dari') || request('sampai') || request('kae_code'))
             <a href="{{ route('tracking-cp.index') }}" class="btn" style="width:auto;">Reset</a>
         @endif
     </form>

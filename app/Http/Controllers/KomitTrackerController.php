@@ -27,6 +27,7 @@ class KomitTrackerController extends Controller
 {
     public function index(Request $request): View
     {
+        $user = $request->user();
         $bulan = (int) $request->input('bulan', now()->month);
         $tahun = (int) $request->input('tahun', now()->year);
 
@@ -43,6 +44,7 @@ class KomitTrackerController extends Controller
             'rows' => $rows,
             'mitraSudahOneOnOne' => $mitraSudahOneOnOne,
             'statusBelanjaOptions' => array_map(fn ($s) => AchievementStatus::label($s), ['belum-belanja', 'kurang', 'mendekati', 'tercapai', 'over-ro']),
+            'kaeOptions' => $user->canViewAll() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
         ]);
     }
 
@@ -96,10 +98,16 @@ class KomitTrackerController extends Controller
             return collect();
         }
 
+        $user = $request->user();
         $q = trim((string) $request->input('q'));
         $statusBelanjaFilter = trim((string) $request->input('status_belanja'));
 
         $mitraRows = Mitra::whereIn('id', $mitraIds)
+            // 2026-10-12: sebelumnya gak ada pembatasan sama sekali di sini
+            // — akun KAE bisa lihat komit/pencapaian SEMUA mitra, bukan
+            // cuma mitra sendiri. Dibenerin konsisten sama menu lain.
+            ->when(! $user->canViewAll(), fn ($w) => $w->where('kae_code', $user->kae_code))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($w) => $w->where('kae_code', $request->input('kae_code')))
             ->when($q !== '', fn ($w) => $w->where(fn ($x) => $x->where('nama', 'like', "%{$q}%")->orWhere('kode_mitra', 'like', "%{$q}%")))
             ->orderBy('nama')
             ->get(['id', 'nama', 'kode_mitra', 'kae_code']);

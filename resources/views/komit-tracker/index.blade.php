@@ -9,7 +9,7 @@
             </div>
         </div>
         @if ($rows->isNotEmpty())
-            <a href="{{ route('growth-specialist.komit-tracker.download', request()->only(['bulan', 'tahun', 'q', 'status_belanja'])) }}" class="btn" style="width:auto;">Download Excel</a>
+            <a href="{{ route('growth-specialist.komit-tracker.download', request()->only(['bulan', 'tahun', 'q', 'status_belanja', 'kae_code'])) }}" class="btn" style="width:auto;">Download Excel</a>
         @endif
     </div>
 
@@ -67,8 +67,19 @@
                 @endforeach
             </select>
         </div>
+        @if (auth()->user()->canViewAll())
+            <div class="field" style="margin-bottom:0;">
+                <label>KAE</label>
+                <select name="kae_code" class="select-pill" onchange="this.form.submit()">
+                    <option value="">Semua KAE</option>
+                    @foreach ($kaeOptions as $kae)
+                        <option value="{{ $kae->kae_code }}" {{ request('kae_code') === $kae->kae_code ? 'selected' : '' }}>{{ $kae->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        @endif
         <button type="submit" class="btn" style="width:auto;">Cari</button>
-        @if (request()->anyFilled(['q', 'status_belanja']))
+        @if (request()->anyFilled(['q', 'status_belanja', 'kae_code']))
             <a href="{{ route('growth-specialist.komit-tracker', ['bulan' => $bulan, 'tahun' => $tahun]) }}" class="btn" style="width:auto;">Reset</a>
         @endif
     </form>
