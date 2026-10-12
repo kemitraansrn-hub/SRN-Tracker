@@ -54,6 +54,7 @@ class SetUpLmsController extends Controller
         $mitraRows = $this->scopedMitra($user)
             ->whereIn('id', $enrolledIds)
             ->when($q !== '', fn ($qr) => $qr->where(fn ($w) => $w->where('nama', 'like', "%{$q}%")->orWhere('kode_mitra', 'like', "%{$q}%")))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($qr) => $qr->where('kae_code', $request->input('kae_code')))
             ->orderBy('nama')
             ->get();
 
@@ -113,6 +114,7 @@ class SetUpLmsController extends Controller
             'rowsPage' => $rowsPage,
             'q' => $q,
             'status' => $status,
+            'kaeOptions' => $user->canViewAll() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
         ]);
     }
 

@@ -52,6 +52,7 @@ class StandInLineController extends Controller
             'q' => $q,
             'weeks' => $weeks,
             'rows' => $rows,
+            'kaeOptions' => $user->canViewAll() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
         ]);
     }
 
@@ -147,6 +148,7 @@ class StandInLineController extends Controller
         $mitraRows = Mitra::whereIn('id', $mitraIds)
             ->when($user->role === 'kae', fn ($qr) => $qr->where('kae_code', $user->kae_code))
             ->when($q !== '', fn ($w) => $w->where(fn ($x) => $x->where('nama', 'like', "%{$q}%")->orWhere('kode_mitra', 'like', "%{$q}%")))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($qr) => $qr->where('kae_code', $request->input('kae_code')))
             ->orderBy('nama')
             ->get(['id', 'nama', 'kode_mitra', 'kae_code']);
 

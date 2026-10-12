@@ -37,8 +37,19 @@
                 @endfor
             </select>
         </div>
+        @if (auth()->user()->canViewAll())
+            <div class="field" style="margin-bottom:0;">
+                <label>KAE</label>
+                <select class="select-pill" name="kae_code" onchange="this.form.submit()">
+                    <option value="">Semua KAE</option>
+                    @foreach ($kaeOptions as $kae)
+                        <option value="{{ $kae->kae_code }}" {{ request('kae_code') === $kae->kae_code ? 'selected' : '' }}>{{ $kae->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        @endif
         <button type="submit" class="btn" style="width:auto;">Cari</button>
-        @if ($q !== '')
+        @if ($q !== '' || request('kae_code'))
             <a href="{{ route('growth-specialist.tracking-performance.stand-in-line', ['bulan' => $bulan, 'tahun' => $tahun]) }}" class="btn" style="width:auto;">Reset</a>
         @endif
     </form>

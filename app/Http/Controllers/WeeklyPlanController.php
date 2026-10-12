@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Mitra;
 use App\Models\SpecialDeal;
 use App\Models\TargetBulanan;
+use App\Models\User;
 use App\Models\WeekPeriod;
 use App\Services\AchievementStatus;
 use Illuminate\Http\Request;
@@ -109,6 +110,7 @@ class WeeklyPlanController extends Controller
         $mitraList = Mitra::where('status', 'aktif')
             ->whereIn('id', $mitraIdsPeriode)
             ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_code', $user->kae_code))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($q) => $q->where('kae_code', $request->input('kae_code')))
             ->orderBy('nama')
             ->get();
 
@@ -287,6 +289,7 @@ class WeeklyPlanController extends Controller
             'bulanIni' => $bulan,
             'tahunIni' => $tahun,
             'isBulanIni' => $isBulanIni,
+            'kaeOptions' => $user->canViewAll() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
         ];
     }
 }

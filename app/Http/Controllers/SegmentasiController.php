@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SpecialDeal;
 use App\Models\TargetBulanan;
+use App\Models\User;
 use App\Services\AchievementStatus;
 use App\Services\MitraHealthService;
 use Carbon\Carbon;
@@ -55,6 +56,7 @@ class SegmentasiController extends Controller
             })
             ->whereIn('mitra.id', $mitraIdsSegmenIni)
             ->when(! $user->canViewAll(), fn ($q) => $q->where('mitra.kae_code', $user->kae_code))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($q) => $q->where('mitra.kae_code', $request->input('kae_code')))
             ->groupBy('mitra.id', 'mitra.nama', 'mitra.kode_mitra', 'mitra.kae_code', 'target_bulanan.komit', 'target_bulanan.target', 'target_bulanan.stretch', 'target_bulanan.tier_dipakai')
             ->selectRaw("mitra.id, mitra.nama, mitra.kode_mitra, mitra.kae_code, COALESCE($targetSql, 0) as target, COALESCE(SUM(orders.total_transaksi), 0) as omset")
             ->orderByDesc('omset')
@@ -102,6 +104,7 @@ class SegmentasiController extends Controller
             'kesehatanMitra' => $kesehatanMitra,
             'segmentSummary' => $this->buildSegmentSummary($kesehatanMitra, $mitraIds),
             'tahunYtd' => $periode->year,
+            'kaeOptions' => $user->canViewAll() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
         ]);
     }
 

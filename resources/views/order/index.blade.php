@@ -13,7 +13,7 @@
             </div>
         </div>
         @if ($orders->total() > 0)
-            <a href="{{ route('order.export', request()->only(['q', 'dari', 'sampai', 'status_pembayaran'])) }}" class="btn" style="width:auto;">Download Excel</a>
+            <a href="{{ route('order.export', request()->only(['q', 'dari', 'sampai', 'status_pembayaran', 'kae_code'])) }}" class="btn" style="width:auto;">Download Excel</a>
         @endif
     </div>
 
@@ -38,7 +38,21 @@
                 <option value="Tempo" {{ request('status_pembayaran') === 'Tempo' ? 'selected' : '' }}>Tempo</option>
             </select>
         </div>
+        @if (auth()->user()->canViewAll())
+            <div class="field" style="margin-bottom:0;">
+                <label>KAE</label>
+                <select name="kae_code" class="select-pill" onchange="this.form.submit()">
+                    <option value="">Semua KAE</option>
+                    @foreach ($kaeOptions as $kae)
+                        <option value="{{ $kae->kae_code }}" {{ request('kae_code') === $kae->kae_code ? 'selected' : '' }}>{{ $kae->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        @endif
         <button type="submit" class="btn" style="width:auto;">Cari</button>
+        @if (request('q') || request('dari') || request('sampai') || request('status_pembayaran') || request('kae_code'))
+            <a href="{{ route('order.index') }}" class="btn" style="width:auto;">Reset</a>
+        @endif
     </form>
 
     <section class="card table-card" style="padding:0; margin-top:16px;">

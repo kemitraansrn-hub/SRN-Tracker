@@ -33,6 +33,7 @@ class SetUpLmsIssueController extends Controller
             ->whereIn('mitra_id', $this->scopedMitra($user)->pluck('id'))
             ->when($q !== '', fn ($w) => $w->whereHas('mitra', fn ($m) => $m->where('nama', 'like', "%{$q}%")->orWhere('kode_mitra', 'like', "%{$q}%")))
             ->when($platformFilter !== '', fn ($w) => $w->where('platform', $platformFilter))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($w) => $w->whereHas('mitra', fn ($m) => $m->where('kae_code', $request->input('kae_code'))))
             ->latest()
             ->paginate(20)
             ->withQueryString();
@@ -44,6 +45,7 @@ class SetUpLmsIssueController extends Controller
             'issues' => $issues,
             'q' => $q,
             'platformFilter' => $platformFilter,
+            'kaeOptions' => $user->canViewAll() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
         ]);
     }
 

@@ -123,7 +123,7 @@
             <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px; flex-wrap:wrap; gap:12px;">
                 <div>
                     <div class="card-title">Progres LMS {{ $platformLabel }}</div>
-                    <div class="card-hint">{{ $rowsPage->total() }} mitra{{ $q !== '' || $status !== '' ? ' (hasil filter)' : '' }}</div>
+                    <div class="card-hint">{{ $rowsPage->total() }} mitra{{ $q !== '' || $status !== '' || request('kae_code') ? ' (hasil filter)' : '' }}</div>
                 </div>
                 <form method="GET" action="{{ route('growth-specialist.set-up-lms') }}" class="field-row" style="margin-bottom:0; align-items:flex-end;">
                     <input type="hidden" name="tab" value="{{ $tab }}">
@@ -138,8 +138,18 @@
                             @endforeach
                         </select>
                     </div>
+                    @if (auth()->user()->canViewAll())
+                        <div class="field" style="margin-bottom:0;">
+                            <select name="kae_code" class="select-pill" onchange="this.form.submit()">
+                                <option value="">Semua KAE</option>
+                                @foreach ($kaeOptions as $kae)
+                                    <option value="{{ $kae->kae_code }}" {{ request('kae_code') === $kae->kae_code ? 'selected' : '' }}>{{ $kae->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
                     <button type="submit" class="btn" style="width:auto;">Cari</button>
-                    @if ($q !== '' || $status !== '')
+                    @if ($q !== '' || $status !== '' || request('kae_code'))
                         <a href="{{ route('growth-specialist.set-up-lms', ['tab' => $tab]) }}" class="btn" style="width:auto;">Reset</a>
                     @endif
                 </form>

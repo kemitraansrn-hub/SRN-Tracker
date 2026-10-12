@@ -4,7 +4,7 @@
     $rp = fn ($v) => 'Rp'.number_format((float) $v, 0, ',', '.');
     $pct = fn ($v) => $v === null ? '—' : number_format($v, 2, ',', '.').'%';
     $bulanNama = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-    $adaFilter = request('mitra_id') || request('bulan') || request('tahun') || request('week') || request('growth') || request('kuartal');
+    $adaFilter = request('mitra_id') || request('bulan') || request('tahun') || request('week') || request('growth') || request('kuartal') || request('kae_code');
     $ikonDelta = function (?string $arah) {
         return match ($arah) {
             'naik' => '<span title="Naik dibanding minggu lalu" style="color:var(--good); font-size:15px;">&#9650;</span>',
@@ -100,6 +100,17 @@
                         @endforeach
                     </select>
                 </div>
+                @if (auth()->user()->canViewAll())
+                    <div class="field" style="margin-bottom:0;">
+                        <label>KAE</label>
+                        <select name="kae_code" class="select-pill" onchange="this.form.submit()">
+                            <option value="">Semua KAE</option>
+                            @foreach ($kaeOptions as $kae)
+                                <option value="{{ $kae->kae_code }}" {{ request('kae_code') === $kae->kae_code ? 'selected' : '' }}>{{ $kae->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
                 <div class="field" style="margin-bottom:0;">
                     <label>Kuartal</label>
                     <select name="kuartal" class="select-pill" onchange="this.form.submit()">

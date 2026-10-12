@@ -34,10 +34,14 @@ class PoinRedemptionController extends Controller
 
         $redemptions = PoinRedemption::with(['mitra:id,nama,kode_mitra,kae_code', 'creator:id,name', 'approver:id,name'])
             ->when($user->role === 'kae', fn ($q) => $q->whereHas('mitra', fn ($qq) => $qq->where('kae_code', $user->kae_code)))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($q) => $q->whereHas('mitra', fn ($qq) => $qq->where('kae_code', $request->input('kae_code'))))
             ->latest()
             ->get();
 
-        return view('poin-redemption.index', ['redemptions' => $redemptions]);
+        return view('poin-redemption.index', [
+            'redemptions' => $redemptions,
+            'kaeOptions' => $user->canViewAll() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
+        ]);
     }
 
     public function export(Request $request): StreamedResponse
@@ -47,6 +51,7 @@ class PoinRedemptionController extends Controller
 
         $redemptions = PoinRedemption::with(['mitra:id,nama,kode_mitra,kae_code', 'approver:id,name'])
             ->when($user->role === 'kae', fn ($q) => $q->whereHas('mitra', fn ($qq) => $qq->where('kae_code', $user->kae_code)))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($q) => $q->whereHas('mitra', fn ($qq) => $qq->where('kae_code', $request->input('kae_code'))))
             ->latest()
             ->get();
 

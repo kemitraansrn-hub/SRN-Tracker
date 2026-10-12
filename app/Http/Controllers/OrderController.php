@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use App\Models\Order;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,8 +17,11 @@ class OrderController extends Controller
 {
     public function index(Request $request): View
     {
+        $user = $request->user();
+
         return view('order.index', [
             'orders' => $this->filtered($request)->latest('tanggal_order')->paginate(25)->withQueryString(),
+            'kaeOptions' => $user->canViewAll() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
         ]);
     }
 
@@ -125,6 +129,7 @@ class OrderController extends Controller
 
         return Order::with('mitra')
             ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_code', $user->kae_code))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($q) => $q->where('kae_code', $request->input('kae_code')))
             ->when($request->filled('q'), fn ($q) => $q->where(function ($qq) use ($request) {
                 $qq->where('no_order', 'like', '%'.$request->input('q').'%')
                     ->orWhereHas('mitra', fn ($m) => $m->where('nama', 'like', '%'.$request->input('q').'%')

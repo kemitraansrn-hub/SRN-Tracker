@@ -81,6 +81,17 @@
                 @endforeach
             </select>
         </div>
+        @if (auth()->user()->canViewAll())
+            <div class="field" style="margin-bottom:0;">
+                <label>KAE</label>
+                <select class="select-pill" name="kae_code" onchange="this.form.submit()">
+                    <option value="">Semua KAE</option>
+                    @foreach ($kaeOptions as $kae)
+                        <option value="{{ $kae->kae_code }}" {{ request('kae_code') === $kae->kae_code ? 'selected' : '' }}>{{ $kae->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        @endif
         <div class="field" style="margin-bottom:0;">
             <label>Minggu Andalan</label>
             <select class="select-pill" name="minggu_andalan" onchange="this.form.submit()">
@@ -114,7 +125,7 @@
             </select>
         </div>
         <button type="submit" class="btn" style="width:auto;">Cari</button>
-        @if (request('q') || request('segmen') || request('minggu_andalan') || request('status_pencapaian') || request('status_minggu'))
+        @if (request('q') || request('segmen') || request('kae_code') || request('minggu_andalan') || request('status_pencapaian') || request('status_minggu'))
             <a href="{{ route('weekly-plan.index') }}" class="btn" style="width:auto;">Reset</a>
         @endif
         <div class="card" style="width:auto; padding:9px 14px; margin-bottom:0;">

@@ -73,8 +73,19 @@
                 @endforeach
             </select>
         </div>
+        @if (auth()->user()->canViewAll())
+            <div class="field" style="margin-bottom:0;">
+                <label>KAE</label>
+                <select name="kae_code" class="select-pill" onchange="this.form.submit()">
+                    <option value="">Semua KAE</option>
+                    @foreach ($kaeOptions as $kae)
+                        <option value="{{ $kae->kae_code }}" {{ request('kae_code') === $kae->kae_code ? 'selected' : '' }}>{{ $kae->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        @endif
         <button type="submit" class="btn" style="width:auto;">Cari</button>
-        @if (request('q'))
+        @if (request('q') || request('kae_code'))
             <a href="{{ route('special-deal.index', ['kuartal' => $kuartal, 'tahun' => $tahun, 'status' => request('status')]) }}" class="btn" style="width:auto;">Reset</a>
         @endif
     </form>
@@ -88,7 +99,7 @@
                     <div class="card-hint">{{ $s['count'] }} deal &middot; {{ $s['done_count'] }} done</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap; font-size:12.5px;">
-                    <a href="{{ route('special-deal.export', array_merge(['segmen' => $segmen, 'kuartal' => $kuartal, 'tahun' => $tahun], request()->only(['status', 'q']))) }}" class="btn" style="width:auto;">Download Excel</a>
+                    <a href="{{ route('special-deal.export', array_merge(['segmen' => $segmen, 'kuartal' => $kuartal, 'tahun' => $tahun], request()->only(['status', 'q', 'kae_code']))) }}" class="btn" style="width:auto;">Download Excel</a>
                     <div>
                         <div class="info-label">Total Target Q{{ $kuartal }}</div>
                         <div class="tnum" style="font-weight:700;">{{ $rp($s['target_sum']) }}</div>

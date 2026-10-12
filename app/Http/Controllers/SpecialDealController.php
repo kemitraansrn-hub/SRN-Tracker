@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Mitra;
 use App\Models\SpecialDeal;
+use App\Models\User;
 use App\Services\ImportTemplateService;
 use App\Services\MouDocumentService;
 use App\Services\SpecialDealImportService;
@@ -36,6 +37,7 @@ class SpecialDealController extends Controller
             // biar KAE yang baru ditugaskan ke mitra itu langsung ketemu
             // deal lamanya di daftar, bukan cuma bisa akses kalau tau link-nya.
             ->when(! $user->canViewAll(), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $user->kae_code)))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $request->input('kae_code'))))
             ->where('kuartal', $kuartal)
             ->where('tahun', $tahun)
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->input('status')))
@@ -88,6 +90,7 @@ class SpecialDealController extends Controller
             'kuartal' => $kuartal,
             'tahun' => $tahun,
             'totalCount' => $deals->count(),
+            'kaeOptions' => $user->canViewAll() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
         ]);
     }
 
@@ -100,6 +103,7 @@ class SpecialDealController extends Controller
 
         $deals = SpecialDeal::with(['mitra', 'kae'])
             ->when(! $user->canViewAll(), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $user->kae_code)))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $request->input('kae_code'))))
             ->where('kuartal', $kuartal)
             ->where('tahun', $tahun)
             ->where('segmen', $segmen)

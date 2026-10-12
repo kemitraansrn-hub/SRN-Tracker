@@ -11,7 +11,7 @@
             <div style="color:var(--ink-muted); font-size:13px; margin-top:4px;">{{ $redemptions->count() }} pengajuan</div>
         </div>
         <div style="display:flex; gap:8px;">
-            <a href="{{ route('poin-redemption.export') }}" class="btn" style="width:auto; text-decoration:none;">Download Excel</a>
+            <a href="{{ route('poin-redemption.export', request()->query()) }}" class="btn" style="width:auto; text-decoration:none;">Download Excel</a>
             <a href="{{ route('poin-redemption.create') }}" class="btn btn-primary" style="width:auto;">+ Penukaran Baru</a>
         </div>
     </div>
@@ -21,6 +21,23 @@
     @endif
     @if ($errors->any())
         <div class="alert-error">{{ $errors->first() }}</div>
+    @endif
+
+    @if (auth()->user()->canViewAll())
+        <form method="GET" action="{{ route('poin-redemption.index') }}" class="field-row" style="align-items:flex-end; margin-bottom:16px;">
+            <div class="field" style="margin-bottom:0;">
+                <label>KAE</label>
+                <select class="select-pill" name="kae_code" onchange="this.form.submit()">
+                    <option value="">Semua KAE</option>
+                    @foreach ($kaeOptions as $kae)
+                        <option value="{{ $kae->kae_code }}" {{ request('kae_code') === $kae->kae_code ? 'selected' : '' }}>{{ $kae->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            @if (request('kae_code'))
+                <a href="{{ route('poin-redemption.index') }}" class="btn" style="width:auto;">Reset</a>
+            @endif
+        </form>
     @endif
 
     <section class="card table-card" style="padding:0;">

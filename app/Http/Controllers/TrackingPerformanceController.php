@@ -71,6 +71,7 @@ class TrackingPerformanceController extends Controller
             'growthOptions' => TrackingPerformance::STATUS_GROWTH_OPTIONS,
             'kuartalOptions' => Quarter::LABELS,
             'kaeMap' => User::kaeNameMap(),
+            'kaeOptions' => $user->canViewAll() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
         ]);
     }
 
@@ -127,6 +128,7 @@ class TrackingPerformanceController extends Controller
     {
         $rows = (clone $base)->with('mitra')
             ->when($request->filled('mitra_id'), fn ($qr) => $qr->where('mitra_id', $request->integer('mitra_id')))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($qr) => $qr->whereHas('mitra', fn ($m) => $m->where('kae_code', $request->input('kae_code'))))
             ->when($request->filled('bulan'), fn ($qr) => $qr->whereMonth('tanggal_selesai', $request->integer('bulan')))
             ->when($request->filled('tahun'), fn ($qr) => $qr->whereYear('tanggal_selesai', $request->integer('tahun')))
             ->when($request->filled('week'), fn ($qr) => $qr->where('week', $request->input('week')))
