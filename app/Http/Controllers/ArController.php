@@ -44,7 +44,7 @@ class ArController extends Controller
                 ->get();
         }
 
-        $arList = $this->buildArList($user);
+        $arList = $this->buildArList($user, $request->input('kae_code'));
 
         $belumLunas = $arList->where('lunas', false);
         $jatuhTempo = $belumLunas->where('jatuh_tempo_flag', true);
@@ -95,14 +95,16 @@ class ArController extends Controller
             'arList' => $arList,
             'stats' => $stats,
             'agingBuckets' => $agingBuckets,
+            'kaeOptions' => $user->canViewAll() ? \App\Models\User::where('role', 'kae')->orderBy('name')->get() : collect(),
         ]);
     }
 
     /** @return \Illuminate\Support\Collection<int, ArReceivable> */
-    private function buildArList($user): \Illuminate\Support\Collection
+    private function buildArList($user, ?string $kaeCodeFilter = null): \Illuminate\Support\Collection
     {
         return ArReceivable::with(['order.mitra:id,nama,kode_mitra,kae_code', 'payments.creator:id,name'])
             ->when(! $user->canViewAll(), fn ($q) => $q->whereHas('order.mitra', fn ($qq) => $qq->where('kae_code', $user->kae_code)))
+            ->when($user->canViewAll() && $kaeCodeFilter, fn ($q) => $q->whereHas('order.mitra', fn ($qq) => $qq->where('kae_code', $kaeCodeFilter)))
             ->get()
             ->map(function ($ar) {
                 $ar->sisa_ar = $ar->sisa();
@@ -120,7 +122,7 @@ class ArController extends Controller
         $user = $request->user();
         $status = $request->input('status');
 
-        $arList = $this->buildArList($user)
+        $arList = $this->buildArList($user, $request->input('kae_code'))
             ->when($status === 'belum-lunas', fn ($c) => $c->where('lunas', false))
             ->when($status === 'lunas', fn ($c) => $c->where('lunas', true))
             ->when($status === 'jatuh-tempo', fn ($c) => $c->where('jatuh_tempo_flag', true))

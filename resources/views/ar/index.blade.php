@@ -158,7 +158,7 @@
                 <div class="card-title">Daftar AR</div>
                 <div class="card-hint">{{ $arList->count() }} AR</div>
             </div>
-            <a href="{{ route('ar.export', ['status' => request('status')]) }}" class="btn" style="width:auto; text-decoration:none;">Download Excel</a>
+            <a href="{{ route('ar.export', ['status' => request('status'), 'kae_code' => request('kae_code')]) }}" class="btn" style="width:auto; text-decoration:none;">Download Excel</a>
         </div>
 
         <form method="GET" action="{{ route('ar.index') }}" class="field-row" style="padding:0 20px 16px; margin-bottom:0;">
@@ -171,6 +171,17 @@
                     <option value="jatuh-tempo" {{ request('status') === 'jatuh-tempo' ? 'selected' : '' }}>Jatuh Tempo</option>
                 </select>
             </div>
+            @if (auth()->user()->canViewAll())
+                <div class="field" style="margin-bottom:0;">
+                    <label>KAE</label>
+                    <select name="kae_code" class="select-pill" onchange="this.form.submit()">
+                        <option value="">Semua KAE</option>
+                        @foreach ($kaeOptions as $kae)
+                            <option value="{{ $kae->kae_code }}" {{ request('kae_code') === $kae->kae_code ? 'selected' : '' }}>{{ $kae->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
         </form>
 
         <div class="table-scroll">
