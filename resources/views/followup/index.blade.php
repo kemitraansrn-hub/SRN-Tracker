@@ -13,7 +13,7 @@
             </div>
         </div>
         <div style="display:flex; gap:10px;">
-            <a href="{{ route('followup.export') }}" class="btn" style="width:auto; display:inline-flex; align-items:center; gap:6px;">
+            <a href="{{ route('followup.export', request()->query()) }}" class="btn" style="width:auto; display:inline-flex; align-items:center; gap:6px;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v13.5"/><path d="M7 12l5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 20h16" stroke-linecap="round"/></svg>
                 Download Excel
             </a>
@@ -28,6 +28,17 @@
     <form method="GET" action="{{ route('followup.index') }}" class="field-row" style="align-items:flex-end; margin-bottom:16px;">
         @if (request('mitra_id'))
             <input type="hidden" name="mitra_id" value="{{ request('mitra_id') }}">
+        @endif
+        @if (auth()->user()->canViewAll())
+            <div class="field" style="margin-bottom:0;">
+                <label>KAE</label>
+                <select class="select-pill" name="kae_code" onchange="this.form.submit()">
+                    <option value="">Semua KAE</option>
+                    @foreach ($kaeOptions as $kae)
+                        <option value="{{ $kae->kae_code }}" {{ request('kae_code') === $kae->kae_code ? 'selected' : '' }}>{{ $kae->name }}</option>
+                    @endforeach
+                </select>
+            </div>
         @endif
         <div class="field" style="margin-bottom:0;">
             <label>Status Follow-up</label>
@@ -55,10 +66,17 @@
                 @endforeach
             </select>
         </div>
-        @if (request('status_followup') || request('status_belanja') || request('alasan_kendala'))
-            <div class="field" style="margin-bottom:0;">
-                <a href="{{ route('followup.index') }}" class="btn" style="width:auto;">Reset</a>
-            </div>
+        <div class="field" style="margin-bottom:0;">
+            <label>Dari Tanggal</label>
+            <input type="date" name="dari" value="{{ request('dari') }}">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+            <label>Sampai Tanggal</label>
+            <input type="date" name="sampai" value="{{ request('sampai') }}">
+        </div>
+        <button type="submit" class="btn" style="width:auto;">Cari</button>
+        @if (request('kae_code') || request('status_followup') || request('status_belanja') || request('alasan_kendala') || request('dari') || request('sampai'))
+            <a href="{{ route('followup.index') }}" class="btn" style="width:auto;">Reset</a>
         @endif
     </form>
 

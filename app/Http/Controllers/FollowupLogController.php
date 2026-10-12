@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\FollowupLog;
 use App\Models\Mitra;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -42,18 +44,35 @@ class FollowupLogController extends Controller
     {
         $user = $request->user();
 
-        $query = FollowupLog::with(['mitra', 'kae'])
+        $query = $this->filteredQuery($request)->latest('tanggal_fu');
+
+        return view('followup.index', [
+            'logs' => $query->paginate(20)->withQueryString(),
+            'alasanOptions' => self::ALASAN_KENDALA,
+            'kaeOptions' => $user->canViewAll() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
+        ]);
+    }
+
+    /**
+     * Query filter yang sama dipakai index() (tabel) dan export() (Excel) —
+     * satu tempat biar gak ketinggalan kalau nambah filter baru.
+     * 2026-10-12: tambah filter KAE (berdasarkan kae_code mitra-nya,
+     * BUKAN kae_user_id si pencatat — biar nilainya konsisten sama
+     * dropdown KAE di menu lain) dan rentang tanggal (tanggal_fu).
+     */
+    private function filteredQuery(Request $request): Builder
+    {
+        $user = $request->user();
+
+        return FollowupLog::with(['mitra', 'kae'])
             ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_user_id', $user->id))
             ->when($request->filled('mitra_id'), fn ($q) => $q->where('mitra_id', $request->input('mitra_id')))
             ->when($request->filled('status_followup'), fn ($q) => $q->where('status_followup', $request->input('status_followup')))
             ->when($request->filled('status_belanja'), fn ($q) => $q->where('status_belanja', $request->input('status_belanja')))
             ->when($request->filled('alasan_kendala'), fn ($q) => $q->where('alasan_kendala', $request->input('alasan_kendala')))
-            ->latest('tanggal_fu');
-
-        return view('followup.index', [
-            'logs' => $query->paginate(20)->withQueryString(),
-            'alasanOptions' => self::ALASAN_KENDALA,
-        ]);
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $request->input('kae_code'))))
+            ->when($request->filled('dari'), fn ($q) => $q->whereDate('tanggal_fu', '>=', $request->input('dari')))
+            ->when($request->filled('sampai'), fn ($q) => $q->whereDate('tanggal_fu', '<=', $request->input('sampai')));
     }
 
     public function create(Request $request): View
@@ -181,16 +200,7 @@ class FollowupLogController extends Controller
 
     public function export(Request $request): StreamedResponse
     {
-        $user = $request->user();
-
-        $logs = FollowupLog::with(['mitra', 'kae'])
-            ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_user_id', $user->id))
-            ->when($request->filled('mitra_id'), fn ($q) => $q->where('mitra_id', $request->input('mitra_id')))
-            ->when($request->filled('status_followup'), fn ($q) => $q->where('status_followup', $request->input('status_followup')))
-            ->when($request->filled('status_belanja'), fn ($q) => $q->where('status_belanja', $request->input('status_belanja')))
-            ->when($request->filled('alasan_kendala'), fn ($q) => $q->where('alasan_kendala', $request->input('alasan_kendala')))
-            ->orderBy('tanggal_fu')
-            ->get();
+        $logs = $this->filteredQuery($request)->orderBy('tanggal_fu')->get();
 
         $headers = ['Tanggal', 'Minggu', 'KAE', 'Nama Mitra', 'Alasan / Kendala', 'Catatan'];
 
