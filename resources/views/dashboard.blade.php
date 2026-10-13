@@ -363,7 +363,7 @@
             </section>
         @endif
 
-        @if (auth()->user()->canViewAll() && $reactivationCandidates->isNotEmpty())
+        @if ($reactivationCandidates->isNotEmpty())
             <section class="card table-card reveal-on-scroll" style="padding:0; margin-bottom:20px;">
                 <div class="card-head" style="padding:18px 20px; margin-bottom:0; cursor:pointer; align-items:center;" onclick="
                     const body = document.getElementById('reactivation-body');
@@ -408,7 +408,7 @@
                                     <td>
                                         @if ($rc->from_kategori ?? false)
                                             <span style="font-size:11px; color:var(--ink-faint);">Otomatis dari kategori</span>
-                                        @else
+                                        @elseif (auth()->user()->role === 'admin')
                                             <form method="POST" action="{{ route('dashboard.toggle-new-mitra', $rc->mitra_id) }}">
                                                 @csrf
                                                 <input type="hidden" name="bulan" value="{{ $bulanIni }}">
@@ -417,6 +417,8 @@
                                                     {{ $rc->is_new_mitra ? 'Batal New Mitra' : 'Tandai New Mitra' }}
                                                 </button>
                                             </form>
+                                        @else
+                                            <span style="font-size:11px; color:var(--ink-faint);">—</span>
                                         @endif
                                     </td>
                                 </tr>
