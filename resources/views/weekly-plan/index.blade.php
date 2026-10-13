@@ -152,6 +152,7 @@
                         <th>Realisasi Bulan</th><th>% Bulan</th>
                         <th>Status Pencapaian</th>
                         <th>Status Minggu</th>
+                        <th>FU</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -240,9 +241,18 @@
                                         <span style="color:var(--ink-faint); font-size:12px;">—</span>
                                 @endswitch
                             </td>
+                            <td>
+                                <a href="{{ route('followup.index', ['mitra_id' => $p->mitra->id]) }}" style="text-decoration:none;" title="Lihat riwayat Follow-up Log mitra ini">
+                                    @if ($p->fu_count > 0)
+                                        <span class="chip chip-good">FU {{ $p->fu_count }}</span>
+                                    @else
+                                        <span class="chip chip-critical">Belum FU</span>
+                                    @endif
+                                </a>
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="17" style="color:var(--ink-muted);">Belum ada mitra.</td></tr>
+                        <tr><td colspan="18" style="color:var(--ink-muted);">Belum ada mitra.</td></tr>
                     @endforelse
                 </tbody>
             </table>

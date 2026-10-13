@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\FollowupLog;
 use App\Models\Mitra;
 use App\Models\SpecialDeal;
 use App\Models\TargetBulanan;
@@ -31,14 +32,14 @@ class WeeklyPlanController extends Controller
     {
         $data = $this->buildPlan($request);
 
-        $headers = ['Mitra', 'Kode Mitra', 'Segmen', 'Minggu Andalan', 'W1 Target', 'W1 Realisasi', 'W2 Target', 'W2 Realisasi', 'W3 Target', 'W3 Realisasi', 'W4 Target', 'W4 Realisasi', 'Target Bulan', 'Realisasi Bulan', '% Bulan', 'Status Minggu', 'Status Pencapaian'];
+        $headers = ['Mitra', 'Kode Mitra', 'Segmen', 'Minggu Andalan', 'W1 Target', 'W1 Realisasi', 'W2 Target', 'W2 Realisasi', 'W3 Target', 'W3 Realisasi', 'W4 Target', 'W4 Realisasi', 'Target Bulan', 'Realisasi Bulan', '% Bulan', 'Status Minggu', 'Status Pencapaian', 'FU'];
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Weekly Plan');
         $sheet->fromArray($headers, null, 'A1', true);
-        $sheet->getStyle('A1:Q1')->getFont()->setBold(true);
-        $sheet->getStyle('A1:Q1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('EBE5EF');
+        $sheet->getStyle('A1:R1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:R1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('EBE5EF');
 
         $r = 2;
         foreach ($data['plan'] as $p) {
@@ -57,12 +58,13 @@ class WeeklyPlanController extends Controller
             $row[] = $p->pct_bulan;
             $row[] = $p->status;
             $row[] = $p->status_pencapaian;
+            $row[] = $p->fu_count > 0 ? 'FU '.$p->fu_count : 'Belum FU';
 
             $sheet->fromArray($row, null, 'A'.$r, true);
             $r++;
         }
 
-        foreach (range('A', 'Q') as $col) {
+        foreach (range('A', 'R') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -187,7 +189,20 @@ class WeeklyPlanController extends Controller
 
         $isPastMonth = $now->lt(today()->startOfMonth());
 
-        $plan = $mitraList->map(function ($m) use ($historyTotals, $prevMonthTotals, $actualByMitra, $currentWeekLabel, $weekIndex, $targetByMitra, $isPastMonth, $segmenByMitraId) {
+        // Kolom "FU" (2026-10-13) — cuma penanda tampilan, GAK disimpan ke
+        // database: dihitung live dari Follow-up Log, berapa kali mitra ini
+        // di-FU di bulan/tahun yang sama dengan periode Weekly Plan yang
+        // lagi dilihat. FollowupLog::kae_user_id (siapa yang mencatat) gak
+        // dipakai buat scoping di sini — $mitraList udah di-scope lewat
+        // kae_code mitra-nya sendiri, jadi cukup whereIn mitra_id.
+        $fuCountByMitra = FollowupLog::whereYear('tanggal_fu', $now->year)
+            ->whereMonth('tanggal_fu', $now->month)
+            ->whereIn('mitra_id', $mitraList->pluck('id'))
+            ->groupBy('mitra_id')
+            ->selectRaw('mitra_id, count(*) as total')
+            ->pluck('total', 'mitra_id');
+
+        $plan = $mitraList->map(function ($m) use ($historyTotals, $prevMonthTotals, $actualByMitra, $currentWeekLabel, $weekIndex, $targetByMitra, $isPastMonth, $segmenByMitraId, $fuCountByMitra) {
             $hist = $historyTotals[$m->id] ?? [];
 
             $histPrevMonth = $prevMonthTotals[$m->id] ?? [];
@@ -246,6 +261,7 @@ class WeeklyPlanController extends Controller
                 'pct_bulan' => $pctBulan,
                 'status' => $status,
                 'status_pencapaian' => AchievementStatus::resolveWeeklyPlan($realisasiBulan, $targetBulan, $pctBulan),
+                'fu_count' => (int) ($fuCountByMitra->get($m->id) ?? 0),
             ];
         });
 
