@@ -377,7 +377,7 @@
                             Reactivation &amp; New Mitra
                             <span class="chip chip-accent" style="margin-left:6px;">New Mitra {{ $reactivationCandidates->where('is_new_mitra', true)->count() }}</span>
                             <span class="chip chip-neutral" style="margin-left:4px;">Reactivation {{ $reactivationCandidates->where('is_new_mitra', false)->where('from_kategori', true)->count() }}</span>
-                            <span class="chip chip-neutral" style="margin-left:4px;">Belum Ditandai {{ $reactivationCandidates->where('is_new_mitra', false)->where('from_kategori', false)->count() }}</span>
+                            <span class="chip chip-neutral" style="margin-left:4px;">Others {{ $reactivationCandidates->where('is_new_mitra', false)->where('from_kategori', false)->count() }}</span>
                         </div>
                         <div class="card-hint">Mitra belanja bulan ini tapi tidak ada target &mdash; tandai yang mitra baru</div>
                     </div>
@@ -402,7 +402,7 @@
                                         @elseif ($rc->from_kategori ?? false)
                                             <span class="chip chip-neutral">Reactivation</span>
                                         @else
-                                            <span class="chip chip-neutral">Belum Ditandai</span>
+                                            <span class="chip chip-neutral">Others</span>
                                         @endif
                                     </td>
                                     <td>
