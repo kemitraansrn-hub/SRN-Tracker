@@ -288,6 +288,9 @@ class WeeklyPlanController extends Controller
             ->when($request->filled('status_pencapaian'), fn ($c) => $c->where('status_pencapaian', $request->input('status_pencapaian')))
             ->when($request->filled('status_minggu'), fn ($c) => $c->where('status', $request->input('status_minggu')))
             ->when($request->filled('segmen'), fn ($c) => $c->where('segmen', $request->input('segmen')))
+            ->when($request->filled('status_fu'), fn ($c) => $c->filter(
+                fn ($p) => $request->input('status_fu') === 'sudah' ? $p->fu_count > 0 : $p->fu_count === 0
+            ))
             ->values();
 
         // Derived from $plan (already KAE-scoped for non-admins) rather than

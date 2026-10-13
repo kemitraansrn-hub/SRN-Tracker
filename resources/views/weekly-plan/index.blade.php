@@ -124,8 +124,16 @@
                 <option value="belum-ada-data" {{ request('status_minggu') === 'belum-ada-data' ? 'selected' : '' }}>Belum ada data</option>
             </select>
         </div>
+        <div class="field" style="margin-bottom:0;">
+            <label>Status FU</label>
+            <select class="select-pill" name="status_fu" onchange="this.form.submit()">
+                <option value="">Semua</option>
+                <option value="sudah" {{ request('status_fu') === 'sudah' ? 'selected' : '' }}>Sudah FU</option>
+                <option value="belum" {{ request('status_fu') === 'belum' ? 'selected' : '' }}>Belum FU</option>
+            </select>
+        </div>
         <button type="submit" class="btn" style="width:auto;">Cari</button>
-        @if (request('q') || request('segmen') || request('kae_code') || request('minggu_andalan') || request('status_pencapaian') || request('status_minggu'))
+        @if (request('q') || request('segmen') || request('kae_code') || request('minggu_andalan') || request('status_pencapaian') || request('status_minggu') || request('status_fu'))
             <a href="{{ route('weekly-plan.index') }}" class="btn" style="width:auto;">Reset</a>
         @endif
         <div class="card" style="width:auto; padding:9px 14px; margin-bottom:0;">
