@@ -161,6 +161,9 @@
                         <th>Status Pencapaian</th>
                         <th>Status Minggu</th>
                         <th>FU</th>
+                        @if (auth()->user()->canAccessAdminGroup())
+                            <th>Aksi</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -258,9 +261,18 @@
                                     @endif
                                 </a>
                             </td>
+                            @if (auth()->user()->canAccessAdminGroup())
+                                <td>
+                                    @if ($p->target_row)
+                                        <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="openEditTargetModal({{ $p->target_row->id }}, '{{ addslashes($p->mitra->nama) }}', {{ $p->target_row->komit ?? 0 }}, {{ $p->target_row->target ?? 0 }}, {{ $p->target_row->stretch ?? 0 }}, '{{ addslashes($p->target_row->kategori ?? '') }}', '{{ addslashes($p->target_row->keterangan ?? '') }}')">Edit</button>
+                                    @else
+                                        <span style="color:var(--ink-faint); font-size:12px;">—</span>
+                                    @endif
+                                </td>
+                            @endif
                         </tr>
                     @empty
-                        <tr><td colspan="18" style="color:var(--ink-muted);">Belum ada mitra.</td></tr>
+                        <tr><td colspan="19" style="color:var(--ink-muted);">Belum ada mitra.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -273,6 +285,58 @@
         <b style="color:var(--ink);">Terlewat</b> = minggu andalannya sudah lewat tapi belum belanja &middot;
         <b style="color:var(--ink);">Menunggu</b> = minggu andalannya belum tiba.
     </div>
+
+    @if (auth()->user()->canAccessAdminGroup())
+        <div class="modal-overlay" id="modal-edit-target" style="display:none;">
+            <div class="modal-box">
+                <div class="modal-title" id="edit-target-title">Edit Target Bulanan</div>
+                <form method="POST" id="edit-target-form" action="">
+                    @csrf
+                    <div class="field-row">
+                        <div class="field">
+                            <label>Komit</label>
+                            <input type="number" step="0.01" min="0" name="komit" id="edit-target-komit">
+                        </div>
+                        <div class="field">
+                            <label>Target</label>
+                            <input type="number" step="0.01" min="0" name="target" id="edit-target-target">
+                        </div>
+                        <div class="field">
+                            <label>Stretch</label>
+                            <input type="number" step="0.01" min="0" name="stretch" id="edit-target-stretch">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Kategori</label>
+                        <input type="text" name="kategori" id="edit-target-kategori">
+                    </div>
+                    <div class="field">
+                        <label>Keterangan</label>
+                        <textarea name="keterangan" id="edit-target-keterangan" rows="3"></textarea>
+                    </div>
+                    <div class="modal-actions" style="display:flex; gap:8px; justify-content:flex-end;">
+                        <button type="button" class="btn" style="width:auto;" onclick="closeEditTargetModal()">Batal</button>
+                        <button type="submit" class="btn btn-primary" style="width:auto;">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <script>
+            function openEditTargetModal(targetId, nama, komit, target, stretch, kategori, keterangan) {
+                document.getElementById('edit-target-form').action = '{{ url('/weekly-plan/target') }}/' + targetId;
+                document.getElementById('edit-target-title').textContent = 'Edit Target Bulanan — ' + nama;
+                document.getElementById('edit-target-komit').value = komit;
+                document.getElementById('edit-target-target').value = target;
+                document.getElementById('edit-target-stretch').value = stretch;
+                document.getElementById('edit-target-kategori').value = kategori;
+                document.getElementById('edit-target-keterangan').value = keterangan;
+                document.getElementById('modal-edit-target').style.display = 'flex';
+            }
+            function closeEditTargetModal() {
+                document.getElementById('modal-edit-target').style.display = 'none';
+            }
+        </script>
+    @endif
 
     @include('partials.reveal-on-scroll')
 @endsection

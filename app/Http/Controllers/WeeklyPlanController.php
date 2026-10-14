@@ -9,6 +9,7 @@ use App\Models\TargetBulanan;
 use App\Models\User;
 use App\Models\WeekPeriod;
 use App\Services\AchievementStatus;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -26,6 +27,21 @@ class WeeklyPlanController extends Controller
         $data = $this->buildPlan($request);
 
         return view('weekly-plan.index', $data);
+    }
+
+    public function updateTarget(Request $request, TargetBulanan $targetBulanan): RedirectResponse
+    {
+        $data = $request->validate([
+            'komit' => ['nullable', 'numeric', 'min:0'],
+            'target' => ['nullable', 'numeric', 'min:0'],
+            'stretch' => ['nullable', 'numeric', 'min:0'],
+            'kategori' => ['nullable', 'string', 'max:255'],
+            'keterangan' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $targetBulanan->update($data);
+
+        return back()->with('status', 'Target Bulanan untuk '.($targetBulanan->mitra->nama ?? 'mitra').' berhasil diubah.');
     }
 
     public function export(Request $request): StreamedResponse

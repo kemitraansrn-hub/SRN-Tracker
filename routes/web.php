@@ -60,6 +60,8 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
     Route::get('/segmentasi/{segmen}', [SegmentasiController::class, 'show'])->name('segmentasi.show');
     Route::get('/weekly-plan', [WeeklyPlanController::class, 'index'])->name('weekly-plan.index');
     Route::get('/weekly-plan/export', [WeeklyPlanController::class, 'export'])->name('weekly-plan.export');
+    Route::post('/weekly-plan/target/{targetBulanan}', [WeeklyPlanController::class, 'updateTarget'])
+        ->middleware('role:admin')->name('weekly-plan.target.update');
 
     Route::prefix('forecast')->name('forecast.')->group(function () {
         Route::get('/', [ForecastController::class, 'index'])->name('index');
