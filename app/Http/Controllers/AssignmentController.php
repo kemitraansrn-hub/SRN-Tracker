@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\MitraAssignment;
 use App\Models\MitraAssignmentSesi;
 use App\Models\User;
+use App\Services\GoogleCalendarService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -24,6 +26,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class AssignmentController extends Controller
 {
+    public function __construct(private readonly GoogleCalendarService $calendar) {}
+
     public function index(Request $request): View
     {
         $assignments = $this->filtered($request)->with(['mitra', 'sesis'])
@@ -123,7 +127,7 @@ class AssignmentController extends Controller
                 ->with('status', 'Mitra ini sudah punya Assignment untuk periode ini.');
         }
 
-        DB::transaction(function () use ($data, $request) {
+        $sesi = DB::transaction(function () use ($data, $request) {
             $assignment = MitraAssignment::create([
                 'mitra_id' => $data['mitra_id'],
                 'bulan' => $data['bulan'],
@@ -133,7 +137,7 @@ class AssignmentController extends Controller
                 'created_by' => $request->user()->id,
             ]);
 
-            MitraAssignmentSesi::create([
+            return MitraAssignmentSesi::create([
                 'mitra_assignment_id' => $assignment->id,
                 'urutan' => 1,
                 'jadwal_zoom' => $data['jadwal_zoom'],
@@ -141,8 +145,10 @@ class AssignmentController extends Controller
             ]);
         });
 
+        $calendarWarning = $this->syncSesiToCalendar($sesi->fresh('assignment.mitra'));
+
         return redirect()->route('data-development.index', ['bulan' => $data['bulan'], 'tahun' => $data['tahun']])
-            ->with('status', 'Assignment berhasil dibuat dan Zoom sudah dijadwalkan.');
+            ->with('status', 'Assignment berhasil dibuat dan Zoom sudah dijadwalkan.'.$calendarWarning);
     }
 
     public function reschedule(Request $request, MitraAssignment $mitraAssignment): RedirectResponse
@@ -157,7 +163,9 @@ class AssignmentController extends Controller
 
         $sesi->update(['jadwal_zoom' => $data['jadwal_zoom']]);
 
-        return redirect()->route('assignment.index')->with('status', 'Jadwal Zoom '.$sesi->label().' berhasil diupdate.');
+        $calendarWarning = $this->syncSesiToCalendar($sesi->fresh('assignment.mitra'));
+
+        return redirect()->route('assignment.index')->with('status', 'Jadwal Zoom '.$sesi->label().' berhasil diupdate.'.$calendarWarning);
     }
 
     public function complete(Request $request, MitraAssignment $mitraAssignment): RedirectResponse
@@ -176,7 +184,7 @@ class AssignmentController extends Controller
             return redirect()->route('assignment.index')->with('status', 'Assignment ini sudah selesai.');
         }
 
-        DB::transaction(function () use ($data, $sesi, $mitraAssignment, $request) {
+        $sesiBaru = DB::transaction(function () use ($data, $sesi, $mitraAssignment, $request) {
             $sesi->update([
                 'problem' => $data['problem'],
                 'solusi' => $data['solusi'],
@@ -187,25 +195,99 @@ class AssignmentController extends Controller
             ]);
 
             if ($data['next_action'] === 'lanjut') {
-                MitraAssignmentSesi::create([
+                return MitraAssignmentSesi::create([
                     'mitra_assignment_id' => $mitraAssignment->id,
                     'urutan' => $sesi->urutan + 1,
                     'jadwal_zoom' => $data['next_jadwal'],
                     'status' => 'terjadwal',
                 ]);
-            } else {
-                $mitraAssignment->update(['status' => 'selesai']);
             }
+
+            $mitraAssignment->update(['status' => 'selesai']);
+
+            return null;
         });
 
-        return redirect()->route('assignment.index')->with('status', 'Hasil '.$sesi->label().' tersimpan.');
+        // Sesi yang baru selesai gak butuh event-nya tetap ada di kalender.
+        $calendarWarning = $this->deleteCalendarEvent($sesi);
+        if ($sesiBaru) {
+            $calendarWarning .= $this->syncSesiToCalendar($sesiBaru->fresh('assignment.mitra'));
+        }
+
+        return redirect()->route('assignment.index')->with('status', 'Hasil '.$sesi->label().' tersimpan.'.$calendarWarning);
     }
 
     public function destroy(MitraAssignment $mitraAssignment): RedirectResponse
     {
         $nama = $mitraAssignment->mitra->nama ?? 'mitra ini';
+        foreach ($mitraAssignment->sesis as $sesi) {
+            $this->deleteCalendarEvent($sesi);
+        }
         $mitraAssignment->delete(); // cascade hapus semua sesis (FK cascadeOnDelete)
 
         return redirect()->route('assignment.index')->with('status', 'Assignment '.$nama.' dihapus. Mitra ini bisa dijadwalkan ulang lagi dari Data Development.');
+    }
+
+    /**
+     * Bikin/update event Google Calendar buat satu sesi, simpan google_event_id-nya.
+     * Return string kosong kalau sukses (atau Calendar belum di-connect, bukan error),
+     * atau pesan warning singkat yang ditempel ke notif "status" kalau beneran gagal —
+     * sengaja TIDAK melempar exception, kegagalan sync gak boleh batalkan data assignment.
+     */
+    private function syncSesiToCalendar(MitraAssignmentSesi $sesi): string
+    {
+        $assignment = $sesi->assignment;
+        $mitra = $assignment->mitra;
+        $title = 'Zoom Coaching — '.($mitra->nama ?? 'Mitra').' ('.$sesi->label().')';
+        $description = "Status Bulan: {$assignment->status_bulan}\nPeriode: {$assignment->periodeLabel()}\nKode Mitra: ".($mitra->kode_mitra ?? '—');
+        $attendees = $this->attendeeEmailsFor($mitra);
+
+        try {
+            if ($sesi->google_event_id) {
+                $this->calendar->updateEvent($sesi->google_event_id, $title, $description, $sesi->jadwal_zoom, $attendees);
+
+                return '';
+            }
+
+            $eventId = $this->calendar->createEvent($title, $description, $sesi->jadwal_zoom, $attendees);
+            if ($eventId) {
+                $sesi->update(['google_event_id' => $eventId]);
+            }
+
+            return '';
+        } catch (\Throwable $e) {
+            Log::warning('AssignmentController: gagal sync Google Calendar', ['sesi_id' => $sesi->id, 'error' => $e->getMessage()]);
+
+            return ' (Peringatan: gagal sync ke Google Calendar — '.$e->getMessage().')';
+        }
+    }
+
+    private function deleteCalendarEvent(MitraAssignmentSesi $sesi): string
+    {
+        if (! $sesi->google_event_id) {
+            return '';
+        }
+
+        try {
+            $this->calendar->deleteEvent($sesi->google_event_id);
+        } catch (\Throwable $e) {
+            Log::warning('AssignmentController: gagal hapus event Google Calendar', ['sesi_id' => $sesi->id, 'error' => $e->getMessage()]);
+
+            return ' (Peringatan: gagal hapus event di Google Calendar — '.$e->getMessage().')';
+        }
+
+        return '';
+    }
+
+    /** Email KAE yang pegang mitra ini, kalau ada — Mitra sendiri gak punya kolom email. */
+    private function attendeeEmailsFor($mitra): array
+    {
+        if (! $mitra?->kae_code) {
+            return [];
+        }
+
+        $email = User::where('role', 'kae')->where('kae_code', $mitra->kae_code)->value('email');
+
+        return $email ? [$email] : [];
     }
 }

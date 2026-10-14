@@ -500,6 +500,10 @@
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>
                             <span class="nav-label">Backup Data</span>
                         </a>
+                        <a href="{{ route('google-calendar.edit') }}" class="nav-item {{ request()->routeIs('google-calendar.*') ? 'active' : '' }}" title="Google Calendar">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke-linecap="round"/></svg>
+                            <span class="nav-label">Google Calendar</span>
+                        </a>
                     </div>
                 @endif
                 @endif

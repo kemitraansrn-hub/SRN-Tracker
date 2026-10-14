@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
 #[Fillable([
-    'mitra_assignment_id', 'urutan', 'jadwal_zoom', 'status',
+    'mitra_assignment_id', 'urutan', 'jadwal_zoom', 'google_event_id', 'status',
     'problem', 'solusi', 'action_plan', 'filled_by', 'filled_at',
 ])]
 class MitraAssignmentSesi extends Model

@@ -173,6 +173,13 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::post('/', [BuybackSettingController::class, 'update'])->name('update');
     });
 
+    Route::middleware('role:admin')->prefix('pengaturan/google-calendar')->name('google-calendar.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\GoogleCalendarSettingController::class, 'edit'])->name('edit');
+        Route::get('/connect', [\App\Http\Controllers\GoogleCalendarSettingController::class, 'connect'])->name('connect');
+        Route::get('/callback', [\App\Http\Controllers\GoogleCalendarSettingController::class, 'callback'])->name('callback');
+        Route::post('/disconnect', [\App\Http\Controllers\GoogleCalendarSettingController::class, 'disconnect'])->name('disconnect');
+    });
+
     Route::middleware('role:admin')->prefix('pengaturan/backup')->name('backup.')->group(function () {
         Route::get('/', [BackupController::class, 'index'])->name('index');
         Route::post('/', [BackupController::class, 'run'])->name('run');
