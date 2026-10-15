@@ -279,15 +279,27 @@ class AssignmentController extends Controller
         return '';
     }
 
-    /** Email KAE yang pegang mitra ini, kalau ada — Mitra sendiri gak punya kolom email. */
+    /**
+     * Email yang diundang sebagai attendee: KAE pemilik mitra ini (kalau ada —
+     * Mitra sendiri gak punya kolom email) + email akun Google yang connect
+     * (kemitraan.srn@gmail.com), biar akun itu juga kebagian notif undangan,
+     * bukan cuma "diam-diam" muncul di kalendernya sendiri selaku organizer.
+     */
     private function attendeeEmailsFor($mitra): array
     {
-        if (! $mitra?->kae_code) {
-            return [];
+        $emails = [];
+
+        if ($mitra?->kae_code) {
+            $kaeEmail = User::where('role', 'kae')->where('kae_code', $mitra->kae_code)->value('email');
+            if ($kaeEmail) {
+                $emails[] = $kaeEmail;
+            }
         }
 
-        $email = User::where('role', 'kae')->where('kae_code', $mitra->kae_code)->value('email');
+        if ($connected = $this->calendar->connectedEmail()) {
+            $emails[] = $connected;
+        }
 
-        return $email ? [$email] : [];
+        return $emails;
     }
 }
