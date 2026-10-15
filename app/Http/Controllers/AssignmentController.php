@@ -281,9 +281,11 @@ class AssignmentController extends Controller
 
     /**
      * Email yang diundang sebagai attendee: KAE pemilik mitra ini (kalau ada —
-     * Mitra sendiri gak punya kolom email) + email akun Google yang connect
-     * (kemitraan.srn@gmail.com), biar akun itu juga kebagian notif undangan,
-     * bukan cuma "diam-diam" muncul di kalendernya sendiri selaku organizer.
+     * Mitra sendiri gak punya kolom email), SEMUA user role Head of SRN &
+     * Supervisor (2026-10-15, biar ikut dipantau tanpa terikat mitra/KAE
+     * tertentu), + email akun Google yang connect (kemitraan.srn@gmail.com,
+     * biar akun itu juga kebagian notif undangan, bukan cuma "diam-diam"
+     * muncul di kalendernya sendiri selaku organizer).
      */
     private function attendeeEmailsFor($mitra): array
     {
@@ -295,6 +297,8 @@ class AssignmentController extends Controller
                 $emails[] = $kaeEmail;
             }
         }
+
+        $emails = array_merge($emails, User::whereIn('role', ['head', 'supervisor'])->pluck('email')->all());
 
         if ($connected = $this->calendar->connectedEmail()) {
             $emails[] = $connected;
