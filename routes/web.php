@@ -158,6 +158,14 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::delete('/{oneOnOne}', [\App\Http\Controllers\OneOnOneController::class, 'destroy'])->name('destroy');
     });
 
+    Route::prefix('akuisisi/tracking-referral')->name('akuisisi-referral.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\AkuisisiReferralController::class, 'index'])->name('index');
+        Route::get('/download', [\App\Http\Controllers\AkuisisiReferralController::class, 'download'])->name('download');
+        Route::post('/', [\App\Http\Controllers\AkuisisiReferralController::class, 'store'])->middleware('role:admin')->name('store');
+        Route::post('/{akuisisiReferral}/tahap', [\App\Http\Controllers\AkuisisiReferralController::class, 'updateTahap'])->middleware('role:admin')->name('tahap.update');
+        Route::delete('/{akuisisiReferral}', [\App\Http\Controllers\AkuisisiReferralController::class, 'destroy'])->middleware('role:admin')->name('destroy');
+    });
+
     Route::middleware('role:admin')->prefix('pengaturan/minggu')->name('pengaturan.')->group(function () {
         Route::get('/', [WeekPeriodController::class, 'edit'])->name('minggu');
         Route::post('/', [WeekPeriodController::class, 'update'])->name('minggu.update');

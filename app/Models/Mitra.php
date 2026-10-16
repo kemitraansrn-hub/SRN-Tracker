@@ -52,4 +52,9 @@ class Mitra extends Model
     {
         return $this->hasMany(PriceAdjustmentRequest::class);
     }
+
+    public function akuisisiReferral()
+    {
+        return $this->hasOne(AkuisisiReferral::class);
+    }
 }

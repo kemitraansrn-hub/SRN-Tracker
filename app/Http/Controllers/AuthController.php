@@ -41,6 +41,10 @@ class AuthController extends Controller
             return redirect()->route('poin.index');
         }
 
+        if ($request->user()->isPengakuisisi()) {
+            return redirect()->route('akuisisi-referral.index');
+        }
+
         return redirect()->intended(route('dashboard'));
     }
 
