@@ -106,7 +106,12 @@ class KomitTrackerController extends Controller
             // 2026-10-12: sebelumnya gak ada pembatasan sama sekali di sini
             // — akun KAE bisa lihat komit/pencapaian SEMUA mitra, bukan
             // cuma mitra sendiri. Dibenerin konsisten sama menu lain.
-            ->when(! $user->canViewAll(), fn ($w) => $w->where('kae_code', $user->kae_code))
+            // 2026-10-16: scoping-nya salah pakai canViewAll() -- role
+            // growth_specialist (gak punya kae_code) ikut kena filter
+            // where('kae_code', null) dan jadi gak lihat data apa pun
+            // (dilaporkan user, akun Putri). Dibenerin ke role==='kae'
+            // (konsisten sama SetUpLmsController/TrackingPerformanceController).
+            ->when($user->role === 'kae', fn ($w) => $w->where('kae_code', $user->kae_code))
             ->when($user->canViewAll() && $request->filled('kae_code'), fn ($w) => $w->where('kae_code', $request->input('kae_code')))
             ->when($q !== '', fn ($w) => $w->where(fn ($x) => $x->where('nama', 'like', "%{$q}%")->orWhere('kode_mitra', 'like', "%{$q}%")))
             ->orderBy('nama')

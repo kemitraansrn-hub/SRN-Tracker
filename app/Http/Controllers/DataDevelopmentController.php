@@ -38,7 +38,9 @@ class DataDevelopmentController extends Controller
             // dibenerin konsisten sama menu lain. KAE live dari mitra
             // (bukan kae_code beku di snapshot), sama kayak download() di
             // bawah.
-            ->when(! $user->canViewAll(), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $user->kae_code)))
+            // 2026-10-16: scoping salah pakai canViewAll() -- growth_specialist
+            // (gak punya kae_code) jadi gak lihat data apa pun. role==='kae'.
+            ->when($user->role === 'kae', fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $user->kae_code)))
             ->when($user->canViewAll() && $request->filled('kae_code'), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $request->input('kae_code'))))
             ->orderBy('pct')
             ->get();
@@ -70,7 +72,7 @@ class DataDevelopmentController extends Controller
         // a snapshot was saved (e.g. a correction), and the report should
         // reflect who owns them now, not a stale code from save-time.
         $snapshots = MitraSnapshot::with('mitra:id,kae_code')->where('bulan', $bulan)->where('tahun', $tahun)
-            ->when(! $user->canViewAll(), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $user->kae_code)))
+            ->when($user->role === 'kae', fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $user->kae_code)))
             ->when($user->canViewAll() && $request->filled('kae_code'), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $request->input('kae_code'))))
             ->orderBy('pct')->get();
         $kaeNameMap = User::kaeNameMap();

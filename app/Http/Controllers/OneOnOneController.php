@@ -93,7 +93,9 @@ class OneOnOneController extends Controller
         return OneOnOne::query()
             // 2026-10-12: sebelumnya gak ada pembatasan KAE sama sekali —
             // dibenerin konsisten sama menu lain.
-            ->when(! $user->canViewAll(), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $user->kae_code)))
+            // 2026-10-16: scoping salah pakai canViewAll() -- growth_specialist
+            // (gak punya kae_code) jadi gak lihat data apa pun. role==='kae'.
+            ->when($user->role === 'kae', fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $user->kae_code)))
             ->when($user->canViewAll() && $request->filled('kae_code'), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $request->input('kae_code'))))
             ->when($request->filled('bulan'), fn ($q) => $q->where('bulan', (int) $request->input('bulan')))
             ->when($request->filled('tahun'), fn ($q) => $q->where('tahun', (int) $request->input('tahun')))
