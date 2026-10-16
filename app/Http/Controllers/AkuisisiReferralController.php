@@ -28,10 +28,17 @@ class AkuisisiReferralController extends Controller
             // Nama-nama Pengakuisisi yang sudah pernah dipakai, cuma buat
             // datalist autocomplete (bukan master data) -- lihat catatan
             // di AkuisisiReferral soal kenapa ini free-text bukan FK user.
-            'namaPengakuisisiOptions' => $request->user()->canViewAll()
+            // Menu ini kebuka semua role KECUALI kae (permintaan eksplisit
+            // 2026-10-16) -- jadi dicek role!=='kae', bukan canViewAll()
+            // (yang bakal ngecualiin growth_specialist juga).
+            'namaPengakuisisiOptions' => $request->user()->role !== 'kae'
                 ? AkuisisiReferral::distinct()->orderBy('nama_pengakuisisi')->pluck('nama_pengakuisisi')
                 : collect(),
-            'mitraOptions' => $request->user()->canViewAll()
+            // mitraOptions cuma dipakai form Tambah Mitra (mutasi, dibatasi
+            // admin/head/manager -- samain sama middleware role:admin di
+            // route store()), jadi tetap canAccessAdminGroup() bukan
+            // seluas pengecekan "boleh lihat menu" di atas.
+            'mitraOptions' => $request->user()->canAccessAdminGroup()
                 ? Mitra::where('status', 'aktif')->whereDoesntHave('akuisisiReferral')->orderBy('nama')->get()
                 : collect(),
         ]);
@@ -101,9 +108,10 @@ class AkuisisiReferralController extends Controller
 
         return AkuisisiReferral::query()
             ->with(['mitra', 'tahaps'])
-            // Gak ada login role buat Pengakuisisi (orang di luar sistem) --
-            // jadi menu ini murni admin/canViewAll, role lain selalu kosong.
-            ->when(! $user->canViewAll(), fn ($q) => $q->whereRaw('1 = 0'))
+            // Semua role bisa buka menu ini KECUALI kae (permintaan eksplisit
+            // 2026-10-16) -- gak dicek canViewAll() biar growth_specialist
+            // ikut kebagian lihat juga.
+            ->when($user->role === 'kae', fn ($q) => $q->whereRaw('1 = 0'))
             ->when($request->filled('nama_pengakuisisi'), fn ($q) => $q->where('nama_pengakuisisi', $request->input('nama_pengakuisisi')))
             ->when($request->filled('q'), function ($q) use ($request) {
                 $needle = $request->input('q');

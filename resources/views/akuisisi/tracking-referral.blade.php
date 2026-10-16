@@ -22,7 +22,7 @@
         </div>
         <div class="field-row" style="margin-bottom:0;">
             <a href="{{ route('akuisisi-referral.download', request()->query()) }}" class="btn" style="width:auto;">Download Excel</a>
-            @if (auth()->user()->canViewAll())
+            @if (auth()->user()->canAccessAdminGroup())
                 <button type="button" class="btn btn-primary" style="width:auto;" onclick="document.getElementById('modal-tambah-referral').style.display='flex'">+ Tambah Mitra</button>
             @endif
         </div>
@@ -40,7 +40,7 @@
             <label>Cari Mitra</label>
             <input type="text" name="q" value="{{ request('q') }}" placeholder="Nama/kode mitra...">
         </div>
-        @if (auth()->user()->canViewAll())
+        @if (auth()->user()->role !== 'kae')
             <div class="field" style="margin-bottom:0;">
                 <label>Pengakuisisi</label>
                 <input type="text" name="nama_pengakuisisi" value="{{ request('nama_pengakuisisi') }}" list="nama-pengakuisisi-filter-list" placeholder="Semua">
@@ -69,7 +69,7 @@
                         <th>Transaksi 2 (2%)</th>
                         <th>Transaksi 3 (1%)</th>
                         <th>Total Bonus Berhak</th>
-                        @if (auth()->user()->canViewAll())
+                        @if (auth()->user()->canAccessAdminGroup())
                             <th></th>
                         @endif
                     </tr>
@@ -95,7 +95,7 @@
                                         <div class="tnum" style="font-size:12.5px;">{{ $rp($th->nominal) }}</div>
                                         <div class="tnum" style="font-size:12.5px; font-weight:700;">Bonus {{ $rp($th->nominal_bonus) }}</div>
                                         <span class="chip {{ $cls }}" style="margin-top:4px; display:inline-block;">{{ $label }}</span>
-                                        @if (auth()->user()->role === 'admin' && $th->dalam_window)
+                                        @if (auth()->user()->canAccessAdminGroup() && $th->dalam_window)
                                             <div style="margin-top:4px;">
                                                 <button type="button" class="btn" style="width:auto; font-size:10.5px; padding:3px 8px;" onclick="openTahapModal({{ $ref->id }}, {{ $t }}, '{{ addslashes($ref->mitra->nama) }}', '{{ $th->bulan_label }}', {{ $th->nominal_bonus }}, '{{ $th->status }}')">Ubah Status</button>
                                             </div>
@@ -104,7 +104,7 @@
                                 </td>
                             @endforeach
                             <td class="tnum" style="font-weight:700;">{{ $rp($ref->totalBonusBerhak()) }}</td>
-                            @if (auth()->user()->canViewAll())
+                            @if (auth()->user()->canAccessAdminGroup())
                                 <td>
                                     <form method="POST" action="{{ route('akuisisi-referral.destroy', $ref) }}" onsubmit="return confirm('Hapus tracking akuisisi {{ addslashes($ref->mitra->nama) }}? Status pembayaran yang sudah tercatat ikut terhapus.');">
                                         @csrf
@@ -122,7 +122,7 @@
         </div>
     </section>
 
-    @if (auth()->user()->canViewAll())
+    @if (auth()->user()->canAccessAdminGroup())
         <div class="modal-overlay" id="modal-tambah-referral" style="display:none;">
             <div class="modal-box">
                 <div class="modal-title">Tambah Mitra ke Tracking Referral</div>
