@@ -35,10 +35,12 @@ class AkuisisiReferralController extends Controller
                 ? AkuisisiReferral::distinct()->orderBy('nama_pengakuisisi')->pluck('nama_pengakuisisi')
                 : collect(),
             // mitraOptions cuma dipakai form Tambah Mitra (mutasi, dibatasi
-            // admin/head/manager -- samain sama middleware role:admin di
-            // route store()), jadi tetap canAccessAdminGroup() bukan
-            // seluas pengecekan "boleh lihat menu" di atas.
-            'mitraOptions' => $request->user()->canAccessAdminGroup()
+            // admin/head/manager/supervisor -- route akuisisi-referral.*
+            // BUKAN bagian dari grup menu Admin sidebar, jadi middleware
+            // role:admin di sini otomatis juga meloloskan Supervisor, lihat
+            // EnsureUserHasRole -- makanya pakai hasAdminAccess(), bukan
+            // canAccessAdminGroup() yang secara sengaja ngecualiin Supervisor).
+            'mitraOptions' => $request->user()->hasAdminAccess()
                 ? Mitra::where('status', 'aktif')->whereDoesntHave('akuisisiReferral')->orderBy('nama')->get()
                 : collect(),
         ]);
