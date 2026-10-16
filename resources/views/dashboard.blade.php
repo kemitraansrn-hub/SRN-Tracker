@@ -8,6 +8,10 @@
 @section('content')
     <h1 class="display" style="font-size:24px; margin-bottom:16px;">Dashboard</h1>
 
+    @if (session('status'))
+        <div class="alert-success">{{ session('status') }}</div>
+    @endif
+
     <div style="display:flex; gap:4px; margin-bottom:22px; border-bottom:1px solid var(--line);">
         <button type="button" id="dashtab-sales-btn" onclick="switchDashboardTab('sales')" style="padding:10px 4px; margin-right:22px; background:none; border:none; border-bottom:2px solid {{ $dashTabAktif === 'sales' ? 'var(--accent)' : 'transparent' }}; font-family:inherit; font-size:14px; font-weight:{{ $dashTabAktif === 'sales' ? '700' : '600' }}; color:var(--{{ $dashTabAktif === 'sales' ? 'ink' : 'ink-muted' }}); cursor:pointer;">Sales</button>
         <button type="button" id="dashtab-development-btn" onclick="switchDashboardTab('development')" style="padding:10px 4px; margin-right:22px; background:none; border:none; border-bottom:2px solid {{ $dashTabAktif === 'development' ? 'var(--accent)' : 'transparent' }}; font-family:inherit; font-size:14px; font-weight:{{ $dashTabAktif === 'development' ? '700' : '600' }}; color:var(--{{ $dashTabAktif === 'development' ? 'ink' : 'ink-muted' }}); cursor:pointer;">Development</button>
@@ -80,6 +84,32 @@
                         <span class="tnum" style="font-weight:700; font-size:14px; color:{{ $mtdGrowthPct >= 0 ? 'var(--good)' : 'var(--critical)' }};">{{ $mtdGrowthPct >= 0 ? '+' : '' }}{{ $mtdGrowthPct }}%</span>
                     @endif
                 </div>
+                @if (auth()->user()->canViewAll())
+                    <div style="margin-top:12px; padding-top:10px; border-top:1px dashed var(--line);">
+                        @if ($omsetParsial)
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+                                <span style="font-size:11.5px; color:var(--ink-muted);">Parsial (manual){{ $omsetParsial->keterangan ? ' — '.$omsetParsial->keterangan : '' }}</span>
+                                <span class="tnum" style="font-size:12.5px; font-weight:600;">{{ $rp($omsetParsial->jumlah) }}</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; margin-top:4px;">
+                                <span style="font-size:12px; color:var(--ink); font-weight:700;">Total (Real + Parsial)</span>
+                                <span class="tnum" style="font-size:13.5px; font-weight:700;">{{ $rp($mtdIni + $omsetParsial->jumlah) }}</span>
+                            </div>
+                        @endif
+                        @if (auth()->user()->role === 'admin')
+                            <div style="margin-top:8px; display:flex; gap:6px;">
+                                <button type="button" class="btn" style="width:auto; font-size:11px; padding:4px 9px;" onclick="openOmsetParsialModal({{ $omsetParsial->jumlah ?? 0 }}, '{{ addslashes($omsetParsial->keterangan ?? '') }}')">{{ $omsetParsial ? 'Edit Parsial' : '+ Tambah Parsial' }}</button>
+                                @if ($omsetParsial)
+                                    <form method="POST" action="{{ route('omset-parsial.destroy') }}" onsubmit="return confirm('Hapus angka Parsial? Card akan kembali nampilin omset real database aja.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger" style="width:auto; font-size:11px; padding:4px 9px;">Hapus</button>
+                                    </form>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
+                @endif
             </div>
             @if ($trendCard)
                 <div class="card" style="min-width:0;">
@@ -914,6 +944,42 @@
             </div>
         </section>
     </div>
+
+    @if (auth()->user()->role === 'admin')
+        <div class="modal-overlay" id="modal-omset-parsial" style="display:none;">
+            <div class="modal-box">
+                <div class="modal-title">Omset Parsial</div>
+                <div style="font-size:11.5px; color:var(--ink-muted); margin-bottom:14px; line-height:1.6;">
+                    Angka manual buat jelasin omset yang sebetulnya sudah ada tapi belum masuk database (masih parsial). Cuma nambahin tampilan di card "MTD vs Bulan Lalu", gak ngaruh ke data Order/Target/Komit Tracker, dll.
+                </div>
+                <form method="POST" action="{{ route('omset-parsial.update') }}">
+                    @csrf
+                    <div class="field">
+                        <label>Jumlah (Rp)</label>
+                        <input type="number" step="0.01" min="0" name="jumlah" id="omset-parsial-jumlah" required>
+                    </div>
+                    <div class="field">
+                        <label>Keterangan (opsional)</label>
+                        <input type="text" name="keterangan" id="omset-parsial-keterangan" maxlength="255" placeholder="Misal: omset H+2 belum sempat diinput">
+                    </div>
+                    <div class="modal-actions" style="display:flex; gap:8px; justify-content:flex-end;">
+                        <button type="button" class="btn" style="width:auto;" onclick="closeOmsetParsialModal()">Batal</button>
+                        <button type="submit" class="btn btn-primary" style="width:auto;">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <script>
+            function openOmsetParsialModal(jumlah, keterangan) {
+                document.getElementById('omset-parsial-jumlah').value = jumlah > 0 ? jumlah : '';
+                document.getElementById('omset-parsial-keterangan').value = keterangan;
+                document.getElementById('modal-omset-parsial').style.display = 'flex';
+            }
+            function closeOmsetParsialModal() {
+                document.getElementById('modal-omset-parsial').style.display = 'none';
+            }
+        </script>
+    @endif
 
     <script>
         function switchDashboardTab(tab) {

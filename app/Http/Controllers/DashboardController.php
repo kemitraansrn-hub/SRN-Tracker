@@ -6,6 +6,7 @@ use App\Models\CpCase;
 use App\Models\LmsStep;
 use App\Models\Mitra;
 use App\Models\NewMitraFlag;
+use App\Models\OmsetParsial;
 use App\Models\Order;
 use App\Models\RunRateTarget;
 use App\Models\TargetBulanan;
@@ -223,6 +224,7 @@ class DashboardController extends Controller
             'mtdLalu' => $mtdLalu,
             'mtdGrowthPct' => $mtdGrowthPct,
             'dayCap' => $dayCap,
+            'omsetParsial' => $canViewAll ? OmsetParsial::current() : null,
             'totalOmsetBulanIni' => $totalOmsetBulanIni,
             'jumlahOrderBulanIni' => $jumlahOrderBulanIni,
             'adaTargetBulanIni' => $adaTargetBulanIni,

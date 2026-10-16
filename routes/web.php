@@ -46,6 +46,10 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/dashboard/new-mitra/{mitra}/toggle', [DashboardController::class, 'toggleNewMitra'])
         ->middleware('role:admin')->name('dashboard.toggle-new-mitra');
+    Route::post('/dashboard/omset-parsial', [\App\Http\Controllers\OmsetParsialController::class, 'update'])
+        ->middleware('role:admin')->name('omset-parsial.update');
+    Route::delete('/dashboard/omset-parsial', [\App\Http\Controllers\OmsetParsialController::class, 'destroy'])
+        ->middleware('role:admin')->name('omset-parsial.destroy');
     Route::get('/trend', [TrendController::class, 'index'])->name('trend.index');
     Route::prefix('action-plan')->name('action-plan.')->group(function () {
         Route::get('/', [\App\Http\Controllers\ActionPlanController::class, 'index'])->name('index');
