@@ -17,10 +17,12 @@ return new class extends Migration
         // tabel orders (lihat AkuisisiReferral::hitungTahap()), gak
         // disimpan di sini -- yang disimpan cuma status pembayaran per
         // tahap (lihat akuisisi_referral_tahaps).
+        // nama_pengakuisisi SENGAJA free-text, bukan FK ke users -- orang
+        // Pengakuisisi adalah pihak di luar sistem (gak punya akun login).
         Schema::create('akuisisi_referrals', function (Blueprint $table) {
             $table->id();
             $table->foreignId('mitra_id')->unique()->constrained('mitra')->cascadeOnDelete();
-            $table->foreignId('pengakuisisi_user_id')->constrained('users')->cascadeOnDelete();
+            $table->string('nama_pengakuisisi');
             $table->date('tanggal_akuisisi');
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();

@@ -9,14 +9,17 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Satu mitra hasil "Program Akuisisi Mitra Offline" (lihat dokumen program,
- * 2026-10-01) -- dikaitkan ke satu Pengakuisisi (user role=pengakuisisi)
- * sejak tanggal_akuisisi. Bonus berjenjang 3%/2%/1% dari transaksi bulan
+ * 2026-10-01) -- dikaitkan ke satu Pengakuisisi sejak tanggal_akuisisi.
+ * nama_pengakuisisi SENGAJA free-text (bukan FK ke users) karena
+ * Pengakuisisi adalah pihak di luar sistem, gak punya akun login (user
+ * eksplisit mengoreksi ini 2026-10-16, versi awal sempat pakai role user
+ * baru sebelum dikoreksi). Bonus berjenjang 3%/2%/1% dari transaksi bulan
  * ke-1/2/3 mitra SEJAK tanggal_akuisisi (order sebelum itu gak dihitung),
  * masing-masing bulan transaksi diakumulasi jadi satu "transaksi" (bukan
  * per-order). Transaksi ke-2 & ke-3 cuma dapat bonus kalau terjadi dalam
  * 6 bulan sejak tanggal transaksi pertama (bukan sejak tanggal_akuisisi).
  */
-#[Fillable(['mitra_id', 'pengakuisisi_user_id', 'tanggal_akuisisi', 'created_by'])]
+#[Fillable(['mitra_id', 'nama_pengakuisisi', 'tanggal_akuisisi', 'created_by'])]
 class AkuisisiReferral extends Model
 {
     protected $casts = [
@@ -28,11 +31,6 @@ class AkuisisiReferral extends Model
     public function mitra()
     {
         return $this->belongsTo(Mitra::class);
-    }
-
-    public function pengakuisisi()
-    {
-        return $this->belongsTo(User::class, 'pengakuisisi_user_id');
     }
 
     public function tahaps()

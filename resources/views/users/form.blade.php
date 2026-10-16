@@ -64,7 +64,6 @@
                     <option value="finance" {{ old('role', $targetUser->role) === 'finance' ? 'selected' : '' }}>Finance</option>
                     <option value="compliance" {{ old('role', $targetUser->role) === 'compliance' ? 'selected' : '' }}>Compliance</option>
                     <option value="growth_specialist" {{ old('role', $targetUser->role) === 'growth_specialist' ? 'selected' : '' }}>Growth Specialist</option>
-                    <option value="pengakuisisi" {{ old('role', $targetUser->role) === 'pengakuisisi' ? 'selected' : '' }}>Pengakuisisi</option>
                 </select>
             </div>
             <div class="field" style="flex:1;" id="kaeCodeField">

@@ -43,16 +43,16 @@
         @if (auth()->user()->canViewAll())
             <div class="field" style="margin-bottom:0;">
                 <label>Pengakuisisi</label>
-                <select class="select-pill" name="pengakuisisi_user_id" onchange="this.form.submit()">
-                    <option value="">Semua</option>
-                    @foreach ($pengakuisisiOptions as $p)
-                        <option value="{{ $p->id }}" {{ (string) request('pengakuisisi_user_id') === (string) $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
+                <input type="text" name="nama_pengakuisisi" value="{{ request('nama_pengakuisisi') }}" list="nama-pengakuisisi-filter-list" placeholder="Semua">
+                <datalist id="nama-pengakuisisi-filter-list">
+                    @foreach ($namaPengakuisisiOptions as $nama)
+                        <option value="{{ $nama }}"></option>
                     @endforeach
-                </select>
+                </datalist>
             </div>
         @endif
         <button type="submit" class="btn" style="width:auto;">Cari</button>
-        @if (request('q') || request('pengakuisisi_user_id'))
+        @if (request('q') || request('nama_pengakuisisi'))
             <a href="{{ route('akuisisi-referral.index') }}" class="btn" style="width:auto;">Reset</a>
         @endif
     </form>
@@ -82,7 +82,7 @@
                                 <a href="{{ route('mitra.show', $ref->mitra) }}" style="color:var(--ink); text-decoration:none; font-weight:600;">{{ $ref->mitra->nama }}</a>
                                 <div style="font-size:11px; color:var(--ink-muted);">{{ $ref->mitra->kode_mitra }}</div>
                             </td>
-                            <td>{{ $ref->pengakuisisi->name ?? '—' }}</td>
+                            <td>{{ $ref->nama_pengakuisisi }}</td>
                             <td class="tnum">{{ $ref->tanggal_akuisisi->format('d/m/Y') }}</td>
                             @foreach ([1, 2, 3] as $t)
                                 @php $th = $tahaps->get($t); @endphp
@@ -138,16 +138,13 @@
                         ])
                     </div>
                     <div class="field">
-                        <label>Pengakuisisi</label>
-                        <select name="pengakuisisi_user_id" required>
-                            <option value="">— pilih —</option>
-                            @foreach ($pengakuisisiOptions as $p)
-                                <option value="{{ $p->id }}" {{ old('pengakuisisi_user_id') == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
+                        <label>Nama Pengakuisisi</label>
+                        <input type="text" name="nama_pengakuisisi" value="{{ old('nama_pengakuisisi') }}" list="nama-pengakuisisi-list" maxlength="255" placeholder="Nama pengakuisisi (orang di luar sistem)" required>
+                        <datalist id="nama-pengakuisisi-list">
+                            @foreach ($namaPengakuisisiOptions as $nama)
+                                <option value="{{ $nama }}"></option>
                             @endforeach
-                        </select>
-                        @if ($pengakuisisiOptions->isEmpty())
-                            <div style="font-size:11px; color:var(--critical); margin-top:4px;">Belum ada user dengan role Pengakuisisi. Tambahkan dulu lewat User Management.</div>
-                        @endif
+                        </datalist>
                     </div>
                     <div class="field">
                         <label>Tanggal Akuisisi</label>

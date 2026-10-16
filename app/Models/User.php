@@ -65,11 +65,6 @@ class User extends Authenticatable
         return $this->role === 'manager';
     }
 
-    public function isPengakuisisi(): bool
-    {
-        return $this->role === 'pengakuisisi';
-    }
-
     /** Role dengan visibilitas company-wide (bukan cuma data KAE sendiri). */
     public function canViewAll(): bool
     {

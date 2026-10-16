@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\AkuisisiReferral;
 use App\Models\AkuisisiReferralTahap;
 use App\Models\Mitra;
-use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -26,8 +25,11 @@ class AkuisisiReferralController extends Controller
 
         return view('akuisisi.tracking-referral', [
             'referrals' => $referrals,
-            'pengakuisisiOptions' => $request->user()->canViewAll()
-                ? User::where('role', 'pengakuisisi')->orderBy('name')->get()
+            // Nama-nama Pengakuisisi yang sudah pernah dipakai, cuma buat
+            // datalist autocomplete (bukan master data) -- lihat catatan
+            // di AkuisisiReferral soal kenapa ini free-text bukan FK user.
+            'namaPengakuisisiOptions' => $request->user()->canViewAll()
+                ? AkuisisiReferral::distinct()->orderBy('nama_pengakuisisi')->pluck('nama_pengakuisisi')
                 : collect(),
             'mitraOptions' => $request->user()->canViewAll()
                 ? Mitra::where('status', 'aktif')->whereDoesntHave('akuisisiReferral')->orderBy('nama')->get()
@@ -57,7 +59,7 @@ class AkuisisiReferralController extends Controller
             $row = [
                 $ref->mitra->nama,
                 $ref->mitra->kode_mitra,
-                $ref->pengakuisisi->name ?? '—',
+                $ref->nama_pengakuisisi,
                 $ref->tanggal_akuisisi->format('d/m/Y'),
             ];
             foreach ([1, 2, 3] as $t) {
@@ -98,9 +100,11 @@ class AkuisisiReferralController extends Controller
         $user = $request->user();
 
         return AkuisisiReferral::query()
-            ->with(['mitra', 'pengakuisisi', 'tahaps'])
-            ->when(! $user->canViewAll(), fn ($q) => $q->where('pengakuisisi_user_id', $user->id))
-            ->when($user->canViewAll() && $request->filled('pengakuisisi_user_id'), fn ($q) => $q->where('pengakuisisi_user_id', $request->input('pengakuisisi_user_id')))
+            ->with(['mitra', 'tahaps'])
+            // Gak ada login role buat Pengakuisisi (orang di luar sistem) --
+            // jadi menu ini murni admin/canViewAll, role lain selalu kosong.
+            ->when(! $user->canViewAll(), fn ($q) => $q->whereRaw('1 = 0'))
+            ->when($request->filled('nama_pengakuisisi'), fn ($q) => $q->where('nama_pengakuisisi', $request->input('nama_pengakuisisi')))
             ->when($request->filled('q'), function ($q) use ($request) {
                 $needle = $request->input('q');
                 $q->whereHas('mitra', fn ($m) => $m->where('nama', 'like', "%{$needle}%")->orWhere('kode_mitra', 'like', "%{$needle}%"));
@@ -114,13 +118,9 @@ class AkuisisiReferralController extends Controller
     {
         $data = $request->validate([
             'mitra_id' => ['required', 'exists:mitra,id', 'unique:akuisisi_referrals,mitra_id'],
-            'pengakuisisi_user_id' => ['required', 'exists:users,id'],
+            'nama_pengakuisisi' => ['required', 'string', 'max:255'],
             'tanggal_akuisisi' => ['required', 'date', 'before_or_equal:today'],
         ]);
-
-        if (! User::where('id', $data['pengakuisisi_user_id'])->where('role', 'pengakuisisi')->exists()) {
-            return back()->withErrors(['pengakuisisi_user_id' => 'User yang dipilih bukan role Pengakuisisi.'])->withInput();
-        }
 
         AkuisisiReferral::create([
             ...$data,
