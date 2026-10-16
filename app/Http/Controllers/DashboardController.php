@@ -34,6 +34,7 @@ class DashboardController extends Controller
 
         $canViewAll = $user->canViewAll();
         $kaeCode = $canViewAll ? null : $user->kae_code;
+        $omsetParsial = $canViewAll ? OmsetParsial::current() : null;
 
         $ordersThisMonth = Order::query()
             ->whereYear('tanggal_order', $now->year)
@@ -57,7 +58,13 @@ class DashboardController extends Controller
             ])
             ->when(! $canViewAll, fn ($q) => $q->where('kae_code', $user->kae_code))
             ->sum('total_transaksi');
-        $mtdGrowthPct = $mtdLalu > 0 ? round((($totalOmsetBulanIni - $mtdLalu) / $mtdLalu) * 100, 1) : null;
+        // Growth ikutin Total Real + Parsial (bukan cuma omset database),
+        // biar persentasenya cerminin pencapaian real yang sebenarnya —
+        // permintaan eksplisit 2026-10-16. $omsetParsial null kalau belum
+        // diisi admin atau yang lihat bukan canViewAll, jadi otomatis balik
+        // ke omset real polos kayak sebelumnya.
+        $mtdIniTermasukParsial = $totalOmsetBulanIni + (float) ($omsetParsial?->jumlah ?? 0);
+        $mtdGrowthPct = $mtdLalu > 0 ? round((($mtdIniTermasukParsial - $mtdLalu) / $mtdLalu) * 100, 1) : null;
 
         $adaTargetBulanIni = TargetBulanan::where('bulan', $now->month)->where('tahun', $now->year)->exists();
 
@@ -224,7 +231,7 @@ class DashboardController extends Controller
             'mtdLalu' => $mtdLalu,
             'mtdGrowthPct' => $mtdGrowthPct,
             'dayCap' => $dayCap,
-            'omsetParsial' => $canViewAll ? OmsetParsial::current() : null,
+            'omsetParsial' => $omsetParsial,
             'totalOmsetBulanIni' => $totalOmsetBulanIni,
             'jumlahOrderBulanIni' => $jumlahOrderBulanIni,
             'adaTargetBulanIni' => $adaTargetBulanIni,
