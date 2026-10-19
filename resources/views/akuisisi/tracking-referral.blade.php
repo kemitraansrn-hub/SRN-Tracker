@@ -22,6 +22,9 @@
         </div>
         <div class="field-row" style="margin-bottom:0;">
             <a href="{{ route('akuisisi-referral.download', request()->query()) }}" class="btn" style="width:auto;">Download Excel</a>
+            @if (auth()->user()->role !== 'kae')
+                <a href="{{ route('pengakuisisi.index') }}" class="btn" style="width:auto; text-decoration:none;">Kelola Pengakuisisi</a>
+            @endif
             @if (auth()->user()->hasAdminAccess())
                 <button type="button" class="btn btn-primary" style="width:auto;" onclick="document.getElementById('modal-tambah-referral').style.display='flex'">+ Tambah Mitra</button>
             @endif
@@ -43,16 +46,16 @@
         @if (auth()->user()->role !== 'kae')
             <div class="field" style="margin-bottom:0;">
                 <label>Pengakuisisi</label>
-                <input type="text" name="nama_pengakuisisi" value="{{ request('nama_pengakuisisi') }}" list="nama-pengakuisisi-filter-list" placeholder="Semua">
-                <datalist id="nama-pengakuisisi-filter-list">
-                    @foreach ($namaPengakuisisiOptions as $nama)
-                        <option value="{{ $nama }}"></option>
+                <select class="select-pill" name="pengakuisisi_id" onchange="this.form.submit()">
+                    <option value="">Semua</option>
+                    @foreach ($pengakuisisiOptions as $p)
+                        <option value="{{ $p->id }}" {{ (string) request('pengakuisisi_id') === (string) $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
                     @endforeach
-                </datalist>
+                </select>
             </div>
         @endif
         <button type="submit" class="btn" style="width:auto;">Cari</button>
-        @if (request('q') || request('nama_pengakuisisi'))
+        @if (request('q') || request('pengakuisisi_id'))
             <a href="{{ route('akuisisi-referral.index') }}" class="btn" style="width:auto;">Reset</a>
         @endif
     </form>
@@ -138,13 +141,16 @@
                         ])
                     </div>
                     <div class="field">
-                        <label>Nama Pengakuisisi</label>
-                        <input type="text" name="nama_pengakuisisi" value="{{ old('nama_pengakuisisi') }}" list="nama-pengakuisisi-list" maxlength="255" placeholder="Nama pengakuisisi (orang di luar sistem)" required>
-                        <datalist id="nama-pengakuisisi-list">
-                            @foreach ($namaPengakuisisiOptions as $nama)
-                                <option value="{{ $nama }}"></option>
-                            @endforeach
-                        </datalist>
+                        <label>Pengakuisisi</label>
+                        @include('partials.searchable-select', [
+                            'name' => 'pengakuisisi_id',
+                            'options' => $pengakuisisiOptions->map(fn ($p) => (object) ['id' => $p->id, 'label' => $p->nama]),
+                            'selectedId' => old('pengakuisisi_id'),
+                            'placeholder' => 'Ketik buat cari pengakuisisi...',
+                        ])
+                        @if ($pengakuisisiOptions->isEmpty())
+                            <div style="font-size:11px; color:var(--critical); margin-top:4px;">Belum ada Pengakuisisi. <a href="{{ route('pengakuisisi.index') }}">Tambahkan dulu di sini</a>.</div>
+                        @endif
                     </div>
                     <div class="field">
                         <label>Tanggal Akuisisi</label>

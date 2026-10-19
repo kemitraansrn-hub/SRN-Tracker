@@ -166,6 +166,13 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::delete('/{akuisisiReferral}', [\App\Http\Controllers\AkuisisiReferralController::class, 'destroy'])->middleware('role:admin')->name('destroy');
     });
 
+    Route::prefix('akuisisi/pengakuisisi')->name('pengakuisisi.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\PengakuisisiController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\PengakuisisiController::class, 'store'])->middleware('role:admin')->name('store');
+        Route::put('/{pengakuisisi}', [\App\Http\Controllers\PengakuisisiController::class, 'update'])->middleware('role:admin')->name('update');
+        Route::delete('/{pengakuisisi}', [\App\Http\Controllers\PengakuisisiController::class, 'destroy'])->middleware('role:admin')->name('destroy');
+    });
+
     Route::middleware('role:admin')->prefix('pengaturan/minggu')->name('pengaturan.')->group(function () {
         Route::get('/', [WeekPeriodController::class, 'edit'])->name('minggu');
         Route::post('/', [WeekPeriodController::class, 'update'])->name('minggu.update');

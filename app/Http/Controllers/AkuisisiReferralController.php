@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AkuisisiReferral;
 use App\Models\AkuisisiReferralTahap;
 use App\Models\Mitra;
+use App\Models\Pengakuisisi;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -25,14 +26,14 @@ class AkuisisiReferralController extends Controller
 
         return view('akuisisi.tracking-referral', [
             'referrals' => $referrals,
-            // Nama-nama Pengakuisisi yang sudah pernah dipakai, cuma buat
-            // datalist autocomplete (bukan master data) -- lihat catatan
-            // di AkuisisiReferral soal kenapa ini free-text bukan FK user.
-            // Menu ini kebuka semua role KECUALI kae (permintaan eksplisit
-            // 2026-10-16) -- jadi dicek role!=='kae', bukan canViewAll()
-            // (yang bakal ngecualiin growth_specialist juga).
-            'namaPengakuisisiOptions' => $request->user()->role !== 'kae'
-                ? AkuisisiReferral::distinct()->orderBy('nama_pengakuisisi')->pluck('nama_pengakuisisi')
+            // 2026-10-19: Pengakuisisi sekarang master data sendiri (tabel
+            // pengakuisisis), diambil dari database -- bukan lagi datalist
+            // dari nama_pengakuisisi yang pernah dipakai. Menu ini kebuka
+            // semua role KECUALI kae (permintaan eksplisit 2026-10-16) --
+            // jadi dicek role!=='kae', bukan canViewAll() (yang bakal
+            // ngecualiin growth_specialist juga).
+            'pengakuisisiOptions' => $request->user()->role !== 'kae'
+                ? Pengakuisisi::orderBy('nama')->get()
                 : collect(),
             // mitraOptions cuma dipakai form Tambah Mitra (mutasi, dibatasi
             // admin/head/manager/supervisor -- route akuisisi-referral.*
@@ -114,7 +115,7 @@ class AkuisisiReferralController extends Controller
             // 2026-10-16) -- gak dicek canViewAll() biar growth_specialist
             // ikut kebagian lihat juga.
             ->when($user->role === 'kae', fn ($q) => $q->whereRaw('1 = 0'))
-            ->when($request->filled('nama_pengakuisisi'), fn ($q) => $q->where('nama_pengakuisisi', $request->input('nama_pengakuisisi')))
+            ->when($request->filled('pengakuisisi_id'), fn ($q) => $q->where('pengakuisisi_id', $request->input('pengakuisisi_id')))
             ->when($request->filled('q'), function ($q) use ($request) {
                 $needle = $request->input('q');
                 $q->whereHas('mitra', fn ($m) => $m->where('nama', 'like', "%{$needle}%")->orWhere('kode_mitra', 'like', "%{$needle}%"));
@@ -128,12 +129,15 @@ class AkuisisiReferralController extends Controller
     {
         $data = $request->validate([
             'mitra_id' => ['required', 'exists:mitra,id', 'unique:akuisisi_referrals,mitra_id'],
-            'nama_pengakuisisi' => ['required', 'string', 'max:255'],
+            'pengakuisisi_id' => ['required', 'exists:pengakuisisis,id'],
             'tanggal_akuisisi' => ['required', 'date', 'before_or_equal:today'],
         ]);
 
         AkuisisiReferral::create([
             ...$data,
+            // Disalin dari master biar tampilan/export gak perlu join --
+            // lihat catatan di model AkuisisiReferral.
+            'nama_pengakuisisi' => Pengakuisisi::find($data['pengakuisisi_id'])->nama,
             'created_by' => $request->user()->id,
         ]);
 

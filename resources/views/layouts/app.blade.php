@@ -184,6 +184,10 @@
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                         <span class="nav-label">Tracking Referral</span>
                     </a>
+                    <a href="{{ route('pengakuisisi.index') }}" class="nav-item {{ request()->routeIs('pengakuisisi.*') ? 'active' : '' }}" title="Pengakuisisi">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <span class="nav-label">Pengakuisisi</span>
+                    </a>
                 @elseif (auth()->user()->isCompliance())
                     @php $developmentActive = request()->routeIs('development.*', 'data-development.*', 'tracking-cp.*', 'takedown-banding.*', 'price-adjustment-monitoring.*', 'kpi-partnership-compliance.*'); @endphp
                     <a href="{{ route('dashboard') }}" class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" title="Dashboard">
@@ -232,6 +236,10 @@
                         <a href="{{ route('akuisisi-referral.index') }}" class="nav-item {{ request()->routeIs('akuisisi-referral.*') ? 'active' : '' }}" title="Tracking Referral">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke-linecap="round"/></svg>
                             <span class="nav-label">Tracking Referral</span>
+                        </a>
+                        <a href="{{ route('pengakuisisi.index') }}" class="nav-item {{ request()->routeIs('pengakuisisi.*') ? 'active' : '' }}" title="Pengakuisisi">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            <span class="nav-label">Pengakuisisi</span>
                         </a>
                     </div>
                 @elseif (auth()->user()->isGrowthSpecialist())
@@ -300,6 +308,10 @@
                         <a href="{{ route('akuisisi-referral.index') }}" class="nav-item {{ request()->routeIs('akuisisi-referral.*') ? 'active' : '' }}" title="Tracking Referral">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke-linecap="round"/></svg>
                             <span class="nav-label">Tracking Referral</span>
+                        </a>
+                        <a href="{{ route('pengakuisisi.index') }}" class="nav-item {{ request()->routeIs('pengakuisisi.*') ? 'active' : '' }}" title="Pengakuisisi">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            <span class="nav-label">Pengakuisisi</span>
                         </a>
                     </div>
                 @else
@@ -492,6 +504,10 @@
                         <a href="{{ route('akuisisi-referral.index') }}" class="nav-item {{ request()->routeIs('akuisisi-referral.*') ? 'active' : '' }}" title="Tracking Referral">
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65" stroke-linecap="round"/></svg>
                             <span class="nav-label">Tracking Referral</span>
+                        </a>
+                        <a href="{{ route('pengakuisisi.index') }}" class="nav-item {{ request()->routeIs('pengakuisisi.*') ? 'active' : '' }}" title="Pengakuisisi">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            <span class="nav-label">Pengakuisisi</span>
                         </a>
                     </div>
                 @endif
