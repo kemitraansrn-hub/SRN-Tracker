@@ -149,7 +149,8 @@ class InternalMemoDocumentService
         $section->addTextBreak(1, ['size' => 8]);
 
         $section->addText('Demikian Internal Memo ini kami sampaikan untuk dapat dipertimbangkan dan disetujui. Atas perhatian dan kerja samanya, kami ucapkan terima kasih.', [], ['alignment' => Jc::BOTH]);
-        $section->addTextBreak(1, ['size' => 8]);
+        // +2 enter sebelum "Bogor, ..." (2026-10-20, user minta ditambah lagi).
+        $section->addTextBreak(3, ['size' => 8]);
 
         $section->addText('Bogor, '.now()->translatedFormat('d F Y'), [], ['alignment' => Jc::CENTER]);
         $section->addText('Salam hangat,', [], ['alignment' => Jc::CENTER]);
