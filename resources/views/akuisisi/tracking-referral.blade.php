@@ -89,7 +89,7 @@
                             <td class="tnum">{{ $ref->tanggal_akuisisi->format('d/m/Y') }}</td>
                             @foreach ([1, 2, 3] as $t)
                                 @php $th = $tahaps->get($t); @endphp
-                                <td style="min-width:170px;">
+                                <td style="min-width:200px;">
                                     @if (! $th)
                                         <span style="color:var(--ink-faint); font-size:12px;">Belum ada transaksi</span>
                                     @else
@@ -99,9 +99,9 @@
                                         <div class="tnum" style="font-size:12.5px; font-weight:700;">Bonus {{ $rp($th->nominal_bonus) }}</div>
                                         <span class="chip {{ $cls }}" style="margin-top:4px; display:inline-block;">{{ $label }}</span>
                                         @if (auth()->user()->hasAdminAccess() && $th->dalam_window)
-                                            <div style="margin-top:4px; display:flex; gap:4px; flex-wrap:wrap;">
-                                                <button type="button" class="btn" style="width:auto; font-size:10.5px; padding:3px 8px;" onclick="openTahapModal({{ $ref->id }}, {{ $t }}, '{{ addslashes($ref->mitra->nama) }}', '{{ $th->bulan_label }}', {{ $th->nominal_bonus }}, '{{ $th->status }}')">Ubah Status</button>
-                                                <button type="button" class="btn" style="width:auto; font-size:10.5px; padding:3px 8px;" onclick="openPrintImModal({{ $ref->id }}, {{ $t }}, '{{ addslashes($ref->mitra->nama) }}')">Print IM</button>
+                                            <div style="margin-top:4px; display:flex; gap:4px; flex-wrap:nowrap; white-space:nowrap;">
+                                                <button type="button" class="btn" style="width:auto; font-size:10.5px; padding:3px 7px;" onclick="openTahapModal({{ $ref->id }}, {{ $t }}, '{{ addslashes($ref->mitra->nama) }}', '{{ $th->bulan_label }}', {{ $th->nominal_bonus }}, '{{ $th->status }}')">Ubah Status</button>
+                                                <button type="button" class="btn" style="width:auto; font-size:10.5px; padding:3px 7px;" onclick="openPrintImModal({{ $ref->id }}, {{ $t }}, '{{ addslashes($ref->mitra->nama) }}')">Print IM</button>
                                             </div>
                                         @endif
                                     @endif
