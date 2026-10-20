@@ -35,12 +35,17 @@ class InternalMemoDocumentService
         $phpWord = new PhpWord();
         $phpWord->setDefaultFontName('Calibri');
         $phpWord->setDefaultFontSize(11);
+        // Default paragraph Word punya spaceAfter ~200 twips bawaan --
+        // dikali belasan paragraf/bullet di dokumen ini, itu nambah hampir
+        // 1 halaman penuh sendirian. Dimatikan di sini, jarak antar bagian
+        // diatur manual lewat addTextBreak ukuran kecil di bawah.
+        $phpWord->setDefaultParagraphStyle(['spaceAfter' => 0, 'spaceBefore' => 0, 'lineHeight' => 1.0]);
 
         // Margin lebih kecil dari MouDocumentService (yang 2 halaman) --
         // dokumen ini WAJIB muat 1 halaman sesuai contoh resmi.
         $section = $phpWord->addSection([
-            'marginTop' => 600, 'marginBottom' => 600, 'marginLeft' => 1100, 'marginRight' => 1100,
-            'headerHeight' => 1300, 'footerHeight' => 500,
+            'marginTop' => 450, 'marginBottom' => 450, 'marginLeft' => 1100, 'marginRight' => 1100,
+            'headerHeight' => 900, 'footerHeight' => 350,
         ]);
 
         self::addLetterhead($section->addHeader());
@@ -104,16 +109,16 @@ class InternalMemoDocumentService
 
         $section->addText('INTERNAL MEMO', ['bold' => true, 'underline' => 'single'], ['alignment' => Jc::CENTER]);
         $section->addText($noMemo, [], ['alignment' => Jc::CENTER]);
-        $section->addTextBreak(1);
+        $section->addTextBreak(1, ['size' => 8]);
 
         $section->addText('Perihal : Pengajuan Pembayaran Bonus Program Refferal');
-        $section->addTextBreak(1);
+        $section->addTextBreak(1, ['size' => 8]);
 
         $intro = $section->addTextRun(['alignment' => Jc::BOTH]);
         $intro->addText('Sehubungan dengan pencapaian dan pelaksanaan Program Referral, bersama ini kami mengajukan permohonan pencairan ');
         $intro->addText('benefit', ['italic' => true]);
         $intro->addText(' referral bagi Pengakuisisi atas transaksi yang dilakukan dengan detail sebagai berikut:');
-        $section->addTextBreak(1);
+        $section->addTextBreak(1, ['size' => 8]);
 
         // Bullet list persis kayak template resmi (bukan tabel) -- label
         // rata kiri dengan lebar tab tetap biar titik dua-nya sejajar.
@@ -127,13 +132,13 @@ class InternalMemoDocumentService
             ['Persentase Bonus', $tahap->persentase.'%'],
             ['Nominal Bonus', self::rp($tahap->nominal_bonus)],
         ];
-        $tabStops = ['tabs' => [new \PhpOffice\PhpWord\Style\Tab('left', 3200)]];
+        $tabStops = ['tabs' => [new \PhpOffice\PhpWord\Style\Tab('left', 3200)], 'spaceAfter' => 40];
         foreach ($rincian as [$label, $value]) {
             $run = $section->addListItemRun(0, null, $tabStops);
             $run->addText($label);
             $run->addText("\t: ".$value);
         }
-        $section->addTextBreak(1);
+        $section->addTextBreak(1, ['size' => 8]);
 
         $penutup1 = $section->addTextRun(['alignment' => Jc::BOTH]);
         $penutup1->addText('Pengajuan ');
@@ -141,14 +146,14 @@ class InternalMemoDocumentService
         $penutup1->addText(' ini disampaikan sebagai bentuk apresiasi atas kontribusi Pengakuisisi dalam memperluas jaringan mitra, serta untuk menjaga motivasi dan kelancaran pencapaian target penjualan pada ');
         $penutup1->addText('channel', ['italic' => true]);
         $penutup1->addText(' terkait.');
-        $section->addTextBreak(1);
+        $section->addTextBreak(1, ['size' => 8]);
 
         $section->addText('Demikian Internal Memo ini kami sampaikan untuk dapat dipertimbangkan dan disetujui. Atas perhatian dan kerja samanya, kami ucapkan terima kasih.', [], ['alignment' => Jc::BOTH]);
-        $section->addTextBreak(1);
+        $section->addTextBreak(1, ['size' => 8]);
 
         $section->addText('Bogor, '.now()->translatedFormat('d F Y'), [], ['alignment' => Jc::CENTER]);
         $section->addText('Salam hangat,', [], ['alignment' => Jc::CENTER]);
-        $section->addTextBreak(2);
+        $section->addTextBreak(1, ['size' => 16]);
 
         $signTable = $section->addTable();
         $signTable->addRow();
