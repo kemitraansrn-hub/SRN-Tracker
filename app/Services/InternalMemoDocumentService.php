@@ -153,7 +153,10 @@ class InternalMemoDocumentService
 
         $section->addText('Bogor, '.now()->translatedFormat('d F Y'), [], ['alignment' => Jc::CENTER]);
         $section->addText('Salam hangat,', [], ['alignment' => Jc::CENTER]);
-        $section->addTextBreak(1, ['size' => 16]);
+        // Dikasih ruang lebih lega sebelum tanda tangan (2026-10-20, user
+        // minta ditambah jaraknya) -- masih tetap 1 halaman karena bagian
+        // atas dokumen sudah dirapatkan di update sebelumnya.
+        $section->addTextBreak(4, ['size' => 16]);
 
         $signTable = $section->addTable();
         $signTable->addRow();
