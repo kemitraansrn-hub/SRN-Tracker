@@ -10,16 +10,13 @@ use PhpOffice\PhpWord\SimpleType\Jc;
 
 /**
  * "Print IM" di Akuisisi > Tracking Referral — surat Internal Memo
- * pengajuan pembayaran bonus Program Referral per tahap transaksi (lihat
- * dokumen "SRN - IM REFFERAL PROGRAM FIX.pdf", 2026-10-20). Method sama
+ * pengajuan pembayaran bonus Program Referral per tahap transaksi.
+ * Dokumen "SRN - IM REFFERAL PROGRAM FIX.pdf" (2026-10-20) adalah format
+ * RESMI/final (dikonfirmasi user) -- bukan contoh sementara. Method sama
  * persis kayak MouDocumentService (Special Deal) -- PhpWord -> .docx,
  * bukan PDF. Nomor memo ("03.288/SRN/X/2026") diisi manual oleh admin pas
  * nge-print (gak ada penomoran otomatis di sistem), sisanya otomatis dari
  * data AkuisisiReferral + tahap yang dipilih.
- *
- * Belum final -- user bilang contoh format PDF resmi akan dikirim
- * menyusul, versi ini dibangun dari isi dokumen yang sudah dikasih
- * (letterhead, perihal, daftar field, penutup, 3 tanda tangan).
  */
 class InternalMemoDocumentService
 {
@@ -39,9 +36,11 @@ class InternalMemoDocumentService
         $phpWord->setDefaultFontName('Calibri');
         $phpWord->setDefaultFontSize(11);
 
+        // Margin lebih kecil dari MouDocumentService (yang 2 halaman) --
+        // dokumen ini WAJIB muat 1 halaman sesuai contoh resmi.
         $section = $phpWord->addSection([
-            'marginTop' => 850, 'marginBottom' => 850, 'marginLeft' => 1100, 'marginRight' => 1100,
-            'headerHeight' => 1500, 'footerHeight' => 600,
+            'marginTop' => 600, 'marginBottom' => 600, 'marginLeft' => 1100, 'marginRight' => 1100,
+            'headerHeight' => 1300, 'footerHeight' => 500,
         ]);
 
         self::addLetterhead($section->addHeader());
@@ -103,7 +102,6 @@ class InternalMemoDocumentService
         $bank = $referral->pengakuisisi?->bank;
         $rekeningLabel = $noRekening ? $noRekening.($bank ? ' ('.$bank.')' : '') : '—';
 
-        $section->addTextBreak(1);
         $section->addText('INTERNAL MEMO', ['bold' => true, 'underline' => 'single'], ['alignment' => Jc::CENTER]);
         $section->addText($noMemo, [], ['alignment' => Jc::CENTER]);
         $section->addTextBreak(1);
@@ -117,6 +115,8 @@ class InternalMemoDocumentService
         $intro->addText(' referral bagi Pengakuisisi atas transaksi yang dilakukan dengan detail sebagai berikut:');
         $section->addTextBreak(1);
 
+        // Bullet list persis kayak template resmi (bukan tabel) -- label
+        // rata kiri dengan lebar tab tetap biar titik dua-nya sejajar.
         $rincian = [
             ['Nama Mitra', $mitraNama],
             ['Tanggal Join Mitra', $referral->tanggal_akuisisi->translatedFormat('d F Y')],
@@ -127,12 +127,11 @@ class InternalMemoDocumentService
             ['Persentase Bonus', $tahap->persentase.'%'],
             ['Nominal Bonus', self::rp($tahap->nominal_bonus)],
         ];
-        $rincianTable = $section->addTable(['cellMarginTop' => 40, 'cellMarginBottom' => 40]);
+        $tabStops = ['tabs' => [new \PhpOffice\PhpWord\Style\Tab('left', 3200)]];
         foreach ($rincian as [$label, $value]) {
-            $rincianTable->addRow();
-            $rincianTable->addCell(3200)->addText($label);
-            $rincianTable->addCell(300)->addText(':');
-            $rincianTable->addCell(5800)->addText($value, [], ['alignment' => Jc::BOTH]);
+            $run = $section->addListItemRun(0, null, $tabStops);
+            $run->addText($label);
+            $run->addText("\t: ".$value);
         }
         $section->addTextBreak(1);
 
@@ -145,18 +144,18 @@ class InternalMemoDocumentService
         $section->addTextBreak(1);
 
         $section->addText('Demikian Internal Memo ini kami sampaikan untuk dapat dipertimbangkan dan disetujui. Atas perhatian dan kerja samanya, kami ucapkan terima kasih.', [], ['alignment' => Jc::BOTH]);
-        $section->addTextBreak(2);
+        $section->addTextBreak(1);
 
         $section->addText('Bogor, '.now()->translatedFormat('d F Y'), [], ['alignment' => Jc::CENTER]);
         $section->addText('Salam hangat,', [], ['alignment' => Jc::CENTER]);
-        $section->addTextBreak(3);
+        $section->addTextBreak(2);
 
         $signTable = $section->addTable();
         $signTable->addRow();
         foreach (self::SIGNERS as [$name, $role]) {
             $cell = $signTable->addCell(3166);
-            $cell->addText($name, ['underline' => 'single'], ['alignment' => Jc::CENTER]);
-            $cell->addText($role, ['bold' => true], ['alignment' => Jc::CENTER]);
+            $cell->addText($name, ['bold' => true], ['alignment' => Jc::CENTER]);
+            $cell->addText($role, [], ['alignment' => Jc::CENTER]);
         }
     }
 }
