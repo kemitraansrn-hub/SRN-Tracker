@@ -6,11 +6,14 @@ use App\Models\AkuisisiReferral;
 use App\Models\AkuisisiReferralTahap;
 use App\Models\Mitra;
 use App\Models\Pengakuisisi;
+use App\Services\InternalMemoDocumentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpWord\IOFactory as WordIOFactory;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -150,6 +153,30 @@ class AkuisisiReferralController extends Controller
         $akuisisiReferral->delete();
 
         return redirect()->route('akuisisi-referral.index')->with('status', 'Tracking akuisisi untuk '.$nama.' dihapus.');
+    }
+
+    public function printIm(Request $request, AkuisisiReferral $akuisisiReferral): BinaryFileResponse|RedirectResponse
+    {
+        $data = $request->validate([
+            'tahap' => ['required', 'integer', 'in:1,2,3'],
+            'no_memo' => ['required', 'string', 'max:100'],
+        ]);
+
+        $tahap = $akuisisiReferral->hitungTahap()->firstWhere('tahap', (int) $data['tahap']);
+
+        if (! $tahap || ! $tahap->dalam_window) {
+            return back()->with('status', 'Transaksi ini belum ada datanya atau sudah di luar window, Internal Memo gak bisa dicetak.');
+        }
+
+        $phpWord = InternalMemoDocumentService::build($akuisisiReferral, $tahap, $data['no_memo']);
+        $fileName = InternalMemoDocumentService::fileName($akuisisiReferral, $tahap);
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'im').'.docx';
+        WordIOFactory::createWriter($phpWord, 'Word2007')->save($tempFile);
+
+        return response()->download($tempFile, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ])->deleteFileAfterSend(true);
     }
 
     public function updateTahap(Request $request, AkuisisiReferral $akuisisiReferral): RedirectResponse

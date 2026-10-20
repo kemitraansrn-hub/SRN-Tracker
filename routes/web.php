@@ -164,6 +164,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::post('/', [\App\Http\Controllers\AkuisisiReferralController::class, 'store'])->middleware('role:admin')->name('store');
         Route::post('/{akuisisiReferral}/tahap', [\App\Http\Controllers\AkuisisiReferralController::class, 'updateTahap'])->middleware('role:admin')->name('tahap.update');
         Route::delete('/{akuisisiReferral}', [\App\Http\Controllers\AkuisisiReferralController::class, 'destroy'])->middleware('role:admin')->name('destroy');
+        Route::get('/{akuisisiReferral}/print-im', [\App\Http\Controllers\AkuisisiReferralController::class, 'printIm'])->middleware('role:admin')->name('print-im');
     });
 
     Route::prefix('akuisisi/pengakuisisi')->name('pengakuisisi.')->group(function () {
