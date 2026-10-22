@@ -60,7 +60,14 @@
                 $photoHeightMm = $photoBoxHeightMm - 2 * $photoPaddingMm;
                 $photoWidthMm = $photoHeightMm;
                 if ($profil->fotoUrl()) {
-                    $photoAbsPath = public_path('storage/'.$profil->foto);
+                    // Baca langsung dari storage/app/public (bukan lewat
+                    // public_path('storage/...')) -- gak boleh gantung ke
+                    // symlink public/storage, yang di production ternyata
+                    // folder kosong biasa (lihat routes/web.php, fallback
+                    // /storage/{path}). DomPDF generate di server, jadi
+                    // baca file fisik langsung lebih simpel & gak gantung
+                    // simlink sama sekali.
+                    $photoAbsPath = storage_path('app/public/'.$profil->foto);
                     $photoDims = @getimagesize($photoAbsPath);
                     if ($photoDims && $photoDims[0] > 0 && $photoDims[1] > 0) {
                         $photoRatio = $photoDims[0] / $photoDims[1];

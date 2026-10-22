@@ -33,7 +33,14 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // 'local' disk gak dipakai sama sekali di app ini (cuma
+            // bawaan scaffold Laravel) -- serve dimatikan karena defaultnya
+            // ('serve'=>true, gak ada 'url' sendiri) otomatis klaim URI
+            // "/storage" juga, tabrakan sama disk 'public' di bawah yang
+            // justru BUTUH itu buat foto upload (2026-10-22, root cause
+            // kenapa foto mitra/user gak muncul di production: symlink
+            // public/storage di server ternyata folder kosong biasa).
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],
@@ -43,6 +50,11 @@ return [
             'root' => storage_path('app/public'),
             'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
             'visibility' => 'public',
+            // Laravel serve file upload langsung lewat route internal
+            // (Illuminate\Filesystem\ServeFile) kalau symlink public/storage
+            // gak ada/gak jalan -- gak gantung ke php artisan storage:link
+            // atau symlink OS sama sekali lagi.
+            'serve' => true,
             'throw' => false,
             'report' => false,
         ],
