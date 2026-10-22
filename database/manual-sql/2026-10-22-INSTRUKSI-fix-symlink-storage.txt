@@ -1,0 +1,50 @@
+INSTRUKSI UNTUK TIM IT — Perbaikan Symlink Storage di Production
+===================================================================
+
+MASALAH:
+Semua foto yang di-upload user (foto profil User, foto Profiling Mitra
+Growth Specialist termasuk yang dipakai di PDF Kartu Member) gagal tampil
+(ikon gambar rusak/broken image). Penyebabnya folder `public/storage` di
+server itu FOLDER KOSONG BIASA, bukan symlink ke `storage/app/public`
+(tempat file upload beneran tersimpan). Laravel harusnya bikin symlink ini
+otomatis lewat command `php artisan storage:link`, tapi sepertinya belum
+pernah dijalankan di production (atau sempat terhapus/tergantikan folder
+biasa). File upload-nya sendiri AMAN, cuma gak "nyambung".
+
+Ini bukan masalah kode aplikasi — FTP (cara deploy biasa) memang gak bisa
+bikin symlink, jadi butuh akses SSH buat benerin.
+
+LANGKAH PERBAIKAN (jalankan via SSH):
+
+1. Login SSH ke server production, lalu masuk ke folder project:
+   cd /path/ke/folder/project   # sesuaikan sama lokasi project di server
+
+2. Cek dulu isi public/storage beneran kosong (buat jaga-jaga sebelum hapus):
+   ls -la public/storage
+
+   Kalau ada file penting di situ (seharusnya TIDAK ada), STOP dan hubungi
+   developer dulu sebelum lanjut ke langkah 3.
+
+3. Hapus folder kosong public/storage:
+   rmdir public/storage
+
+   Kalau muncul error "Directory not empty", JANGAN pakai rm -rf sembarangan
+   — cek dulu isinya (ulangi langkah 2), kemungkinan ada file yang perlu
+   diselamatkan dulu.
+
+4. Buat symlink yang benar:
+   php artisan storage:link
+
+5. Verifikasi symlink-nya kebuat dengan benar (harus muncul baris yang ada
+   tanda panah "->" menunjuk ke storage/app/public):
+   ls -la public/ | grep storage
+
+   Contoh output yang BENAR:
+   lrwxrwxrwx  1 user user   26 Oct 22 10:00 storage -> ../storage/app/public
+
+6. Verifikasi dari browser — buka salah satu foto yang sebelumnya rusak,
+   misalnya foto profil user mana pun di menu User Management, pastikan
+   sekarang tampil normal (bukan ikon broken image lagi).
+
+Setelah ini dikonfirmasi jalan, kabari saya (Claude) — gak perlu deploy
+kode apa pun, ini murni perbaikan konfigurasi server.
