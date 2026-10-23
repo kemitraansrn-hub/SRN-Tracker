@@ -126,6 +126,7 @@ class InternalMemoDocumentService
             ['Nama Mitra', $mitraNama],
             ['Tanggal Join Mitra', $referral->tanggal_akuisisi->translatedFormat('d F Y')],
             ['Transaksi ke', (string) $tahap->tahap],
+            ['No. Order', $tahap->no_order ?: '—'],
             ['Nominal Order', self::rp($tahap->nominal)],
             ['Nama Pengakuisisi', $namaPengakuisisi],
             ['Nomor Rekening Pengakuisisi', $rekeningLabel],

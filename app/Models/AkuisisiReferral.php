@@ -61,7 +61,7 @@ class AkuisisiReferral extends Model
         $rows = DB::table('orders')
             ->where('mitra_id', $this->mitra_id)
             ->whereDate('tanggal_order', '>=', $this->tanggal_akuisisi)
-            ->selectRaw('DATE_FORMAT(tanggal_order, "%Y-%m") as bulan_key, MIN(tanggal_order) as tanggal_mulai, SUM(total_transaksi) as nominal')
+            ->selectRaw('DATE_FORMAT(tanggal_order, "%Y-%m") as bulan_key, MIN(tanggal_order) as tanggal_mulai, SUM(total_transaksi) as nominal, GROUP_CONCAT(no_order ORDER BY tanggal_order SEPARATOR ", ") as no_order')
             ->groupBy('bulan_key')
             ->orderBy('bulan_key')
             ->limit(3)
@@ -90,6 +90,7 @@ class AkuisisiReferral extends Model
                 'tanggal_mulai' => $tanggalMulai,
                 'bulan_label' => $tanggalMulai->translatedFormat('F Y'),
                 'nominal' => $nominal,
+                'no_order' => $row->no_order,
                 'persentase' => $persentase,
                 'nominal_bonus' => $nominalBonus,
                 'dalam_window' => $dalamWindow,
