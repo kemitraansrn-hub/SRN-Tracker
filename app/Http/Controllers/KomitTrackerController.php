@@ -143,11 +143,16 @@ class KomitTrackerController extends Controller
         $rows = $mitraRows->map(function (Mitra $m) use ($kaeMap, $kaeDevelopment, $targetByMitra, $realisasiByMitra, $lmsStatusByMitra) {
             $target = $targetByMitra->get($m->id);
             $komit = (float) ($target->komit ?? 0);
-            $effectiveTarget = $target ? $target->effectiveTarget() : 0.0;
             $pencapaian = (float) ($realisasiByMitra[$m->id] ?? 0);
             $pctAch = $komit > 0 ? round($pencapaian / $komit * 100, 1) : null;
-            $pctVsEffective = $effectiveTarget > 0 ? round($pencapaian / $effectiveTarget * 100, 1) : 0.0;
-            $statusKey = AchievementStatus::resolveWeeklyPlan($pencapaian, $effectiveTarget, $pctVsEffective);
+            // 2026-10-23: Status Belanja sebelumnya dihitung vs effective
+            // target (tier_dipakai: komit/target/stretch), beda basis sama
+            // % Ach yang selalu vs Komit -- bikin kasus ganjil kayak 334.6%
+            // tapi "Kurang Belanja" (pencapaian jauh lewat Komit tapi masih
+            // di bawah Target/Stretch). User eksplisit minta konsisten
+            // KHUSUS di Komit Tracker: Status Belanja sekarang juga vs
+            // Komit, sama kayak % Ach -- gak pakai effectiveTarget lagi.
+            $statusKey = AchievementStatus::resolveWeeklyPlan($pencapaian, $komit, $pctAch);
 
             return [
                 'mitra_id' => $m->id,
