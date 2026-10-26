@@ -28,6 +28,11 @@ class Produk extends Model
         return $this->hasMany(CpCase::class);
     }
 
+    public function trendSku()
+    {
+        return $this->hasOne(TrendSku::class);
+    }
+
     /** Produk yang ke-create otomatis pas import order harian dan belum di-review admin. */
     public function scopePendingReview($query)
     {

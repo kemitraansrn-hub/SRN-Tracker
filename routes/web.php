@@ -57,6 +57,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::post('/', [\App\Http\Controllers\ActionPlanController::class, 'store'])->middleware('role:admin')->name('store');
         Route::delete('/{actionPlan}', [\App\Http\Controllers\ActionPlanController::class, 'destroy'])->middleware('role:admin')->name('destroy');
     });
+    Route::get('/cek-trend-sku', [\App\Http\Controllers\CekTrendSkuController::class, 'index'])->name('cek-trend-sku.index');
     Route::get('/omset-bulanan', [\App\Http\Controllers\OmsetBulananController::class, 'index'])->name('omset-bulanan.index');
     Route::get('/sales-overview', [\App\Http\Controllers\SalesOverviewController::class, 'index'])->name('sales-overview.index');
     Route::post('/trend/dashboard-card', [TrendController::class, 'saveDashboardCard'])
@@ -211,6 +212,12 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
     Route::middleware('role:admin')->prefix('npd')->name('npd.')->group(function () {
         Route::get('/', [NpdProductController::class, 'index'])->name('index');
         Route::post('/{produk}/toggle', [NpdProductController::class, 'toggle'])->name('toggle');
+    });
+
+    Route::middleware('role:admin')->prefix('npd/trend-sku')->name('trend-sku.')->group(function () {
+        Route::post('/{produk}', [\App\Http\Controllers\TrendSkuController::class, 'store'])->name('store');
+        Route::put('/{trendSku}', [\App\Http\Controllers\TrendSkuController::class, 'update'])->name('update');
+        Route::delete('/{trendSku}', [\App\Http\Controllers\TrendSkuController::class, 'destroy'])->name('destroy');
     });
 
     Route::middleware('role:admin')->prefix('master-lms')->name('master-lms.')->group(function () {

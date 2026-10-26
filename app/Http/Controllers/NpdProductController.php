@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\NpdProduct;
 use App\Models\Produk;
+use App\Models\TrendSku;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -19,10 +20,14 @@ class NpdProductController extends Controller
             ->paginate(30)->withQueryString();
 
         $npdByProdukId = NpdProduct::whereIn('produk_id', $produkList->pluck('id'))->get()->keyBy('produk_id');
+        // Dipakai tab "Input Trend SKU" -- halaman yang sama, lihat
+        // TrendSkuController buat aksi tandai/edit/hapusnya.
+        $trendSkuByProdukId = TrendSku::whereIn('produk_id', $produkList->pluck('id'))->get()->keyBy('produk_id');
 
         return view('npd.index', [
             'produkList' => $produkList,
             'npdByProdukId' => $npdByProdukId,
+            'trendSkuByProdukId' => $trendSkuByProdukId,
             'brandOptions' => Produk::select('brand')->distinct()->orderBy('brand')->pluck('brand'),
         ]);
     }

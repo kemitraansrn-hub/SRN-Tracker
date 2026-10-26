@@ -326,7 +326,7 @@
                         $segmenList = collect(['PARETO', 'RTP (ROAD TO PARETO)', 'REGULER', 'SPECIAL REGULER']);
                     }
 
-                    $salesRoutes = ['sales-overview.*', 'segmentasi.*', 'trend.*', 'omset-bulanan.*', 'weekly-plan.*', 'forecast.*', 'action-plan.*', 'mitra.*', 'order.*', 'followup.*', 'special-deal.*', 'ar.*', 'sales-draft.*', 'buyback.*', 'poin.*', 'poin-redemption.*', 'price-adjustment.*'];
+                    $salesRoutes = ['sales-overview.*', 'segmentasi.*', 'trend.*', 'omset-bulanan.*', 'weekly-plan.*', 'forecast.*', 'action-plan.*', 'cek-trend-sku.*', 'mitra.*', 'order.*', 'followup.*', 'special-deal.*', 'ar.*', 'sales-draft.*', 'buyback.*', 'poin.*', 'poin-redemption.*', 'price-adjustment.*'];
                     $adminRoutes = ['reward.*', 'produk.*', 'import.*', 'data-health.*', 'pengaturan.*', 'run-rate-target.*', 'tier-target.*', 'buyback-setting.*', 'npd.*', 'users.*', 'backup.*', 'master-lms.*'];
                     $salesActive = request()->routeIs(...$salesRoutes);
                     $developmentActive = request()->routeIs('development.*', 'data-development.*', 'tracking-cp.*', 'takedown-banding.*', 'price-adjustment-monitoring.*', 'kpi-partnership-compliance.*', 'growth-specialist.*');
@@ -378,6 +378,10 @@
                     <a href="{{ route('action-plan.index') }}" class="nav-item {{ request()->routeIs('action-plan.*') ? 'active' : '' }}" title="Action Plan">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="16" x2="12" y2="16"/></svg>
                         <span class="nav-label">Action Plan</span>
+                    </a>
+                    <a href="{{ route('cek-trend-sku.index') }}" class="nav-item {{ request()->routeIs('cek-trend-sku.*') ? 'active' : '' }}" title="Cek Trend SKU">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-6 3 4 5-8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="14" cy="14" r="1.5" fill="currentColor" stroke="none"/></svg>
+                        <span class="nav-label">Cek Trend SKU</span>
                     </a>
 
                     <div class="nav-group-label">Operasional</div>
