@@ -40,6 +40,17 @@
                     @endfor
                 </select>
             </div>
+            @if ($trendSku && $impactOptions->isNotEmpty())
+                <div class="field" style="margin-bottom:0; min-width:240px;">
+                    <label>SKU Terimpact (bandingkan)</label>
+                    <select name="impact_produk_id" class="select-pill">
+                        <option value="">— Gak dibandingkan —</option>
+                        @foreach ($impactOptions as $opt)
+                            <option value="{{ $opt->id }}" {{ $impactProduk && $impactProduk->id === $opt->id ? 'selected' : '' }}>{{ $opt->nama }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
             <button type="submit" class="btn" style="width:auto;">Terapkan</button>
         </form>
 
@@ -49,7 +60,12 @@
             <section class="card">
                 <div class="card-head">
                     <div>
-                        <div class="card-title">{{ $trendSku->produk->brand }} &middot; {{ $trendSku->produk->nama }}</div>
+                        <div class="card-title">
+                            {{ $trendSku->produk->brand }} &middot; {{ $trendSku->produk->nama }}
+                            @if ($impactProduk)
+                                <span style="color:var(--ink-muted); font-weight:500;"> vs {{ $impactProduk->nama }}</span>
+                            @endif
+                        </div>
                         <div class="card-hint">
                             Mulai campaign B2C: {{ $trendSku->tanggal_mulai_campaign->format('d/m/Y') }}
                             @unless ($campaignDalamRentang)
@@ -63,7 +79,45 @@
                     </div>
                 </div>
 
-                @if ($chart)
+                @if ($chart && $chart['mode'] === 'compare')
+                    <div style="display:flex; gap:16px; font-size:11.5px; color:var(--ink-muted); margin-bottom:10px;">
+                        <span><span style="display:inline-block; width:14px; height:2.5px; background:var(--accent); vertical-align:middle; margin-right:5px;"></span>{{ $trendSku->produk->nama }}</span>
+                        <span><span style="display:inline-block; width:14px; height:2.5px; background:var(--good); vertical-align:middle; margin-right:5px; border-top:2.5px dashed var(--good);"></span>{{ $impactProduk->nama }}</span>
+                        <span style="color:var(--ink-faint);">(dinormalisasi ke % dari puncak masing-masing, buat bandingkan bentuk tren)</span>
+                    </div>
+
+                    <svg viewBox="0 0 {{ $chart['width'] }} {{ $chart['height'] }}" style="width:100%; height:auto;">
+                        @foreach ($chart['omset']['gridlines'] as $gl)
+                            <line x1="{{ $chart['padLeft'] }}" y1="{{ $gl['y'] }}" x2="{{ $chart['width'] - 16 }}" y2="{{ $gl['y'] }}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3,3"/>
+                            <text x="{{ $chart['padLeft'] - 8 }}" y="{{ $gl['y'] + 3 }}" text-anchor="end" font-size="10" fill="var(--ink-muted)">{{ $gl['label'] }}</text>
+                        @endforeach
+
+                        @if (! empty($chart['campaignX']))
+                            <line x1="{{ $chart['campaignX'] }}" y1="{{ $chart['padTop'] }}" x2="{{ $chart['campaignX'] }}" y2="{{ $chart['padTop'] + $chart['plotHeight'] }}" stroke="var(--highlight)" stroke-width="1.5" stroke-dasharray="4,3"/>
+                            <circle cx="{{ $chart['campaignX'] }}" cy="{{ $chart['padTop'] }}" r="3.5" fill="var(--highlight)"/>
+                            <text x="{{ $chart['campaignX'] }}" y="{{ $chart['padTop'] - 5 }}" text-anchor="middle" font-size="10" font-weight="600" fill="var(--highlight)">Mulai Campaign</text>
+                        @endif
+
+                        @foreach (['omset', 'qty'] as $metric)
+                            <polyline id="trend-sku-lineA-{{ $metric }}" points="{{ $chart[$metric]['pointsA'] }}" fill="none" stroke="var(--accent)" stroke-width="2" style="{{ $metric === 'omset' ? '' : 'display:none;' }}"/>
+                            <polyline id="trend-sku-lineB-{{ $metric }}" points="{{ $chart[$metric]['pointsB'] }}" fill="none" stroke="var(--good)" stroke-width="2" stroke-dasharray="5,4" style="{{ $metric === 'omset' ? '' : 'display:none;' }}"/>
+                        @endforeach
+
+                        @foreach ($chart['xLabels'] as $xl)
+                            <text x="{{ $xl['x'] }}" y="{{ $chart['padTop'] + $chart['plotHeight'] + 20 }}" text-anchor="middle" font-size="10" fill="var(--ink-muted)">{{ $xl['label'] }}</text>
+                        @endforeach
+                    </svg>
+
+                    <script>
+                        function setTrendSkuMetric(metric) {
+                            ['omset', 'qty'].forEach(function (m) {
+                                document.getElementById('trend-sku-lineA-' + m).style.display = (m === metric) ? '' : 'none';
+                                document.getElementById('trend-sku-lineB-' + m).style.display = (m === metric) ? '' : 'none';
+                                document.getElementById('btn-metric-' + m).classList.toggle('btn-primary', m === metric);
+                            });
+                        }
+                    </script>
+                @elseif ($chart)
                     <svg viewBox="0 0 {{ $chart['width'] }} {{ $chart['height'] }}" style="width:100%; height:auto;">
                         @foreach (['omset', 'qty'] as $metric)
                             <g id="trend-sku-gridlines-{{ $metric }}" style="{{ $metric === 'omset' ? '' : 'display:none;' }}">
