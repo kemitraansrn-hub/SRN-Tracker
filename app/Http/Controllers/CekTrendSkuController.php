@@ -33,18 +33,27 @@ class CekTrendSkuController extends Controller
         $trendSku = $trendSkuOptions->firstWhere('id', $selectedTrendSkuId);
 
         $tahun = $request->filled('tahun') ? (int) $request->input('tahun') : null;
-        if ($tahun) {
-            $dariTanggal = Carbon::create($tahun, 1, 1)->toDateString();
-            $sampaiTanggal = Carbon::create($tahun, 12, 31)->toDateString();
+        $bulan = $request->filled('bulan') ? (int) $request->input('bulan') : null;
+
+        if ($bulan) {
+            // Bulan butuh tahun jadi konteks -- pakai Tahun yang dipilih,
+            // kalau belum pilih tahun ini berjalan jadi default.
+            $dari = Carbon::create($tahun ?: now()->year, $bulan, 1)->startOfMonth();
+            $sampai = $dari->copy()->endOfMonth();
+        } elseif ($tahun) {
+            $dari = Carbon::create($tahun, 1, 1)->startOfDay();
+            $sampai = Carbon::create($tahun, 12, 31)->endOfDay();
+        } elseif ($request->filled('dari_tanggal') || $request->filled('sampai_tanggal')) {
+            $dari = Carbon::parse($request->input('dari_tanggal', now()->startOfYear()->toDateString()))->startOfDay();
+            $sampai = Carbon::parse($request->input('sampai_tanggal', now()->toDateString()))->endOfDay();
         } else {
-            $dariTanggal = $request->input('dari_tanggal', now()->subDays(89)->toDateString());
-            $sampaiTanggal = $request->input('sampai_tanggal', now()->toDateString());
+            // Default: Year To Date (1 Jan tahun berjalan s/d hari ini).
+            $dari = now()->startOfYear()->startOfDay();
+            $sampai = now()->endOfDay();
         }
 
         // Jaga-jaga urutan kebalik / rentang kebesaran (biar gak accidentally
         // generate ratusan ribu titik chart kalau user salah input tanggal).
-        $dari = Carbon::parse($dariTanggal)->startOfDay();
-        $sampai = Carbon::parse($sampaiTanggal)->endOfDay();
         if ($sampai->lt($dari)) {
             [$dari, $sampai] = [$sampai->copy()->startOfDay(), $dari->copy()->endOfDay()];
         }
@@ -82,18 +91,28 @@ class CekTrendSkuController extends Controller
             $chart = $this->buildChartGeometry($series, $campaignTanggal);
         }
 
-        return view('cek-trend-sku.index', [
+        $viewData = [
             'trendSkuOptions' => $trendSkuOptions,
             'trendSku' => $trendSku,
             'series' => $series,
             'dariTanggal' => $dari->toDateString(),
             'sampaiTanggal' => $sampai->toDateString(),
             'tahun' => $tahun,
+            'bulan' => $bulan,
             'campaignDalamRentang' => $campaignDalamRentang,
             'impactOptions' => $impactOptions,
             'impactProduk' => $impactProduk,
             'chart' => $chart,
-        ]);
+        ];
+
+        // Filter (SKU/tanggal/bulan/tahun/SKU Terimpact) dikirim via fetch()
+        // tanpa tombol Terapkan -- cukup balas fragment form+chart-nya saja,
+        // bukan halaman penuh dengan layout/sidebar.
+        if ($request->ajax()) {
+            return view('cek-trend-sku._content', $viewData);
+        }
+
+        return view('cek-trend-sku.index', $viewData);
     }
 
     /** Series harian (Omset & Qty), diisi 0 buat hari tanpa transaksi biar garisnya kontinu. */
