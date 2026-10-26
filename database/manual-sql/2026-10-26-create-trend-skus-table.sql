@@ -15,8 +15,7 @@ CREATE TABLE `trend_skus` (
   CONSTRAINT `trend_skus_produk_id_foreign` FOREIGN KEY (`produk_id`) REFERENCES `produk` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `migrations` (`migration`, `batch`)
-SELECT '2026_10_26_014157_create_trend_skus_table', (SELECT COALESCE(MAX(batch), 0) + 1 FROM `migrations` m2)
-WHERE NOT EXISTS (
-    SELECT 1 FROM `migrations` WHERE `migration` = '2026_10_26_014157_create_trend_skus_table'
-);
+SET @batch = (SELECT COALESCE(MAX(batch),0)+1 FROM migrations);
+INSERT INTO migrations (migration, batch)
+SELECT '2026_10_26_014157_create_trend_skus_table', @batch FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration = '2026_10_26_014157_create_trend_skus_table');
