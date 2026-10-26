@@ -1,6 +1,22 @@
 @extends('layouts.app')
 
 @section('content')
+    @php
+        // Closure (bukan function biasa) sengaja dipakai di sini biar gak
+        // bentrok "function sudah dideklarasikan" kalau view ini di-render
+        // lebih dari sekali dalam 1 proses PHP yang sama (misal tinker test).
+        $trendBadge = function (array $trend, string $size = '12px') {
+            $arah = $trend['arah'] ?? 'stabil';
+            $pct = $trend['pct'] ?? null;
+            $color = $arah === 'naik' ? 'var(--good)' : ($arah === 'turun' ? 'var(--critical)' : 'var(--ink-muted)');
+            $icon = $arah === 'naik' ? '&#9650;' : ($arah === 'turun' ? '&#9660;' : '&#8594;');
+            $label = $arah === 'naik' ? 'Naik' : ($arah === 'turun' ? 'Turun' : 'Stabil');
+            $pctText = $pct !== null ? ' '.number_format(abs($pct), 1, ',', '.').'%' : '';
+
+            return '<span style="color:'.$color.'; font-weight:700; font-size:'.$size.'; white-space:nowrap;">'.$icon.' '.$label.$pctText.'</span>';
+        };
+    @endphp
+
     <h1 class="display" style="font-size:24px;">Cek Trend SKU</h1>
     <div style="color:var(--ink-muted); font-size:13px; margin-top:4px; margin-bottom:20px;">
         Tren penjualan harian (Omset &amp; Qty) untuk SKU yang ditandai di menu Input NPD &rarr; tab Input Trend SKU, lengkap dengan titik mulai campaign di B2C.
@@ -80,10 +96,18 @@
                 </div>
 
                 @if ($chart && $chart['mode'] === 'compare')
-                    <div style="display:flex; gap:16px; font-size:11.5px; color:var(--ink-muted); margin-bottom:10px;">
-                        <span><span style="display:inline-block; width:14px; height:2.5px; background:var(--accent); vertical-align:middle; margin-right:5px;"></span>{{ $trendSku->produk->nama }}</span>
-                        <span><span style="display:inline-block; width:14px; height:2.5px; background:var(--good); vertical-align:middle; margin-right:5px; border-top:2.5px dashed var(--good);"></span>{{ $impactProduk->nama }}</span>
-                        <span style="color:var(--ink-faint);">(dinormalisasi ke % dari puncak masing-masing, buat bandingkan bentuk tren)</span>
+                    <div style="display:flex; flex-wrap:wrap; gap:16px; align-items:center; font-size:11.5px; color:var(--ink-muted); margin-bottom:10px;">
+                        <span><span style="display:inline-block; width:14px; height:2.5px; background:var(--accent); vertical-align:middle; margin-right:5px;"></span>{{ $trendSku->produk->nama }} &mdash;
+                            @foreach (['omset', 'qty'] as $metric)
+                                <span id="trend-badge-A-{{ $metric }}" style="{{ $metric === 'omset' ? '' : 'display:none;' }}">{!! $trendBadge($chart[$metric]['trendA']) !!}</span>
+                            @endforeach
+                        </span>
+                        <span><span style="display:inline-block; width:14px; height:2.5px; background:var(--good); vertical-align:middle; margin-right:5px; border-top:2.5px dashed var(--good);"></span>{{ $impactProduk->nama }} &mdash;
+                            @foreach (['omset', 'qty'] as $metric)
+                                <span id="trend-badge-B-{{ $metric }}" style="{{ $metric === 'omset' ? '' : 'display:none;' }}">{!! $trendBadge($chart[$metric]['trendB']) !!}</span>
+                            @endforeach
+                        </span>
+                        <span style="color:var(--ink-faint);">(garis dinormalisasi ke % dari puncak masing-masing; garis putus-putus tipis = garis tren)</span>
                     </div>
 
                     <svg viewBox="0 0 {{ $chart['width'] }} {{ $chart['height'] }}" style="width:100%; height:auto;">
@@ -99,6 +123,13 @@
                         @endif
 
                         @foreach (['omset', 'qty'] as $metric)
+                            @php $trendA = $chart[$metric]['trendA']; $trendB = $chart[$metric]['trendB']; @endphp
+                            @if ($trendA['points'])
+                                <polyline id="trend-sku-trendA-{{ $metric }}" points="{{ $trendA['points'] }}" fill="none" stroke="{{ $trendA['arah'] === 'naik' ? 'var(--good)' : ($trendA['arah'] === 'turun' ? 'var(--critical)' : 'var(--ink-faint)') }}" stroke-width="1.5" stroke-dasharray="2,3" opacity="0.8" style="{{ $metric === 'omset' ? '' : 'display:none;' }}"/>
+                            @endif
+                            @if ($trendB['points'])
+                                <polyline id="trend-sku-trendB-{{ $metric }}" points="{{ $trendB['points'] }}" fill="none" stroke="{{ $trendB['arah'] === 'naik' ? 'var(--good)' : ($trendB['arah'] === 'turun' ? 'var(--critical)' : 'var(--ink-faint)') }}" stroke-width="1.5" stroke-dasharray="2,3" opacity="0.5" style="{{ $metric === 'omset' ? '' : 'display:none;' }}"/>
+                            @endif
                             <polyline id="trend-sku-lineA-{{ $metric }}" points="{{ $chart[$metric]['pointsA'] }}" fill="none" stroke="var(--accent)" stroke-width="2" style="{{ $metric === 'omset' ? '' : 'display:none;' }}"/>
                             <polyline id="trend-sku-lineB-{{ $metric }}" points="{{ $chart[$metric]['pointsB'] }}" fill="none" stroke="var(--good)" stroke-width="2" stroke-dasharray="5,4" style="{{ $metric === 'omset' ? '' : 'display:none;' }}"/>
                         @endforeach
@@ -113,11 +144,23 @@
                             ['omset', 'qty'].forEach(function (m) {
                                 document.getElementById('trend-sku-lineA-' + m).style.display = (m === metric) ? '' : 'none';
                                 document.getElementById('trend-sku-lineB-' + m).style.display = (m === metric) ? '' : 'none';
+                                var ta = document.getElementById('trend-sku-trendA-' + m); if (ta) ta.style.display = (m === metric) ? '' : 'none';
+                                var tb = document.getElementById('trend-sku-trendB-' + m); if (tb) tb.style.display = (m === metric) ? '' : 'none';
+                                document.getElementById('trend-badge-A-' + m).style.display = (m === metric) ? '' : 'none';
+                                document.getElementById('trend-badge-B-' + m).style.display = (m === metric) ? '' : 'none';
                                 document.getElementById('btn-metric-' + m).classList.toggle('btn-primary', m === metric);
                             });
                         }
                     </script>
                 @elseif ($chart)
+                    <div style="display:flex; gap:10px; align-items:center; font-size:12px; margin-bottom:10px;">
+                        <span style="color:var(--ink-muted);">Tren:</span>
+                        @foreach (['omset', 'qty'] as $metric)
+                            <span id="trend-badge-{{ $metric }}" style="{{ $metric === 'omset' ? '' : 'display:none;' }}">{!! $trendBadge($chart[$metric]['trend'], '13px') !!}</span>
+                        @endforeach
+                        <span style="color:var(--ink-faint); font-size:11px;">(garis putus-putus tipis di chart = garis tren)</span>
+                    </div>
+
                     <svg viewBox="0 0 {{ $chart['width'] }} {{ $chart['height'] }}" style="width:100%; height:auto;">
                         @foreach (['omset', 'qty'] as $metric)
                             <g id="trend-sku-gridlines-{{ $metric }}" style="{{ $metric === 'omset' ? '' : 'display:none;' }}">
@@ -135,6 +178,10 @@
                         @endif
 
                         @foreach (['omset', 'qty'] as $metric)
+                            @php $trend = $chart[$metric]['trend']; @endphp
+                            @if ($trend['points'])
+                                <polyline id="trend-sku-trend-{{ $metric }}" points="{{ $trend['points'] }}" fill="none" stroke="{{ $trend['arah'] === 'naik' ? 'var(--good)' : ($trend['arah'] === 'turun' ? 'var(--critical)' : 'var(--ink-faint)') }}" stroke-width="2" stroke-dasharray="2,4" style="{{ $metric === 'omset' ? '' : 'display:none;' }}"/>
+                            @endif
                             <polyline id="trend-sku-line-{{ $metric }}" points="{{ $chart[$metric]['points'] }}" fill="none" stroke="var(--accent)" stroke-width="2" style="{{ $metric === 'omset' ? '' : 'display:none;' }}"/>
                         @endforeach
 
@@ -148,6 +195,8 @@
                             ['omset', 'qty'].forEach(function (m) {
                                 document.getElementById('trend-sku-line-' + m).style.display = (m === metric) ? '' : 'none';
                                 document.getElementById('trend-sku-gridlines-' + m).style.display = (m === metric) ? '' : 'none';
+                                var t = document.getElementById('trend-sku-trend-' + m); if (t) t.style.display = (m === metric) ? '' : 'none';
+                                document.getElementById('trend-badge-' + m).style.display = (m === metric) ? '' : 'none';
                                 document.getElementById('btn-metric-' + m).classList.toggle('btn-primary', m === metric);
                             });
                         }

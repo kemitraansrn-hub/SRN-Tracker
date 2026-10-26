@@ -156,7 +156,12 @@ class CekTrendSkuController extends Controller
                 ];
             }
 
-            return ['points' => implode(' ', $points), 'gridlines' => $gridlines, 'max' => $max];
+            return [
+                'points' => implode(' ', $points),
+                'gridlines' => $gridlines,
+                'max' => $max,
+                'trend' => $this->linearTrend($values, $max, $xFor, $padTop, $plotHeight),
+            ];
         };
 
         return [
@@ -218,6 +223,8 @@ class CekTrendSkuController extends Controller
                 'gridlines' => $gridlines,
                 'maxA' => $maxA,
                 'maxB' => $maxB,
+                'trendA' => $this->linearTrend($valuesA, $maxA, $xFor, $padTop, $plotHeight),
+                'trendB' => $this->linearTrend($valuesB, $maxB, $xFor, $padTop, $plotHeight),
             ];
         };
 
@@ -280,6 +287,62 @@ class CekTrendSkuController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Garis tren (regresi linear sederhana) atas data harian -- buat
+     * menandakan arah tren naik/turun secara visual, bukan cuma dari
+     * fluktuasi harian yang naik-turun kecil. Dihitung dari NILAI ASLI
+     * (bukan titik piksel), lalu baru dikonversi ke koordinat SVG pakai
+     * skala `$max` yang sama dengan garis datanya sendiri.
+     */
+    private function linearTrend(array $values, float $max, callable $xFor, int $padTop, int $plotHeight): array
+    {
+        $n = count($values);
+        if ($n < 2) {
+            return ['points' => null, 'arah' => 'stabil', 'pct' => null];
+        }
+
+        $sumX = $sumY = $sumXY = $sumX2 = 0.0;
+        foreach ($values as $i => $v) {
+            $sumX += $i;
+            $sumY += $v;
+            $sumXY += $i * $v;
+            $sumX2 += $i * $i;
+        }
+
+        $denom = ($n * $sumX2 - $sumX * $sumX);
+        if ($denom == 0.0) {
+            return ['points' => null, 'arah' => 'stabil', 'pct' => null];
+        }
+
+        $slope = ($n * $sumXY - $sumX * $sumY) / $denom;
+        $intercept = ($sumY - $slope * $sumX) / $n;
+
+        $startVal = $intercept;
+        $endVal = $intercept + $slope * ($n - 1);
+
+        $yStart = $padTop + $plotHeight - ($startVal / $max) * $plotHeight;
+        $yEnd = $padTop + $plotHeight - ($endVal / $max) * $plotHeight;
+
+        // Threshold 1% dari puncak, biar perubahan kecil yang keliatan
+        // flat di mata tetap dilabeli "Stabil", bukan naik/turun palsu.
+        $threshold = $max * 0.01;
+        if ($endVal - $startVal > $threshold) {
+            $arah = 'naik';
+        } elseif ($startVal - $endVal > $threshold) {
+            $arah = 'turun';
+        } else {
+            $arah = 'stabil';
+        }
+
+        $pct = $startVal > 0 ? round((($endVal - $startVal) / $startVal) * 100, 1) : null;
+
+        return [
+            'points' => round($xFor(0), 2).','.round($yStart, 2).' '.round($xFor($n - 1), 2).','.round($yEnd, 2),
+            'arah' => $arah,
+            'pct' => $pct,
+        ];
     }
 
     private function formatRupiahSingkat(float $val): string
