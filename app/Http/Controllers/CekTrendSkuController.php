@@ -37,9 +37,13 @@ class CekTrendSkuController extends Controller
 
         if ($bulan) {
             // Bulan butuh tahun jadi konteks -- pakai Tahun yang dipilih,
-            // kalau belum pilih tahun ini berjalan jadi default.
-            $dari = Carbon::create($tahun ?: now()->year, $bulan, 1)->startOfMonth();
-            $sampai = $dari->copy()->endOfMonth();
+            // kalau belum pilih tahun ini berjalan jadi default. Rentangnya
+            // dari awal bulan itu s/d HARI INI (bukan cuma 1 bulan itu saja)
+            // -- kalau tahunnya tahun lampau (sudah lewat), "hari ini" gak
+            // relevan lagi, jadi dibatasi s/d akhir tahun itu.
+            $tahunPakai = $tahun ?: now()->year;
+            $dari = Carbon::create($tahunPakai, $bulan, 1)->startOfMonth();
+            $sampai = $tahunPakai === now()->year ? now()->endOfDay() : Carbon::create($tahunPakai, 12, 31)->endOfDay();
         } elseif ($tahun) {
             $dari = Carbon::create($tahun, 1, 1)->startOfDay();
             $sampai = Carbon::create($tahun, 12, 31)->endOfDay();
