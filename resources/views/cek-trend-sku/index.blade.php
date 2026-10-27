@@ -3,7 +3,7 @@
 @section('content')
     <h1 class="display" style="font-size:24px;">Cek Trend SKU</h1>
     <div style="color:var(--ink-muted); font-size:13px; margin-top:4px; margin-bottom:20px;">
-        Tren penjualan harian (Omset &amp; Qty) untuk SKU yang ditandai di menu Input NPD &rarr; tab Input Trend SKU, lengkap dengan titik mulai campaign di B2C. Default tampilan: Year To Date.
+        Tren penjualan harian (Omset &amp; Qty) untuk SKU yang ditandai di menu Input NPD &rarr; tab Input Trend SKU, lengkap dengan titik mulai campaign di B2C. Rentang chart otomatis simetris: sejumlah hari sebelum s/d sejumlah hari sesudah tanggal campaign, mengikuti "Hitung s/d Tanggal" (default hari ini).
     </div>
 
     @if ($trendSkuOptions->isEmpty())
@@ -34,7 +34,7 @@
             function trendSkuReload() {
                 var app = document.getElementById('trend-sku-app');
                 var params = new URLSearchParams();
-                ['trend_sku_id', 'dari_tanggal', 'sampai_tanggal', 'tahun', 'bulan', 'impact_produk_id'].forEach(function (name) {
+                ['trend_sku_id', 'sampai_tanggal', 'tahun', 'impact_produk_id'].forEach(function (name) {
                     var v = trendSkuFieldValue(name);
                     if (v) params.set(name, v);
                 });
@@ -53,20 +53,6 @@
                     });
             }
 
-            function trendSkuClearDateInputs() {
-                ['dari_tanggal', 'sampai_tanggal'].forEach(function (name) {
-                    var el = document.querySelector('#trend-sku-app [name="' + name + '"]');
-                    if (el) el.value = '';
-                });
-            }
-
-            function trendSkuClearPeriodSelects() {
-                ['tahun', 'bulan'].forEach(function (name) {
-                    var el = document.querySelector('#trend-sku-app [name="' + name + '"]');
-                    if (el) el.value = '';
-                });
-            }
-
             function trendSkuOnSkuChange() {
                 var impact = document.querySelector('#trend-sku-app [name="impact_produk_id"]');
                 if (impact) impact.value = '';
@@ -74,17 +60,18 @@
             }
 
             function trendSkuOnTahunChange() {
-                trendSkuClearDateInputs();
-                trendSkuReload();
-            }
-
-            function trendSkuOnBulanChange() {
-                trendSkuClearDateInputs();
+                // Server yang hitung ulang tanggal "Hitung s/d"-nya (31 Des
+                // tahun itu, atau hari ini kalau tahun berjalan) -- field
+                // tanggalnya otomatis ke-update begitu fragment-nya diganti.
                 trendSkuReload();
             }
 
             function trendSkuOnDateChange() {
-                trendSkuClearPeriodSelects();
+                // Ganti tanggal manual -> lepas dulu dari Tahun yang lagi
+                // kepilih, biar tanggal manualnya beneran dipakai (bukan
+                // ketimpa lagi sama Tahun di request berikutnya).
+                var tahun = document.querySelector('#trend-sku-app [name="tahun"]');
+                if (tahun) tahun.value = '';
                 trendSkuReload();
             }
 

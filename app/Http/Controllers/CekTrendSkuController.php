@@ -14,6 +14,12 @@ use Illuminate\View\View;
  * buat satu SKU yang sudah ditandai lewat tab "Input Trend SKU" di menu
  * Input NPD, plus titik penanda di tanggal mulai dicampaignkan di B2C.
  *
+ * Rentang chart SELALU simetris di sekitar tanggal campaign: N hari
+ * sebelum s/d N hari sesudah, di mana N = jumlah hari dari tanggal
+ * campaign s/d tanggal "Hitung s/d" yang dipilih (default hari ini).
+ * Jadi perbandingan sebelum/sesudah campaign otomatis adil (jumlah hari
+ * sama persis), gak perlu Dari Tanggal/Sampai Tanggal/Bulan terpisah.
+ *
  * Bisa juga overlay 1 "SKU Terimpact" (produk lain brand yang sama) buat
  * membuktikan efek halo -- campaign 1 SKU ikut mengerek tren SKU lain.
  */
@@ -33,36 +39,39 @@ class CekTrendSkuController extends Controller
         $trendSku = $trendSkuOptions->firstWhere('id', $selectedTrendSkuId);
 
         $tahun = $request->filled('tahun') ? (int) $request->input('tahun') : null;
-        $bulan = $request->filled('bulan') ? (int) $request->input('bulan') : null;
 
-        if ($bulan) {
-            // Bulan butuh tahun jadi konteks -- pakai Tahun yang dipilih,
-            // kalau belum pilih tahun ini berjalan jadi default. Rentangnya
-            // dari awal bulan itu s/d HARI INI (bukan cuma 1 bulan itu saja)
-            // -- kalau tahunnya tahun lampau (sudah lewat), "hari ini" gak
-            // relevan lagi, jadi dibatasi s/d akhir tahun itu.
-            $tahunPakai = $tahun ?: now()->year;
-            $dari = Carbon::create($tahunPakai, $bulan, 1)->startOfMonth();
-            $sampai = $tahunPakai === now()->year ? now()->endOfDay() : Carbon::create($tahunPakai, 12, 31)->endOfDay();
-        } elseif ($tahun) {
-            $dari = Carbon::create($tahun, 1, 1)->startOfDay();
-            $sampai = Carbon::create($tahun, 12, 31)->endOfDay();
-        } elseif ($request->filled('dari_tanggal') || $request->filled('sampai_tanggal')) {
-            $dari = Carbon::parse($request->input('dari_tanggal', now()->startOfYear()->toDateString()))->startOfDay();
-            $sampai = Carbon::parse($request->input('sampai_tanggal', now()->toDateString()))->endOfDay();
-        } else {
-            // Default: Year To Date (1 Jan tahun berjalan s/d hari ini).
-            $dari = now()->startOfYear()->startOfDay();
-            $sampai = now()->endOfDay();
+        $hitungSampai = $request->filled('sampai_tanggal')
+            ? Carbon::parse($request->input('sampai_tanggal'))->endOfDay()
+            : now()->endOfDay();
+
+        // Tahun = shortcut cepat: isi "Hitung s/d Tanggal" ke 31 Desember
+        // tahun itu, atau hari ini kalau tahun yang dipilih tahun berjalan
+        // (itulah yang bikin ini otomatis jadi YTD buat tahun berjalan).
+        if ($tahun) {
+            $hitungSampai = $tahun === now()->year
+                ? now()->endOfDay()
+                : Carbon::create($tahun, 12, 31)->endOfDay();
         }
 
-        // Jaga-jaga urutan kebalik / rentang kebesaran (biar gak accidentally
-        // generate ratusan ribu titik chart kalau user salah input tanggal).
-        if ($sampai->lt($dari)) {
-            [$dari, $sampai] = [$sampai->copy()->startOfDay(), $dari->copy()->endOfDay()];
-        }
-        if ($dari->diffInDays($sampai) > 730) {
-            $sampai = $dari->copy()->addDays(730)->endOfDay();
+        $sampai = $hitungSampai;
+        $dari = $sampai->copy()->subDays(89)->startOfDay(); // fallback kalau belum ada SKU/campaign date
+
+        $campaignDay = null;
+        if ($trendSku) {
+            $campaignDay = $trendSku->tanggal_mulai_campaign->copy()->startOfDay();
+
+            // Kalau "Hitung s/d" dipilih SEBELUM tanggal campaign (gak masuk
+            // akal, campaign-nya belum "kejadian" di titik itu), paksa minimal
+            // mentok ke tanggal campaign itu sendiri biar tetap ada 1 hari
+            // buat dihitung, bukan rentang negatif/kosong.
+            if ($sampai->lt($campaignDay)) {
+                $sampai = $campaignDay->copy()->endOfDay();
+            }
+
+            // N = jumlah hari dari tanggal campaign s/d "Hitung s/d Tanggal",
+            // dibatasi maksimal 365 biar gak kebablasan kalau tanggalnya jauh.
+            $afterDays = min(365, abs($sampai->copy()->startOfDay()->diffInDays($campaignDay)) + 1);
+            $dari = $campaignDay->copy()->subDays($afterDays)->startOfDay();
         }
 
         $series = $trendSku ? $this->buildDailySeries($trendSku->produk_id, $dari, $sampai) : [];
@@ -82,42 +91,13 @@ class CekTrendSkuController extends Controller
 
         $impactSeries = $impactProduk ? $this->buildDailySeries($impactProduk->id, $dari, $sampai) : [];
 
-        $campaignDalamRentang = $trendSku
-            && $trendSku->tanggal_mulai_campaign->gte($dari->startOfDay())
-            && $trendSku->tanggal_mulai_campaign->lte($sampai->startOfDay());
-
-        $campaignTanggal = $campaignDalamRentang ? $trendSku->tanggal_mulai_campaign->toDateString() : null;
-
-        // Biar jumlah hari "sebelum" vs "sesudah" campaign adil (sama
-        // panjang), kalau jatah hari SEBELUM campaign di dalam rentang
-        // filter gak cukup buat nyamain panjang "sesudah", tarik data
-        // tambahan dari SEBELUM awal filter (di luar yang kelihatan di
-        // chart, khusus buat hitungan %, bukan buat gambar garisnya).
-        $extraSeriesA = [];
-        $extraSeriesB = [];
-        if ($campaignDalamRentang) {
-            // abs() di sini SENGAJA -- Carbon::diffInDays() balikin nilai
-            // signed (bisa negatif tergantung urutan tanggalnya), bukan
-            // selalu absolut, jadi tanpa abs() $kurang bisa salah hitung
-            // jadi 0 padahal harusnya positif.
-            $campaignDay = $trendSku->tanggal_mulai_campaign->copy()->startOfDay();
-            $afterLen = abs($sampai->copy()->startOfDay()->diffInDays($campaignDay)) + 1;
-            $beforeAvailable = abs($campaignDay->diffInDays($dari->copy()->startOfDay()));
-            $kurang = max(0, $afterLen - $beforeAvailable);
-
-            if ($kurang > 0) {
-                $extraStart = $dari->copy()->subDays($kurang)->startOfDay();
-                $extraEnd = $dari->copy()->subDay()->endOfDay();
-                $extraSeriesA = $trendSku ? $this->buildDailySeries($trendSku->produk_id, $extraStart, $extraEnd) : [];
-                $extraSeriesB = $impactProduk ? $this->buildDailySeries($impactProduk->id, $extraStart, $extraEnd) : [];
-            }
-        }
+        $campaignTanggal = $campaignDay?->toDateString();
 
         $chart = null;
         if ($series && $impactProduk) {
-            $chart = $this->buildComparisonChartGeometry($series, $impactSeries, $campaignTanggal, $extraSeriesA, $extraSeriesB);
+            $chart = $this->buildComparisonChartGeometry($series, $impactSeries, $campaignTanggal);
         } elseif ($series) {
-            $chart = $this->buildChartGeometry($series, $campaignTanggal, $extraSeriesA);
+            $chart = $this->buildChartGeometry($series, $campaignTanggal);
         }
 
         $viewData = [
@@ -127,16 +107,14 @@ class CekTrendSkuController extends Controller
             'dariTanggal' => $dari->toDateString(),
             'sampaiTanggal' => $sampai->toDateString(),
             'tahun' => $tahun,
-            'bulan' => $bulan,
-            'campaignDalamRentang' => $campaignDalamRentang,
             'impactOptions' => $impactOptions,
             'impactProduk' => $impactProduk,
             'chart' => $chart,
         ];
 
-        // Filter (SKU/tanggal/bulan/tahun/SKU Terimpact) dikirim via fetch()
-        // tanpa tombol Terapkan -- cukup balas fragment form+chart-nya saja,
-        // bukan halaman penuh dengan layout/sidebar.
+        // Filter (SKU/"Hitung s/d Tanggal"/Tahun/SKU Terimpact) dikirim via
+        // fetch() tanpa tombol Terapkan -- cukup balas fragment form+chart-nya
+        // saja, bukan halaman penuh dengan layout/sidebar.
         if ($request->ajax()) {
             return view('cek-trend-sku._content', $viewData);
         }
@@ -178,7 +156,7 @@ class CekTrendSkuController extends Controller
      * dan Qty sekali di sini, biar blade-nya cuma tinggal echo angka siap
      * pakai -- gak ada perhitungan skala di view.
      */
-    private function buildChartGeometry(array $series, ?string $campaignTanggal, array $extraBeforeSeries = []): array
+    private function buildChartGeometry(array $series, ?string $campaignTanggal): array
     {
         [$width, $height, $padLeft, $padTop, $padBottom, $plotWidth, $plotHeight] = $this->chartDims();
 
@@ -187,7 +165,7 @@ class CekTrendSkuController extends Controller
 
         $campaignIdx = $this->campaignIndex($series, $campaignTanggal);
 
-        $buildSeries = function (string $field, string $format) use ($series, $xFor, $padTop, $plotHeight, $campaignIdx, $extraBeforeSeries) {
+        $buildSeries = function (string $field, string $format) use ($series, $xFor, $padTop, $plotHeight, $campaignIdx) {
             $values = array_column($series, $field);
             $max = max($values) ?: 1;
 
@@ -210,7 +188,7 @@ class CekTrendSkuController extends Controller
                 'points' => implode(' ', $points),
                 'gridlines' => $gridlines,
                 'max' => $max,
-                'trend' => $this->linearTrend($values, $max, $xFor, $padTop, $plotHeight, $campaignIdx, array_column($extraBeforeSeries, $field)),
+                'trend' => $this->linearTrend($values, $max, $xFor, $padTop, $plotHeight, $campaignIdx),
             ];
         };
 
@@ -236,7 +214,7 @@ class CekTrendSkuController extends Controller
      * trennya (apakah sama-sama naik di sekitar tanggal campaign), bukan
      * nilai absolutnya.
      */
-    private function buildComparisonChartGeometry(array $seriesA, array $seriesB, ?string $campaignTanggal, array $extraSeriesA = [], array $extraSeriesB = []): array
+    private function buildComparisonChartGeometry(array $seriesA, array $seriesB, ?string $campaignTanggal): array
     {
         [$width, $height, $padLeft, $padTop, $padBottom, $plotWidth, $plotHeight] = $this->chartDims();
 
@@ -244,7 +222,7 @@ class CekTrendSkuController extends Controller
         $xFor = fn (int $i) => $n > 1 ? $padLeft + ($i / ($n - 1)) * $plotWidth : $padLeft + $plotWidth / 2;
         $campaignIdx = $this->campaignIndex($seriesA, $campaignTanggal);
 
-        $buildPair = function (string $field) use ($seriesA, $seriesB, $xFor, $padTop, $plotHeight, $campaignIdx, $extraSeriesA, $extraSeriesB) {
+        $buildPair = function (string $field) use ($seriesA, $seriesB, $xFor, $padTop, $plotHeight, $campaignIdx) {
             $valuesA = array_column($seriesA, $field);
             $valuesB = array_column($seriesB, $field);
             $maxA = max($valuesA) ?: 1;
@@ -277,8 +255,8 @@ class CekTrendSkuController extends Controller
                 // SKU Terimpact gak punya tanggal campaign sendiri -- sengaja
                 // dibelah pakai tanggal campaign SKU UTAMA yang sama (itulah
                 // tanggal yang mau dibuktikan efek halo-nya ke SKU ini juga).
-                'trendA' => $this->linearTrend($valuesA, $maxA, $xFor, $padTop, $plotHeight, $campaignIdx, array_column($extraSeriesA, $field)),
-                'trendB' => $this->linearTrend($valuesB, $maxB, $xFor, $padTop, $plotHeight, $campaignIdx, array_column($extraSeriesB, $field)),
+                'trendA' => $this->linearTrend($valuesA, $maxA, $xFor, $padTop, $plotHeight, $campaignIdx),
+                'trendB' => $this->linearTrend($valuesB, $maxB, $xFor, $padTop, $plotHeight, $campaignIdx),
             ];
         };
 
@@ -335,7 +313,7 @@ class CekTrendSkuController extends Controller
         return $idx !== null ? round($xFor($idx), 2) : null;
     }
 
-    /** Index di $series yang tanggalnya persis sama dengan tanggal campaign, atau null kalau gak ketemu (campaign di luar rentang filter). */
+    /** Index di $series yang tanggalnya persis sama dengan tanggal campaign, atau null kalau gak ketemu. */
     private function campaignIndex(array $series, ?string $campaignTanggal): ?int
     {
         if (! $campaignTanggal) {
@@ -359,20 +337,14 @@ class CekTrendSkuController extends Controller
      * skala `$max` yang sama dengan garis datanya sendiri.
      *
      * $campaignIdx (index di $values yang tanggalnya = tanggal mulai
-     * campaign) kalau ada, dipakai sebagai titik belah buat arah/persentase
-     * -- "sebelum campaign" vs "sesudah campaign" dalam rentang filter yang
-     * aktif, biar bener-bener nunjukin dampak campaign-nya, bukan cuma
-     * "separuh pertama vs kedua" yang kebetulan. Kalau null (campaign di
-     * luar rentang filter, atau di paling ujung sehingga salah satu sisi
-     * kosong), balik ke belah tengah biasa.
-     *
-     * $extraBeforeValues (opsional) = data harian TAMBAHAN dari SEBELUM
-     * awal rentang filter, dipakai buat nyamain jumlah hari "sebelum"
-     * dengan "sesudah" campaign kalau jatah hari sebelum di dalam filter
-     * gak cukup -- supaya perbandingannya adil (apple-to-apple jumlah
-     * hari), bukan asal ambil semua yang kebetulan ada di filter.
+     * campaign) dipakai sebagai titik belah buat arah/persentase --
+     * "sebelum campaign" vs "sesudah campaign". Berkat $series yang SELALU
+     * dibangun simetris di sekitar tanggal campaign (lihat index()), kedua
+     * sisi otomatis sama panjang -- gak perlu tarik data tambahan lagi.
+     * Fallback belah-tengah cuma jaga-jaga kalau campaignIdx ternyata gak
+     * ketemu (harusnya gak pernah kejadian dengan desain saat ini).
      */
-    private function linearTrend(array $values, float $max, callable $xFor, int $padTop, int $plotHeight, ?int $campaignIdx = null, array $extraBeforeValues = []): array
+    private function linearTrend(array $values, float $max, callable $xFor, int $padTop, int $plotHeight, ?int $campaignIdx = null): array
     {
         $n = count($values);
         if ($n < 2) {
@@ -402,30 +374,15 @@ class CekTrendSkuController extends Controller
         $yEnd = $padTop + $plotHeight - ($endVal / $max) * $plotHeight;
 
         // Arah & persentase SENGAJA dihitung dari rata-rata data ASLI
-        // (sebelum vs sesudah tanggal campaign, atau separuh-separuh kalau
-        // campaign-nya gak ada di rentang filter), BUKAN dari titik regresi
+        // (sebelum vs sesudah tanggal campaign), BUKAN dari titik regresi
         // di atas. Titik regresi (start/endVal) cuma buat gambar garis
-        // putus-putusnya -- kalau ada 1 lonjakan ekstrem di akhir periode
-        // (kasus nyata: SKU datar ~0 selama 2,5 bulan lalu 1 spike besar),
-        // garis least-squares bisa "nembus" ke bawah 0 di titik awal
-        // walau data aslinya gak pernah negatif, jadi basis % jadi rusak
-        // (selalu null). Rata-rata sebelum/sesudah jauh lebih tahan banting.
+        // putus-putusnya -- kalau ada 1 lonjakan ekstrem, garis least-squares
+        // bisa "nembus" ke bawah 0 di titik awal walau data aslinya gak
+        // pernah negatif, jadi basis % jadi rusak (selalu null). Rata-rata
+        // sebelum/sesudah jauh lebih tahan banting.
         if ($campaignIdx !== null && $campaignIdx > 0 && $campaignIdx < $n) {
-            $beforeWithinFilter = array_slice($values, 0, $campaignIdx);
+            $beforeValues = array_slice($values, 0, $campaignIdx);
             $afterValues = array_slice($values, $campaignIdx);
-            $targetLen = count($afterValues);
-
-            if (count($beforeWithinFilter) >= $targetLen) {
-                // Lebih dari cukup -- potong, ambil yang paling DEKAT ke
-                // tanggal campaign (paling relevan), biar sama panjang persis.
-                $beforeValues = array_slice($beforeWithinFilter, -$targetLen);
-            } else {
-                // Kurang -- tempelin data tambahan dari sebelum awal filter
-                // (kalau ada/cukup) di depan, biar totalnya nyamain $targetLen.
-                $kurang = $targetLen - count($beforeWithinFilter);
-                $extraPart = $extraBeforeValues ? array_slice($extraBeforeValues, -$kurang) : [];
-                $beforeValues = array_merge($extraPart, $beforeWithinFilter);
-            }
         } else {
             $half = (int) max(1, floor($n / 2));
             $beforeValues = array_slice($values, 0, $half);
@@ -448,9 +405,9 @@ class CekTrendSkuController extends Controller
         if ($firstAvg > 0) {
             $pct = round((($lastAvg - $firstAvg) / $firstAvg) * 100, 1);
         } elseif ($lastAvg > 0) {
-            // Separuh awal nol/nyaris nol -- tetap kasih angka (bukan null)
-            // pakai basis kecil (0,1% dari puncak) biar gak terbagi 0 tapi
-            // juga gak mengada-ada, bukan ekstrapolasi titik regresi.
+            // Sebelum campaign nol/nyaris nol -- tetap kasih angka (bukan
+            // null) pakai basis kecil (0,1% dari puncak) biar gak terbagi 0
+            // tapi juga gak mengada-ada, bukan ekstrapolasi titik regresi.
             $epsilon = max($max * 0.001, 0.0001);
             $pct = round((($lastAvg - $epsilon) / $epsilon) * 100, 1);
         } else {

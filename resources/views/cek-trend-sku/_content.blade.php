@@ -13,8 +13,6 @@
 
         return '<span style="color:'.$color.'; font-weight:700; font-size:'.$size.'; white-space:nowrap;">'.$icon.' '.$label.$pctText.'</span>';
     };
-
-    $namaBulan = [1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'];
 @endphp
 
 <form onsubmit="return false;" class="field-row" style="align-items:flex-end; margin-bottom:20px;">
@@ -29,21 +27,8 @@
         </select>
     </div>
     <div class="field" style="margin-bottom:0;">
-        <label>Dari Tanggal</label>
-        <input type="date" name="dari_tanggal" value="{{ $dariTanggal }}" onchange="trendSkuOnDateChange()">
-    </div>
-    <div class="field" style="margin-bottom:0;">
-        <label>Sampai Tanggal</label>
+        <label>Hitung s/d Tanggal</label>
         <input type="date" name="sampai_tanggal" value="{{ $sampaiTanggal }}" onchange="trendSkuOnDateChange()">
-    </div>
-    <div class="field" style="margin-bottom:0;">
-        <label>Bulan</label>
-        <select name="bulan" class="select-pill" onchange="trendSkuOnBulanChange()">
-            <option value="">—</option>
-            @foreach ($namaBulan as $num => $label)
-                <option value="{{ $num }}" {{ (int) $bulan === $num ? 'selected' : '' }}>{{ $label }}</option>
-            @endforeach
-        </select>
     </div>
     <div class="field" style="margin-bottom:0;">
         <label>Tahun</label>
@@ -81,9 +66,8 @@
                 </div>
                 <div class="card-hint">
                     Mulai campaign B2C: {{ $trendSku->tanggal_mulai_campaign->format('d/m/Y') }}
-                    @unless ($campaignDalamRentang)
-                        <span style="color:var(--ink-faint);">(di luar rentang filter saat ini)</span>
-                    @endunless
+                    &middot; Rentang chart: {{ \Carbon\Carbon::parse($dariTanggal)->format('d/m/Y') }} &ndash; {{ \Carbon\Carbon::parse($sampaiTanggal)->format('d/m/Y') }}
+                    ({{ abs(\Carbon\Carbon::parse($dariTanggal)->diffInDays(\Carbon\Carbon::parse($trendSku->tanggal_mulai_campaign))) }} hari sebelum &amp; {{ abs(\Carbon\Carbon::parse($trendSku->tanggal_mulai_campaign)->diffInDays(\Carbon\Carbon::parse($sampaiTanggal))) + 1 }} hari sesudah campaign)
                 </div>
             </div>
             <div style="display:flex; gap:6px;">
@@ -106,12 +90,7 @@
                 </span>
                 <span style="color:var(--ink-faint);">
                     (garis dinormalisasi ke % dari puncak masing-masing; garis putus-putus tipis = garis tren)<br>
-                    % dihitung dari rata-rata
-                    @if ($campaignDalamRentang)
-                        sebelum vs sesudah tanggal Mulai Campaign
-                    @else
-                        separuh awal vs separuh akhir rentang filter (tanggal campaign di luar rentang filter saat ini)
-                    @endif
+                    % dihitung dari rata-rata sebelum vs sesudah tanggal Mulai Campaign, jumlah hari sama persis di kedua sisi
                 </span>
             </div>
 
@@ -150,12 +129,7 @@
                     <span id="trend-badge-{{ $metric }}" style="{{ $metric === 'omset' ? '' : 'display:none;' }}">{!! $trendBadge($chart[$metric]['trend'], '13px') !!}</span>
                 @endforeach
                 <span style="color:var(--ink-faint); font-size:11px;">
-                    (garis putus-putus tipis di chart = garis tren) &middot; % dihitung dari rata-rata
-                    @if ($campaignDalamRentang)
-                        sebelum vs sesudah tanggal Mulai Campaign
-                    @else
-                        separuh awal vs separuh akhir rentang filter (tanggal campaign di luar rentang filter saat ini)
-                    @endif
+                    (garis putus-putus tipis di chart = garis tren) &middot; % dihitung dari rata-rata sebelum vs sesudah tanggal Mulai Campaign, jumlah hari sama persis di kedua sisi
                 </span>
             </div>
 
