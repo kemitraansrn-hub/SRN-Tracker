@@ -160,7 +160,9 @@ class CekTrendSkuController extends Controller
         $n = count($series);
         $xFor = fn (int $i) => $n > 1 ? $padLeft + ($i / ($n - 1)) * $plotWidth : $padLeft + $plotWidth / 2;
 
-        $buildSeries = function (string $field, string $format) use ($series, $xFor, $padTop, $plotHeight) {
+        $campaignIdx = $this->campaignIndex($series, $campaignTanggal);
+
+        $buildSeries = function (string $field, string $format) use ($series, $xFor, $padTop, $plotHeight, $campaignIdx) {
             $values = array_column($series, $field);
             $max = max($values) ?: 1;
 
@@ -183,7 +185,7 @@ class CekTrendSkuController extends Controller
                 'points' => implode(' ', $points),
                 'gridlines' => $gridlines,
                 'max' => $max,
-                'trend' => $this->linearTrend($values, $max, $xFor, $padTop, $plotHeight),
+                'trend' => $this->linearTrend($values, $max, $xFor, $padTop, $plotHeight, $campaignIdx),
             ];
         };
 
@@ -215,8 +217,9 @@ class CekTrendSkuController extends Controller
 
         $n = count($seriesA);
         $xFor = fn (int $i) => $n > 1 ? $padLeft + ($i / ($n - 1)) * $plotWidth : $padLeft + $plotWidth / 2;
+        $campaignIdx = $this->campaignIndex($seriesA, $campaignTanggal);
 
-        $buildPair = function (string $field) use ($seriesA, $seriesB, $xFor, $padTop, $plotHeight) {
+        $buildPair = function (string $field) use ($seriesA, $seriesB, $xFor, $padTop, $plotHeight, $campaignIdx) {
             $valuesA = array_column($seriesA, $field);
             $valuesB = array_column($seriesB, $field);
             $maxA = max($valuesA) ?: 1;
@@ -246,8 +249,11 @@ class CekTrendSkuController extends Controller
                 'gridlines' => $gridlines,
                 'maxA' => $maxA,
                 'maxB' => $maxB,
-                'trendA' => $this->linearTrend($valuesA, $maxA, $xFor, $padTop, $plotHeight),
-                'trendB' => $this->linearTrend($valuesB, $maxB, $xFor, $padTop, $plotHeight),
+                // SKU Terimpact gak punya tanggal campaign sendiri -- sengaja
+                // dibelah pakai tanggal campaign SKU UTAMA yang sama (itulah
+                // tanggal yang mau dibuktikan efek halo-nya ke SKU ini juga).
+                'trendA' => $this->linearTrend($valuesA, $maxA, $xFor, $padTop, $plotHeight, $campaignIdx),
+                'trendB' => $this->linearTrend($valuesB, $maxB, $xFor, $padTop, $plotHeight, $campaignIdx),
             ];
         };
 
@@ -299,13 +305,21 @@ class CekTrendSkuController extends Controller
 
     private function campaignX(array $series, ?string $campaignTanggal, callable $xFor): ?float
     {
+        $idx = $this->campaignIndex($series, $campaignTanggal);
+
+        return $idx !== null ? round($xFor($idx), 2) : null;
+    }
+
+    /** Index di $series yang tanggalnya persis sama dengan tanggal campaign, atau null kalau gak ketemu (campaign di luar rentang filter). */
+    private function campaignIndex(array $series, ?string $campaignTanggal): ?int
+    {
         if (! $campaignTanggal) {
             return null;
         }
 
         foreach ($series as $i => $row) {
             if ($row['tanggal'] === $campaignTanggal) {
-                return round($xFor($i), 2);
+                return $i;
             }
         }
 
@@ -318,8 +332,16 @@ class CekTrendSkuController extends Controller
      * fluktuasi harian yang naik-turun kecil. Dihitung dari NILAI ASLI
      * (bukan titik piksel), lalu baru dikonversi ke koordinat SVG pakai
      * skala `$max` yang sama dengan garis datanya sendiri.
+     *
+     * $campaignIdx (index di $values yang tanggalnya = tanggal mulai
+     * campaign) kalau ada, dipakai sebagai titik belah buat arah/persentase
+     * -- "sebelum campaign" vs "sesudah campaign" dalam rentang filter yang
+     * aktif, biar bener-bener nunjukin dampak campaign-nya, bukan cuma
+     * "separuh pertama vs kedua" yang kebetulan. Kalau null (campaign di
+     * luar rentang filter, atau di paling ujung sehingga salah satu sisi
+     * kosong), balik ke belah tengah biasa.
      */
-    private function linearTrend(array $values, float $max, callable $xFor, int $padTop, int $plotHeight): array
+    private function linearTrend(array $values, float $max, callable $xFor, int $padTop, int $plotHeight, ?int $campaignIdx = null): array
     {
         $n = count($values);
         if ($n < 2) {
@@ -349,16 +371,24 @@ class CekTrendSkuController extends Controller
         $yEnd = $padTop + $plotHeight - ($endVal / $max) * $plotHeight;
 
         // Arah & persentase SENGAJA dihitung dari rata-rata data ASLI
-        // (separuh awal vs separuh akhir), BUKAN dari titik regresi di
-        // atas. Titik regresi (start/endVal) cuma buat gambar garis
+        // (sebelum vs sesudah tanggal campaign, atau separuh-separuh kalau
+        // campaign-nya gak ada di rentang filter), BUKAN dari titik regresi
+        // di atas. Titik regresi (start/endVal) cuma buat gambar garis
         // putus-putusnya -- kalau ada 1 lonjakan ekstrem di akhir periode
         // (kasus nyata: SKU datar ~0 selama 2,5 bulan lalu 1 spike besar),
         // garis least-squares bisa "nembus" ke bawah 0 di titik awal
         // walau data aslinya gak pernah negatif, jadi basis % jadi rusak
-        // (selalu null). Rata-rata separuh-separuh jauh lebih tahan banting.
-        $half = (int) max(1, floor($n / 2));
-        $firstAvg = array_sum(array_slice($values, 0, $half)) / $half;
-        $lastAvg = array_sum(array_slice($values, -$half)) / $half;
+        // (selalu null). Rata-rata sebelum/sesudah jauh lebih tahan banting.
+        if ($campaignIdx !== null && $campaignIdx > 0 && $campaignIdx < $n) {
+            $beforeValues = array_slice($values, 0, $campaignIdx);
+            $afterValues = array_slice($values, $campaignIdx);
+        } else {
+            $half = (int) max(1, floor($n / 2));
+            $beforeValues = array_slice($values, 0, $half);
+            $afterValues = array_slice($values, -$half);
+        }
+        $firstAvg = array_sum($beforeValues) / max(1, count($beforeValues));
+        $lastAvg = array_sum($afterValues) / max(1, count($afterValues));
 
         // Threshold 1% dari puncak, biar perubahan kecil yang keliatan
         // flat di mata tetap dilabeli "Stabil", bukan naik/turun palsu.

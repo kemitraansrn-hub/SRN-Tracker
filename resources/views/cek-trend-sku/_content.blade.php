@@ -104,7 +104,15 @@
                         <span id="trend-badge-B-{{ $metric }}" style="{{ $metric === 'omset' ? '' : 'display:none;' }}">{!! $trendBadge($chart[$metric]['trendB']) !!}</span>
                     @endforeach
                 </span>
-                <span style="color:var(--ink-faint);">(garis dinormalisasi ke % dari puncak masing-masing; garis putus-putus tipis = garis tren)</span>
+                <span style="color:var(--ink-faint);">
+                    (garis dinormalisasi ke % dari puncak masing-masing; garis putus-putus tipis = garis tren)<br>
+                    % dihitung dari rata-rata
+                    @if ($campaignDalamRentang)
+                        sebelum vs sesudah tanggal Mulai Campaign
+                    @else
+                        separuh awal vs separuh akhir rentang filter (tanggal campaign di luar rentang filter saat ini)
+                    @endif
+                </span>
             </div>
 
             <svg viewBox="0 0 {{ $chart['width'] }} {{ $chart['height'] }}" style="width:100%; height:auto;">
@@ -141,7 +149,14 @@
                 @foreach (['omset', 'qty'] as $metric)
                     <span id="trend-badge-{{ $metric }}" style="{{ $metric === 'omset' ? '' : 'display:none;' }}">{!! $trendBadge($chart[$metric]['trend'], '13px') !!}</span>
                 @endforeach
-                <span style="color:var(--ink-faint); font-size:11px;">(garis putus-putus tipis di chart = garis tren)</span>
+                <span style="color:var(--ink-faint); font-size:11px;">
+                    (garis putus-putus tipis di chart = garis tren) &middot; % dihitung dari rata-rata
+                    @if ($campaignDalamRentang)
+                        sebelum vs sesudah tanggal Mulai Campaign
+                    @else
+                        separuh awal vs separuh akhir rentang filter (tanggal campaign di luar rentang filter saat ini)
+                    @endif
+                </span>
             </div>
 
             <svg viewBox="0 0 {{ $chart['width'] }} {{ $chart['height'] }}" style="width:100%; height:auto;">
