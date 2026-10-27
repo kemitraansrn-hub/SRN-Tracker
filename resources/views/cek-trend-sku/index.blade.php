@@ -25,6 +25,12 @@
                 return el ? el.value : '';
             }
 
+            // Metrik yang lagi aktif (Omset/Qty) -- dipertahankan di sini, di
+            // luar #trend-sku-app, supaya gak diam-diam balik ke "Omset"
+            // tiap kali fragment-nya diganti via AJAX (server selalu render
+            // omset yang keliatan duluan secara default).
+            window.trendSkuActiveMetric = window.trendSkuActiveMetric || 'omset';
+
             function trendSkuReload() {
                 var app = document.getElementById('trend-sku-app');
                 var params = new URLSearchParams();
@@ -34,12 +40,13 @@
                 });
                 var url = '{{ route('cek-trend-sku.index') }}?' + params.toString();
                 app.style.opacity = '0.5';
-                fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, cache: 'no-store' })
                     .then(function (r) { return r.text(); })
                     .then(function (html) {
                         app.innerHTML = html;
                         app.style.opacity = '';
                         window.history.replaceState(null, '', url);
+                        setTrendSkuMetric(window.trendSkuActiveMetric);
                     })
                     .catch(function () {
                         app.style.opacity = '';
@@ -85,6 +92,7 @@
             // compare -- cek keberadaan tiap elemen dulu (beberapa id cuma
             // ada di salah satu mode) biar aman dipanggil dari mode manapun.
             function setTrendSkuMetric(metric) {
+                window.trendSkuActiveMetric = metric;
                 ['omset', 'qty'].forEach(function (m) {
                     var show = (m === metric);
                     [
