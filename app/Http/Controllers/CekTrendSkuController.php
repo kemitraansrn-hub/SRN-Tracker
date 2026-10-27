@@ -348,18 +348,41 @@ class CekTrendSkuController extends Controller
         $yStart = $padTop + $plotHeight - ($startVal / $max) * $plotHeight;
         $yEnd = $padTop + $plotHeight - ($endVal / $max) * $plotHeight;
 
+        // Arah & persentase SENGAJA dihitung dari rata-rata data ASLI
+        // (separuh awal vs separuh akhir), BUKAN dari titik regresi di
+        // atas. Titik regresi (start/endVal) cuma buat gambar garis
+        // putus-putusnya -- kalau ada 1 lonjakan ekstrem di akhir periode
+        // (kasus nyata: SKU datar ~0 selama 2,5 bulan lalu 1 spike besar),
+        // garis least-squares bisa "nembus" ke bawah 0 di titik awal
+        // walau data aslinya gak pernah negatif, jadi basis % jadi rusak
+        // (selalu null). Rata-rata separuh-separuh jauh lebih tahan banting.
+        $half = (int) max(1, floor($n / 2));
+        $firstAvg = array_sum(array_slice($values, 0, $half)) / $half;
+        $lastAvg = array_sum(array_slice($values, -$half)) / $half;
+
         // Threshold 1% dari puncak, biar perubahan kecil yang keliatan
         // flat di mata tetap dilabeli "Stabil", bukan naik/turun palsu.
         $threshold = $max * 0.01;
-        if ($endVal - $startVal > $threshold) {
+        if ($lastAvg - $firstAvg > $threshold) {
             $arah = 'naik';
-        } elseif ($startVal - $endVal > $threshold) {
+        } elseif ($firstAvg - $lastAvg > $threshold) {
             $arah = 'turun';
         } else {
             $arah = 'stabil';
         }
 
-        $pct = $startVal > 0 ? round((($endVal - $startVal) / $startVal) * 100, 1) : null;
+        if ($firstAvg > 0) {
+            $pct = round((($lastAvg - $firstAvg) / $firstAvg) * 100, 1);
+        } elseif ($lastAvg > 0) {
+            // Separuh awal nol/nyaris nol -- tetap kasih angka (bukan null)
+            // pakai basis kecil (0,1% dari puncak) biar gak terbagi 0 tapi
+            // juga gak mengada-ada, bukan ekstrapolasi titik regresi.
+            $epsilon = max($max * 0.001, 0.0001);
+            $pct = round((($lastAvg - $epsilon) / $epsilon) * 100, 1);
+        } else {
+            // Dua-duanya nol -- memang gak ada apa-apa buat dibandingkan.
+            $pct = null;
+        }
 
         return [
             'points' => round($xFor(0), 2).','.round($yStart, 2).' '.round($xFor($n - 1), 2).','.round($yEnd, 2),
