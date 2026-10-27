@@ -88,11 +88,36 @@ class CekTrendSkuController extends Controller
 
         $campaignTanggal = $campaignDalamRentang ? $trendSku->tanggal_mulai_campaign->toDateString() : null;
 
+        // Biar jumlah hari "sebelum" vs "sesudah" campaign adil (sama
+        // panjang), kalau jatah hari SEBELUM campaign di dalam rentang
+        // filter gak cukup buat nyamain panjang "sesudah", tarik data
+        // tambahan dari SEBELUM awal filter (di luar yang kelihatan di
+        // chart, khusus buat hitungan %, bukan buat gambar garisnya).
+        $extraSeriesA = [];
+        $extraSeriesB = [];
+        if ($campaignDalamRentang) {
+            // abs() di sini SENGAJA -- Carbon::diffInDays() balikin nilai
+            // signed (bisa negatif tergantung urutan tanggalnya), bukan
+            // selalu absolut, jadi tanpa abs() $kurang bisa salah hitung
+            // jadi 0 padahal harusnya positif.
+            $campaignDay = $trendSku->tanggal_mulai_campaign->copy()->startOfDay();
+            $afterLen = abs($sampai->copy()->startOfDay()->diffInDays($campaignDay)) + 1;
+            $beforeAvailable = abs($campaignDay->diffInDays($dari->copy()->startOfDay()));
+            $kurang = max(0, $afterLen - $beforeAvailable);
+
+            if ($kurang > 0) {
+                $extraStart = $dari->copy()->subDays($kurang)->startOfDay();
+                $extraEnd = $dari->copy()->subDay()->endOfDay();
+                $extraSeriesA = $trendSku ? $this->buildDailySeries($trendSku->produk_id, $extraStart, $extraEnd) : [];
+                $extraSeriesB = $impactProduk ? $this->buildDailySeries($impactProduk->id, $extraStart, $extraEnd) : [];
+            }
+        }
+
         $chart = null;
         if ($series && $impactProduk) {
-            $chart = $this->buildComparisonChartGeometry($series, $impactSeries, $campaignTanggal);
+            $chart = $this->buildComparisonChartGeometry($series, $impactSeries, $campaignTanggal, $extraSeriesA, $extraSeriesB);
         } elseif ($series) {
-            $chart = $this->buildChartGeometry($series, $campaignTanggal);
+            $chart = $this->buildChartGeometry($series, $campaignTanggal, $extraSeriesA);
         }
 
         $viewData = [
@@ -153,7 +178,7 @@ class CekTrendSkuController extends Controller
      * dan Qty sekali di sini, biar blade-nya cuma tinggal echo angka siap
      * pakai -- gak ada perhitungan skala di view.
      */
-    private function buildChartGeometry(array $series, ?string $campaignTanggal): array
+    private function buildChartGeometry(array $series, ?string $campaignTanggal, array $extraBeforeSeries = []): array
     {
         [$width, $height, $padLeft, $padTop, $padBottom, $plotWidth, $plotHeight] = $this->chartDims();
 
@@ -162,7 +187,7 @@ class CekTrendSkuController extends Controller
 
         $campaignIdx = $this->campaignIndex($series, $campaignTanggal);
 
-        $buildSeries = function (string $field, string $format) use ($series, $xFor, $padTop, $plotHeight, $campaignIdx) {
+        $buildSeries = function (string $field, string $format) use ($series, $xFor, $padTop, $plotHeight, $campaignIdx, $extraBeforeSeries) {
             $values = array_column($series, $field);
             $max = max($values) ?: 1;
 
@@ -185,7 +210,7 @@ class CekTrendSkuController extends Controller
                 'points' => implode(' ', $points),
                 'gridlines' => $gridlines,
                 'max' => $max,
-                'trend' => $this->linearTrend($values, $max, $xFor, $padTop, $plotHeight, $campaignIdx),
+                'trend' => $this->linearTrend($values, $max, $xFor, $padTop, $plotHeight, $campaignIdx, array_column($extraBeforeSeries, $field)),
             ];
         };
 
@@ -211,7 +236,7 @@ class CekTrendSkuController extends Controller
      * trennya (apakah sama-sama naik di sekitar tanggal campaign), bukan
      * nilai absolutnya.
      */
-    private function buildComparisonChartGeometry(array $seriesA, array $seriesB, ?string $campaignTanggal): array
+    private function buildComparisonChartGeometry(array $seriesA, array $seriesB, ?string $campaignTanggal, array $extraSeriesA = [], array $extraSeriesB = []): array
     {
         [$width, $height, $padLeft, $padTop, $padBottom, $plotWidth, $plotHeight] = $this->chartDims();
 
@@ -219,7 +244,7 @@ class CekTrendSkuController extends Controller
         $xFor = fn (int $i) => $n > 1 ? $padLeft + ($i / ($n - 1)) * $plotWidth : $padLeft + $plotWidth / 2;
         $campaignIdx = $this->campaignIndex($seriesA, $campaignTanggal);
 
-        $buildPair = function (string $field) use ($seriesA, $seriesB, $xFor, $padTop, $plotHeight, $campaignIdx) {
+        $buildPair = function (string $field) use ($seriesA, $seriesB, $xFor, $padTop, $plotHeight, $campaignIdx, $extraSeriesA, $extraSeriesB) {
             $valuesA = array_column($seriesA, $field);
             $valuesB = array_column($seriesB, $field);
             $maxA = max($valuesA) ?: 1;
@@ -252,8 +277,8 @@ class CekTrendSkuController extends Controller
                 // SKU Terimpact gak punya tanggal campaign sendiri -- sengaja
                 // dibelah pakai tanggal campaign SKU UTAMA yang sama (itulah
                 // tanggal yang mau dibuktikan efek halo-nya ke SKU ini juga).
-                'trendA' => $this->linearTrend($valuesA, $maxA, $xFor, $padTop, $plotHeight, $campaignIdx),
-                'trendB' => $this->linearTrend($valuesB, $maxB, $xFor, $padTop, $plotHeight, $campaignIdx),
+                'trendA' => $this->linearTrend($valuesA, $maxA, $xFor, $padTop, $plotHeight, $campaignIdx, array_column($extraSeriesA, $field)),
+                'trendB' => $this->linearTrend($valuesB, $maxB, $xFor, $padTop, $plotHeight, $campaignIdx, array_column($extraSeriesB, $field)),
             ];
         };
 
@@ -340,8 +365,14 @@ class CekTrendSkuController extends Controller
      * "separuh pertama vs kedua" yang kebetulan. Kalau null (campaign di
      * luar rentang filter, atau di paling ujung sehingga salah satu sisi
      * kosong), balik ke belah tengah biasa.
+     *
+     * $extraBeforeValues (opsional) = data harian TAMBAHAN dari SEBELUM
+     * awal rentang filter, dipakai buat nyamain jumlah hari "sebelum"
+     * dengan "sesudah" campaign kalau jatah hari sebelum di dalam filter
+     * gak cukup -- supaya perbandingannya adil (apple-to-apple jumlah
+     * hari), bukan asal ambil semua yang kebetulan ada di filter.
      */
-    private function linearTrend(array $values, float $max, callable $xFor, int $padTop, int $plotHeight, ?int $campaignIdx = null): array
+    private function linearTrend(array $values, float $max, callable $xFor, int $padTop, int $plotHeight, ?int $campaignIdx = null, array $extraBeforeValues = []): array
     {
         $n = count($values);
         if ($n < 2) {
@@ -380,8 +411,21 @@ class CekTrendSkuController extends Controller
         // walau data aslinya gak pernah negatif, jadi basis % jadi rusak
         // (selalu null). Rata-rata sebelum/sesudah jauh lebih tahan banting.
         if ($campaignIdx !== null && $campaignIdx > 0 && $campaignIdx < $n) {
-            $beforeValues = array_slice($values, 0, $campaignIdx);
+            $beforeWithinFilter = array_slice($values, 0, $campaignIdx);
             $afterValues = array_slice($values, $campaignIdx);
+            $targetLen = count($afterValues);
+
+            if (count($beforeWithinFilter) >= $targetLen) {
+                // Lebih dari cukup -- potong, ambil yang paling DEKAT ke
+                // tanggal campaign (paling relevan), biar sama panjang persis.
+                $beforeValues = array_slice($beforeWithinFilter, -$targetLen);
+            } else {
+                // Kurang -- tempelin data tambahan dari sebelum awal filter
+                // (kalau ada/cukup) di depan, biar totalnya nyamain $targetLen.
+                $kurang = $targetLen - count($beforeWithinFilter);
+                $extraPart = $extraBeforeValues ? array_slice($extraBeforeValues, -$kurang) : [];
+                $beforeValues = array_merge($extraPart, $beforeWithinFilter);
+            }
         } else {
             $half = (int) max(1, floor($n / 2));
             $beforeValues = array_slice($values, 0, $half);
