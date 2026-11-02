@@ -175,6 +175,29 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::delete('/{pengakuisisi}', [\App\Http\Controllers\PengakuisisiController::class, 'destroy'])->middleware('role:admin')->name('destroy');
     });
 
+    // Akuisisi > Database Lead -- CRM lead calon mitra (diporting dari app
+    // standalone PartnerAcquire CRM). Lihat GET kebuka semua role kecuali
+    // kae (sama kayak akuisisi-referral/pengakuisisi), mutasi dibatasi
+    // hasAdminAccess() (role:admin -- otomatis juga meloloskan Head/
+    // Manager/Supervisor, lihat EnsureUserHasRole, bukan grup Admin sidebar).
+    Route::prefix('akuisisi/leads')->name('akuisisi-leads.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\AkuisisiLeadController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\AkuisisiLeadController::class, 'create'])->middleware('role:admin')->name('create');
+        Route::post('/', [\App\Http\Controllers\AkuisisiLeadController::class, 'store'])->middleware('role:admin')->name('store');
+        Route::get('/{lead}', [\App\Http\Controllers\AkuisisiLeadController::class, 'show'])->name('show');
+        Route::get('/{lead}/edit', [\App\Http\Controllers\AkuisisiLeadController::class, 'edit'])->middleware('role:admin')->name('edit');
+        Route::put('/{lead}', [\App\Http\Controllers\AkuisisiLeadController::class, 'update'])->middleware('role:admin')->name('update');
+        Route::delete('/{lead}', [\App\Http\Controllers\AkuisisiLeadController::class, 'destroy'])->middleware('role:admin')->name('destroy');
+        Route::post('/{lead}/restore', [\App\Http\Controllers\AkuisisiLeadController::class, 'restore'])->withTrashed()->middleware('role:admin')->name('restore');
+        Route::post('/{lead}/followups', [\App\Http\Controllers\AkuisisiFollowupController::class, 'store'])->middleware('role:admin')->name('followups.store');
+    });
+
+    Route::prefix('akuisisi/followups')->name('akuisisi-leads.followups.')->group(function () {
+        Route::get('/{followup}/edit', [\App\Http\Controllers\AkuisisiFollowupController::class, 'edit'])->middleware('role:admin')->name('edit');
+        Route::put('/{followup}', [\App\Http\Controllers\AkuisisiFollowupController::class, 'update'])->middleware('role:admin')->name('update');
+        Route::delete('/{followup}', [\App\Http\Controllers\AkuisisiFollowupController::class, 'destroy'])->middleware('role:admin')->name('destroy');
+    });
+
     Route::middleware('role:admin')->prefix('pengaturan/minggu')->name('pengaturan.')->group(function () {
         Route::get('/', [WeekPeriodController::class, 'edit'])->name('minggu');
         Route::post('/', [WeekPeriodController::class, 'update'])->name('minggu.update');
