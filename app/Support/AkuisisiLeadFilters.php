@@ -39,6 +39,7 @@ class AkuisisiLeadFilters
         public readonly ?string $month = null,
         public readonly ?string $from = null,
         public readonly ?string $to = null,
+        public readonly ?string $followupMonth = null,
     ) {}
 
     public static function fromRequest(Request $request): self
@@ -57,6 +58,7 @@ class AkuisisiLeadFilters
             month: self::validDate($request->query('month'), 'Y-m'),
             from: self::validDate($request->query('from'), 'Y-m-d'),
             to: self::validDate($request->query('to'), 'Y-m-d'),
+            followupMonth: self::validDate($request->query('followup_month'), 'Y-m'),
         );
     }
 
@@ -144,6 +146,12 @@ class AkuisisiLeadFilters
             default => $query->where('latest_followup_status_id', $this->status),
         };
 
+        if ($this->followupMonth) {
+            $start = Carbon::parse("{$this->followupMonth}-01")->toDateString();
+            $end = Carbon::parse("{$this->followupMonth}-01")->endOfMonth()->toDateString();
+            $query->whereBetween('last_followup_date', [$start, $end]);
+        }
+
         return $query;
     }
 
@@ -181,13 +189,13 @@ class AkuisisiLeadFilters
     /** Apakah ada filter selain tab & periode yang aktif. */
     public function hasListFilters(): bool
     {
-        return $this->search !== '' || $this->priority || $this->pipeline || $this->status;
+        return $this->search !== '' || $this->priority || $this->pipeline || $this->status || $this->followupMonth;
     }
 
-    /** Jumlah filter aktif (pencarian, prioritas, pipeline, hasil follow-up, periode) untuk tombol Reset. */
+    /** Jumlah filter aktif (pencarian, prioritas, pipeline, hasil follow-up, bulan follow-up, periode) untuk tombol Reset. */
     public function activeFilterCount(): int
     {
-        return count(array_filter([$this->search !== '', $this->priority, $this->pipeline, $this->status, $this->hasPeriod()]));
+        return count(array_filter([$this->search !== '', $this->priority, $this->pipeline, $this->status, $this->followupMonth, $this->hasPeriod()]));
     }
 
     public function hasPeriod(): bool
@@ -209,6 +217,7 @@ class AkuisisiLeadFilters
             'month' => $this->period === 'month' ? $this->month : null,
             'from' => $this->period === 'range' ? $this->from : null,
             'to' => $this->period === 'range' ? $this->to : null,
+            'followup_month' => $this->followupMonth,
         ];
 
         return array_filter([...$params, ...$overrides], fn ($value) => $value !== null && $value !== '');
@@ -217,6 +226,6 @@ class AkuisisiLeadFilters
     /** Parameter periode saja, untuk tautan kartu rekap & matriks. */
     public function periodQuery(array $overrides = []): array
     {
-        return $this->query(['q' => null, 'priority' => null, 'pipeline' => null, 'status' => null, ...$overrides]);
+        return $this->query(['q' => null, 'priority' => null, 'pipeline' => null, 'status' => null, 'followup_month' => null, ...$overrides]);
     }
 }

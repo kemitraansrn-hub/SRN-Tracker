@@ -255,6 +255,10 @@
                         @endforeach
                     </select>
                 </div>
+                <div class="field" style="margin-bottom:0;">
+                    <label>Bulan Follow-up Terakhir</label>
+                    <input type="month" name="followup_month" value="{{ $f->followupMonth }}">
+                </div>
                 <button type="submit" class="btn" style="width:auto;">Terapkan</button>
                 @if ($f->activeFilterCount())
                     <a href="{{ $url(['tab' => $f->tab]) }}" class="btn" style="width:auto;">Reset ({{ $f->activeFilterCount() }})</a>
