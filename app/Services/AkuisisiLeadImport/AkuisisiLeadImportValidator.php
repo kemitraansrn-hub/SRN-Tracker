@@ -109,14 +109,6 @@ class AkuisisiLeadImportValidator
             $messages[] = 'Nama Lead maksimal 150 karakter';
         }
 
-        $rawPhone = $values['whatsapp'] ?? null;
-        $phone = AkuisisiPhoneNumber::normalize(is_float($rawPhone) ? number_format($rawPhone, 0, '', '') : (string) $rawPhone);
-        if (! $phone) {
-            $messages[] = 'Nomor WhatsApp wajib diisi';
-        } elseif (! preg_match('/^62\d{8,13}$/', $phone)) {
-            $messages[] = 'Nomor WhatsApp tidak valid';
-        }
-
         $city = $text('city');
         if ($city && mb_strlen($city) > 100) {
             $messages[] = 'Kota maksimal 100 karakter';
@@ -144,6 +136,25 @@ class AkuisisiLeadImportValidator
             if (! $ids[$key]) {
                 $messages[] = "{$label} \"{$value}\" tidak dikenal";
             }
+        }
+
+        // Format nomor WA (harus 62xxxxxxxxxx) gak dicek kalau baris ini ditandai "Invalid Number"
+        // di Hasil Follow Up -- alasannya sudah tercatat di kolom itu, gak perlu diblok di import
+        // (permintaan eksplisit 2026-11-02). Tetap wajib diisi sesuatu (kolom DB NOT NULL + UNIQUE).
+        $invalidNumberStatusId = $this->choices['followup_result'][AkuisisiImportColumns::normalize('INVALID_NUMBER')] ?? null;
+        $skipPhoneFormatCheck = $invalidNumberStatusId !== null && $ids['followup_result'] === $invalidNumberStatusId;
+
+        $rawPhone = $values['whatsapp'] ?? null;
+        $phone = AkuisisiPhoneNumber::normalize(is_float($rawPhone) ? number_format($rawPhone, 0, '', '') : (string) $rawPhone);
+        if (! $phone) {
+            $rawPhoneText = $text('whatsapp');
+            if ($skipPhoneFormatCheck && $rawPhoneText) {
+                $phone = mb_substr($rawPhoneText, 0, 20);
+            } else {
+                $messages[] = 'Nomor WhatsApp wajib diisi';
+            }
+        } elseif (! preg_match('/^62\d{8,13}$/', $phone) && ! $skipPhoneFormatCheck) {
+            $messages[] = 'Nomor WhatsApp tidak valid';
         }
 
         // "Tanggal Next Follow Up" -- opsional, gak dibatasi rentang (boleh lampau buat lead yang
