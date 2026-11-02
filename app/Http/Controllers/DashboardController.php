@@ -34,7 +34,7 @@ class DashboardController extends Controller
 
         $canViewAll = $user->canViewAll();
         $kaeCode = $canViewAll ? null : $user->kae_code;
-        $omsetParsial = $canViewAll ? OmsetParsial::current() : null;
+        $omsetParsial = $canViewAll ? OmsetParsial::forPeriode($now->month, $now->year) : null;
 
         $ordersThisMonth = Order::query()
             ->whereYear('tanggal_order', $now->year)

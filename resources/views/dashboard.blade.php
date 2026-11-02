@@ -100,9 +100,11 @@
                             <div style="margin-top:8px; display:flex; gap:6px;">
                                 <button type="button" class="btn" style="width:auto; font-size:11px; padding:4px 9px;" onclick="openOmsetParsialModal({{ $omsetParsial->jumlah ?? 0 }}, '{{ addslashes($omsetParsial->keterangan ?? '') }}')">{{ $omsetParsial ? 'Edit Parsial' : '+ Tambah Parsial' }}</button>
                                 @if ($omsetParsial)
-                                    <form method="POST" action="{{ route('omset-parsial.destroy') }}" onsubmit="return confirm('Hapus angka Parsial? Card akan kembali nampilin omset real database aja.');">
+                                    <form method="POST" action="{{ route('omset-parsial.destroy') }}" onsubmit="return confirm('Hapus angka Parsial bulan ini? Card akan kembali nampilin omset real database aja.');">
                                         @csrf
                                         @method('DELETE')
+                                        <input type="hidden" name="bulan" value="{{ $bulanIni }}">
+                                        <input type="hidden" name="tahun" value="{{ $tahunIni }}">
                                         <button type="submit" class="btn btn-danger" style="width:auto; font-size:11px; padding:4px 9px;">Hapus</button>
                                     </form>
                                 @endif
@@ -948,12 +950,14 @@
     @if (auth()->user()->role === 'admin')
         <div class="modal-overlay" id="modal-omset-parsial" style="display:none;">
             <div class="modal-box">
-                <div class="modal-title">Omset Parsial</div>
+                <div class="modal-title">Omset Parsial — {{ \Carbon\Carbon::create($tahunIni, $bulanIni, 1)->translatedFormat('F Y') }}</div>
                 <div style="font-size:11.5px; color:var(--ink-muted); margin-bottom:14px; line-height:1.6;">
-                    Angka manual buat jelasin omset yang sebetulnya sudah ada tapi belum masuk database (masih parsial). Cuma nambahin tampilan di card "MTD vs Bulan Lalu", gak ngaruh ke data Order/Target/Komit Tracker, dll.
+                    Angka manual buat jelasin omset yang sebetulnya sudah ada tapi belum masuk database (masih parsial). Cuma nambahin tampilan di card "MTD vs Bulan Lalu", gak ngaruh ke data Order/Target/Komit Tracker, dll. Angkanya di-lock per bulan — kalau sudah ganti bulan, mulai dari 0 lagi, angka bulan ini tetap tersimpan.
                 </div>
                 <form method="POST" action="{{ route('omset-parsial.update') }}">
                     @csrf
+                    <input type="hidden" name="bulan" value="{{ $bulanIni }}">
+                    <input type="hidden" name="tahun" value="{{ $tahunIni }}">
                     <div class="field">
                         <label>Jumlah (Rp)</label>
                         <input type="number" step="0.01" min="0" name="jumlah" id="omset-parsial-jumlah" required>
