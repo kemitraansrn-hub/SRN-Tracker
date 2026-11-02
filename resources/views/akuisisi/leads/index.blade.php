@@ -67,78 +67,108 @@
             }
         </script>
 
-        {{-- Kartu rekap + funnel --}}
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:12px; margin-top:20px;">
+        {{-- Kartu rekap (2x3) + funnel di sebelah kanan --}}
+        <div style="display:grid; grid-template-columns:2fr 1fr; gap:12px; margin-top:20px; align-items:stretch;">
             @php
-                $statCard = function (string $label, $value, ?string $href = null, ?string $badge = null, string $tone = 'ink') {
-                    return compact('label', 'value', 'href', 'badge', 'tone');
+                $statCard = function (string $label, $value, ?string $href = null, ?string $badge = null, string $tone = 'slate', string $icon = '') {
+                    return compact('label', 'value', 'href', 'badge', 'tone', 'icon');
                 };
+                $icons = [
+                    'bell' => '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.73 21a2 2 0 0 1-3.46 0" stroke-linecap="round"/>',
+                    'database' => '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/>',
+                    'refresh' => '<path d="M21 2v6h-6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 22v-6h6" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16" stroke-linecap="round" stroke-linejoin="round"/>',
+                    'fire' => '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" stroke-linejoin="round"/>',
+                    'sun' => '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3" stroke-linecap="round"/><line x1="12" y1="21" x2="12" y2="23" stroke-linecap="round"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke-linecap="round"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke-linecap="round"/><line x1="1" y1="12" x2="3" y2="12" stroke-linecap="round"/><line x1="21" y1="12" x2="23" y2="12" stroke-linecap="round"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke-linecap="round"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke-linecap="round"/>',
+                    'check-circle' => '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>',
+                ];
+                $tones = [
+                    'warn' => ['bg' => 'var(--warn-soft)', 'ink' => 'var(--warn)'],
+                    'slate' => ['bg' => 'var(--surface-alt)', 'ink' => 'var(--ink-muted)'],
+                    'accent' => ['bg' => 'var(--accent-soft)', 'ink' => 'var(--accent-ink)'],
+                    'critical' => ['bg' => 'var(--critical-soft)', 'ink' => 'var(--critical)'],
+                    'highlight' => ['bg' => 'var(--highlight-soft)', 'ink' => 'var(--highlight)'],
+                    'good' => ['bg' => 'var(--good-soft)', 'ink' => 'var(--good)'],
+                ];
                 $cards = [
-                    $statCard('Follow-up Hari Ini', $stats['todo_today'], $url(['tab' => 'todo']), $stats['todo_overdue'] ? '+'.$number($stats['todo_overdue']).' terlewat' : null, 'warn'),
-                    $statCard('Total Database', $stats['total']),
-                    $statCard('In Progress (Aktif)', $stats['active'], $url($f->periodQuery(['tab' => 'active']))),
-                    $statCard('Hot Leads (Aktif)', $stats['hot'], $url($f->periodQuery(['tab' => 'active', 'priority' => 'HOT'])), null, 'critical'),
-                    $statCard('Warm Leads (Aktif)', $stats['warm'], $url($f->periodQuery(['tab' => 'active', 'priority' => 'WARM'])), null, 'warn'),
-                    $statCard('Closed Deal', $stats['closed'], $closingStatusId ? $url($f->periodQuery(['tab' => 'archive', 'status' => $closingStatusId])) : null, null, 'good'),
+                    $statCard('Follow-up Hari Ini', $stats['todo_today'], $url(['tab' => 'todo']), $stats['todo_overdue'] ? '+'.$number($stats['todo_overdue']).' terlewat' : null, 'warn', 'bell'),
+                    $statCard('Total Database', $stats['total'], null, null, 'slate', 'database'),
+                    $statCard('In Progress (Aktif)', $stats['active'], $url($f->periodQuery(['tab' => 'active'])), null, 'accent', 'refresh'),
+                    $statCard('Hot Leads (Aktif)', $stats['hot'], $url($f->periodQuery(['tab' => 'active', 'priority' => 'HOT'])), null, 'critical', 'fire'),
+                    $statCard('Warm Leads (Aktif)', $stats['warm'], $url($f->periodQuery(['tab' => 'active', 'priority' => 'WARM'])), null, 'highlight', 'sun'),
+                    $statCard('Closed Deal', $stats['closed'], $closingStatusId ? $url($f->periodQuery(['tab' => 'archive', 'status' => $closingStatusId])) : null, null, 'good', 'check-circle'),
                 ];
             @endphp
-            @foreach ($cards as $card)
-                @php $tag = $card['href'] ? 'a' : 'div'; @endphp
-                <{!! $tag !!} @if ($card['href']) href="{{ $card['href'] }}" @endif class="card" style="padding:14px 16px; text-decoration:none; display:block;">
-                    <div style="font-size:11.5px; color:var(--ink-muted); font-weight:600;">{{ $card['label'] }}</div>
-                    <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
-                        <span class="tnum" style="font-size:22px; font-weight:700; color:var(--ink);">{{ $number($card['value']) }}</span>
-                        @if ($card['badge'])
-                            <span class="chip chip-critical" style="font-size:10.5px;">{{ $card['badge'] }}</span>
-                        @endif
-                    </div>
-                </{!! $tag !!}>
-            @endforeach
-        </div>
-
-        {{-- Funnel pipeline --}}
-        <section class="card" style="margin-top:12px;">
-            <div class="card-head">
-                <div class="card-title">Funnel Pipeline</div>
-                @if ($funnel['unstaged'])
-                    <a href="#rincian-tahapan" class="card-hint" style="text-decoration:none;" title="{{ $number($funnel['unstaged']) }} lead belum punya tahapan.">
-                        {{ $number($funnel['unstaged']) }} belum bertahap
-                    </a>
-                @endif
+            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;">
+                @foreach ($cards as $card)
+                    @php
+                        $tag = $card['href'] ? 'a' : 'div';
+                        $tone = $tones[$card['tone']];
+                        $highlightBorder = in_array($card['tone'], ['warn', 'good'], true) ? "border-color:{$tone['ink']};" : '';
+                    @endphp
+                    <{!! $tag !!} @if ($card['href']) href="{{ $card['href'] }}" @endif class="card" style="padding:14px 16px; text-decoration:none; display:block; {{ $highlightBorder }}">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                            <div style="font-size:11.5px; color:{{ $highlightBorder ? $tone['ink'] : 'var(--ink-muted)' }}; font-weight:600;">{{ $card['label'] }}</div>
+                            <div style="width:34px; height:34px; border-radius:10px; background:{{ $tone['bg'] }}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{ $tone['ink'] }}" stroke-width="2">{!! $icons[$card['icon']] !!}</svg>
+                            </div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px; margin-top:8px;">
+                            <span class="tnum" style="font-size:22px; font-weight:700; color:var(--ink);">{{ $number($card['value']) }}</span>
+                            @if ($card['badge'])
+                                <span class="chip chip-critical" style="font-size:10.5px;">{{ $card['badge'] }}</span>
+                            @endif
+                        </div>
+                    </{!! $tag !!}>
+                @endforeach
             </div>
 
-            @if ($funnel['base'] === 0)
-                <div style="color:var(--ink-muted); font-size:13px; text-align:center; padding:16px;">Belum ada lead yang ditahapkan. Tahapan terisi saat CS mencatat follow-up.</div>
-            @else
-                <div style="display:flex; flex-direction:column; gap:10px;">
-                    @foreach ($funnel['steps'] as $index => $step)
-                        @php
-                            $width = $step['reached'] ? max($step['reached'] / $funnel['base'] * 100, 4) : 0;
-                            $previousName = $funnel['steps'][$index - 1]['name'] ?? null;
-                            $pct = $step['conversion'] === null ? null : number_format($step['conversion'] * 100, $step['conversion'] * 100 < 10 ? 1 : 0, ',', '.').'%';
-                            $tooltip = $step['is_closing']
-                                ? "Closing dari lead yang sudah ditahapkan: {$number($step['reached'])}"
-                                : "Mencapai tahap ini: {$number($step['reached'])} · Aktif: {$number($step['active'])} · Gugur: {$number($step['dropped'])} · Closing: {$number($step['closed'])}";
-                            $tooltip .= ($previousName && $pct) ? " · Konversi dari {$previousName}: {$pct}" : '';
-                        @endphp
-                        <div style="display:grid; grid-template-columns:110px 1fr 80px; align-items:center; gap:10px;" title="{{ $tooltip }}">
-                            <span style="font-size:12px; font-weight:600; color:var(--ink);">
-                                {{ $step['is_closing'] ? '✓ ' : '' }}{{ $step['name'] }}
-                            </span>
-                            <span style="height:14px; background:var(--surface-alt); border-radius:4px; overflow:hidden;">
-                                <span style="display:block; height:100%; width:{{ round($width, 2) }}%; background:{{ $step['is_closing'] ? 'var(--good)' : 'var(--accent)' }}; border-radius:4px;"></span>
-                            </span>
-                            <span style="text-align:right; font-size:12px; white-space:nowrap;">
-                                <span class="tnum" style="font-weight:700;">{{ $number($step['reached']) }}</span>
-                                @if ($index > 0 && $pct)
-                                    <span style="color:var(--ink-faint);">· {{ $pct }}</span>
-                                @endif
-                            </span>
-                        </div>
-                    @endforeach
+            {{-- Funnel pipeline --}}
+            <section class="card" style="display:flex; flex-direction:column;">
+                <div class="card-head">
+                    <div class="card-title">Funnel Pipeline</div>
+                    @if ($funnel['unstaged'])
+                        <a href="#rincian-tahapan" class="card-hint" style="text-decoration:none;" title="{{ $number($funnel['unstaged']) }} lead belum punya tahapan.">
+                            {{ $number($funnel['unstaged']) }} belum bertahap
+                        </a>
+                    @endif
                 </div>
-            @endif
-        </section>
+
+                @if ($funnel['base'] === 0)
+                    <div style="color:var(--ink-muted); font-size:13px; text-align:center; padding:16px; margin:auto;">Belum ada lead yang ditahapkan. Tahapan terisi saat CS mencatat follow-up.</div>
+                @else
+                    <div style="display:flex; flex-direction:column; gap:10px; justify-content:space-between; flex:1;">
+                        @foreach ($funnel['steps'] as $index => $step)
+                            @php
+                                $width = $step['reached'] ? max($step['reached'] / $funnel['base'] * 100, 4) : 0;
+                                $previousName = $funnel['steps'][$index - 1]['name'] ?? null;
+                                $pct = $step['conversion'] === null ? null : number_format($step['conversion'] * 100, $step['conversion'] * 100 < 10 ? 1 : 0, ',', '.').'%';
+                                $tooltip = $step['is_closing']
+                                    ? "Closing dari lead yang sudah ditahapkan: {$number($step['reached'])}"
+                                    : "Mencapai tahap ini: {$number($step['reached'])} · Aktif: {$number($step['active'])} · Gugur: {$number($step['dropped'])} · Closing: {$number($step['closed'])}";
+                                $tooltip .= ($previousName && $pct) ? " · Konversi dari {$previousName}: {$pct}" : '';
+                            @endphp
+                            <div style="display:grid; grid-template-columns:90px 1fr 70px; align-items:center; gap:8px;" title="{{ $tooltip }}">
+                                <span style="font-size:11.5px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                    @if ($step['is_closing'])
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--good)" stroke-width="2.5" style="vertical-align:-1px; margin-right:2px;"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    @endif
+                                    {{ $step['name'] }}
+                                </span>
+                                <span style="height:12px; background:var(--surface-alt); border-radius:4px; overflow:hidden;">
+                                    <span style="display:block; height:100%; width:{{ round($width, 2) }}%; background:{{ $step['is_closing'] ? 'var(--good)' : 'var(--accent)' }}; border-radius:4px;"></span>
+                                </span>
+                                <span style="text-align:right; font-size:11.5px; white-space:nowrap;">
+                                    <span class="tnum" style="font-weight:700;">{{ $number($step['reached']) }}</span>
+                                    @if ($index > 0 && $pct)
+                                        <span style="color:var(--ink-faint);">· {{ $pct }}</span>
+                                    @endif
+                                </span>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </section>
+        </div>
 
         {{-- Rincian lead per tahapan --}}
         <details class="card" id="rincian-tahapan" style="margin-top:12px; padding:0;">
