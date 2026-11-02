@@ -15,7 +15,10 @@
             </div>
         </div>
         @if (auth()->user()->hasAdminAccess())
-            <a href="{{ route('akuisisi-leads.create') }}" class="btn btn-primary" style="width:auto;">+ Tambah Lead</a>
+            <div style="display:flex; gap:8px;">
+                <a href="{{ route('akuisisi-leads.imports.create') }}" class="btn" style="width:auto;">Import Lead</a>
+                <a href="{{ route('akuisisi-leads.create') }}" class="btn btn-primary" style="width:auto;">+ Tambah Lead</a>
+            </div>
         @endif
     </div>
 

@@ -198,6 +198,20 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::delete('/{followup}', [\App\Http\Controllers\AkuisisiFollowupController::class, 'destroy'])->middleware('role:admin')->name('destroy');
     });
 
+    // Import lead (baru atau migrasi data lama) -- seluruh alur mutasi, jadi role:admin semua.
+    Route::middleware('role:admin')->prefix('akuisisi/leads-imports')->name('akuisisi-leads.imports.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\AkuisisiImportController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\AkuisisiImportController::class, 'create'])->name('create');
+        Route::get('/template', [\App\Http\Controllers\AkuisisiImportController::class, 'template'])->name('template');
+        Route::post('/', [\App\Http\Controllers\AkuisisiImportController::class, 'upload'])->name('upload');
+        Route::get('/pending/{token}', [\App\Http\Controllers\AkuisisiImportController::class, 'preview'])->whereUuid('token')->name('preview');
+        Route::get('/pending/{token}/errors', [\App\Http\Controllers\AkuisisiImportController::class, 'pendingErrors'])->whereUuid('token')->name('pending-errors');
+        Route::post('/pending/{token}', [\App\Http\Controllers\AkuisisiImportController::class, 'confirm'])->whereUuid('token')->name('confirm');
+        Route::delete('/pending/{token}', [\App\Http\Controllers\AkuisisiImportController::class, 'cancel'])->whereUuid('token')->name('cancel');
+        Route::get('/{batch}', [\App\Http\Controllers\AkuisisiImportController::class, 'show'])->whereNumber('batch')->name('show');
+        Route::get('/{batch}/errors', [\App\Http\Controllers\AkuisisiImportController::class, 'errors'])->whereNumber('batch')->name('errors');
+    });
+
     Route::middleware('role:admin')->prefix('pengaturan/minggu')->name('pengaturan.')->group(function () {
         Route::get('/', [WeekPeriodController::class, 'edit'])->name('minggu');
         Route::post('/', [WeekPeriodController::class, 'update'])->name('minggu.update');
