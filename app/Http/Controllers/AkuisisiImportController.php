@@ -68,6 +68,7 @@ class AkuisisiImportController extends Controller
         $request->session()->put("akuisisi_lead_import.{$token}", [
             'name' => $file->getClientOriginalName(),
             'extension' => $extension,
+            'overwrite' => $request->boolean('overwrite_existing'),
         ]);
 
         return redirect()->route('akuisisi-leads.imports.preview', $token);
@@ -80,7 +81,7 @@ class AkuisisiImportController extends Controller
             return $result;
         }
 
-        return view('akuisisi.imports.preview', ['token' => $token, 'fileName' => $pending['name'], 'result' => $result]);
+        return view('akuisisi.imports.preview', ['token' => $token, 'fileName' => $pending['name'], 'overwrite' => $pending['overwrite'] ?? false, 'result' => $result]);
     }
 
     public function pendingErrors(Request $request, string $token): StreamedResponse|RedirectResponse
@@ -106,11 +107,16 @@ class AkuisisiImportController extends Controller
             return redirect()->route('akuisisi-leads.imports.preview', $token)->with('error', 'Tidak ada baris yang bisa diimport.');
         }
 
-        $batch = $importer->import($result, $pending['name'], $request->user());
+        $import = $importer->import($result, $pending['name'], $request->user());
         $this->forget($request, $token, $pending);
 
-        return redirect()->route('akuisisi-leads.imports.show', $batch)
-            ->with('status', number_format($batch->success_rows, 0, ',', '.').' lead berhasil diimport.');
+        $status = number_format($import['created'], 0, ',', '.').' lead baru diimport';
+        if ($import['overwritten']) {
+            $status .= ', '.number_format($import['overwritten'], 0, ',', '.').' lead lama ditimpa';
+        }
+
+        return redirect()->route('akuisisi-leads.imports.show', $import['batch'])
+            ->with('status', $status.'.');
     }
 
     public function cancel(Request $request, string $token): RedirectResponse
@@ -149,7 +155,7 @@ class AkuisisiImportController extends Controller
         try {
             $sheet = $this->reader->read(Storage::disk('local')->path($path), $pending['extension']);
 
-            return [$pending, $this->validator->validate($sheet)];
+            return [$pending, $this->validator->validate($sheet, $pending['overwrite'] ?? false)];
         } catch (AkuisisiImportFileException $e) {
             $this->forget($request, $token, $pending);
 

@@ -28,6 +28,12 @@
                 <label style="font-weight:600; font-size:13.5px; display:block;">Upload file</label>
                 <div style="font-size:12px; color:var(--ink-muted); margin-top:2px;">Format .xlsx atau .csv, maksimal 10.000 baris / 10 MB. Data belum disimpan sampai Anda mengonfirmasi di halaman pratinjau.</div>
                 <input type="file" name="file" accept=".xlsx,.csv" required style="margin-top:10px; display:block;">
+
+                <label style="display:flex; align-items:flex-start; gap:8px; border:1px solid var(--warn); background:var(--warn-soft); border-radius:8px; padding:8px 12px; margin-top:12px; font-size:11.5px; color:var(--warn);">
+                    <input type="checkbox" name="overwrite_existing" value="1" style="margin-top:2px;" {{ old('overwrite_existing') ? 'checked' : '' }}>
+                    <span>Timpa data lead lama yang nomor WA-nya sudah ada di database. Hanya berlaku untuk lead <strong>data lama</strong> yang belum pernah di-follow-up beneran di aplikasi ini (lead yang sudah ada riwayat follow-up aslinya tetap gak akan ditimpa, apapun pilihan ini).</span>
+                </label>
+
                 <button type="submit" class="btn btn-primary" style="width:auto; margin-top:12px;">Upload &amp; Pratinjau</button>
             </form>
         </div>
@@ -38,7 +44,7 @@
                 <li>Skor &amp; prioritas dihitung otomatis dari status bisnis, respon/minat, dan modal.</li>
                 <li>Lead BARU (kolom Hasil Follow Up &amp; Tanggal Next Follow Up kosong) dijadwalkan follow-up di tanggal masuknya, langsung muncul di To-Do.</li>
                 <li>Lead LAMA (salah satu dari 2 kolom itu diisi) ditandai data lama -- status &amp; jadwalnya dipakai apa adanya, tidak dihitung ulang otomatis.</li>
-                <li>Nomor WhatsApp yang sudah ada di database dilewati; nomor dobel di file hanya diambil baris pertamanya.</li>
+                <li>Nomor WhatsApp yang sudah ada di database dilewati (kecuali centang "Timpa data lead lama" di atas, dan lead-nya memang data lama yang belum pernah di-follow-up); nomor dobel di file hanya diambil baris pertamanya.</li>
                 <li>Baris error tidak disimpan dan bisa diunduh sebagai laporan untuk diperbaiki.</li>
             </ul>
         </div>

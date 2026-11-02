@@ -8,6 +8,7 @@
         $errorCount = $problems->where('type', V::TYPE_ERROR)->count();
         $skippedCount = $problems->count() - $errorCount;
         $validCount = count($result['valid']);
+        $overwriteCount = collect($result['valid'])->filter(fn ($row) => ! empty($row['overwrite_lead_id']))->count();
         $scoring = app(\App\Services\AkuisisiLeadScoring::class);
         $typeLabels = [
             V::TYPE_ERROR => ['Error', 'chip-critical'],
@@ -29,7 +30,12 @@
                 <button type="submit" class="btn" style="width:auto;">Batal</button>
             </form>
             @if ($validCount)
-                <form method="POST" action="{{ route('akuisisi-leads.imports.confirm', $token) }}" onsubmit="return confirm('Import {{ number_format($validCount, 0, ',', '.') }} lead?');">
+                @php
+                    $confirmMsg = $overwriteCount
+                        ? "Import {$validCount} lead ({$overwriteCount} di antaranya akan MENIMPA data lead lama yang sudah ada)?"
+                        : "Import {$validCount} lead?";
+                @endphp
+                <form method="POST" action="{{ route('akuisisi-leads.imports.confirm', $token) }}" onsubmit="return confirm('{{ $confirmMsg }}');">
                     @csrf
                     <button type="submit" class="btn btn-primary" style="width:auto;">Import {{ number_format($validCount, 0, ',', '.') }} Lead</button>
                 </form>
@@ -38,12 +44,13 @@
     </div>
 
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:12px; margin-bottom:16px;">
-        @foreach ([
+        @foreach (array_filter([
             ['Baris di file', $result['total'], 'var(--ink)'],
             ['Siap diimport', $validCount, 'var(--good)'],
+            $overwriteCount ? ['Akan menimpa data lama', $overwriteCount, 'var(--warn)'] : null,
             ['Error (tidak disimpan)', $errorCount, 'var(--critical)'],
             ['Dilewati (sudah ada / dobel)', $skippedCount, 'var(--warn)'],
-        ] as [$label, $value, $color])
+        ]) as [$label, $value, $color])
             <div class="card" style="padding:14px 16px;">
                 <div style="font-size:11.5px; color:var(--ink-muted); font-weight:600;">{{ $label }}</div>
                 <div class="tnum" style="font-size:22px; font-weight:700; color:{{ $color }}; margin-top:4px;">{{ number_format($value, 0, ',', '.') }}</div>
@@ -133,7 +140,9 @@
                                     <span style="font-size:11px; color:var(--ink-muted);">{{ $score }} poin</span>
                                 </td>
                                 <td>
-                                    @if ($a['is_legacy'])
+                                    @if (! empty($row['overwrite_lead_id']))
+                                        <span class="chip chip-warn">Akan ditimpa</span>
+                                    @elseif ($a['is_legacy'])
                                         <span class="chip chip-neutral">Data lama</span>
                                     @else
                                         <span class="chip chip-accent">Lead baru</span>

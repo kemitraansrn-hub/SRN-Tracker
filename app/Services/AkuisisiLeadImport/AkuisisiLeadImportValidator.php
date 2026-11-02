@@ -16,7 +16,11 @@ use Throwable;
  * App\Services\LeadImport\LeadImportValidator di PartnerAcquire CRM, DITAMBAH validasi 2 kolom
  * "Hasil Follow Up" & "Tanggal Next Follow Up" (lihat AkuisisiImportColumns) -- mengisi salah satu
  * menandai baris itu `is_legacy` (permintaan eksplisit 2026-11-02, biar data lead lama yang sudah
- * ada status/jadwalnya bisa dibawa langsung tanpa harus bikin riwayat follow-up palsu).
+ * ada status/jadwalnya bisa dibawa langsung tanpa harus bikin riwayat follow-up palsu), DITAMBAH
+ * lagi opsi `$overwrite` (permintaan eksplisit 2026-11-02 lainnya) buat upload ulang menimpa data
+ * lead LAMA yang salah -- dibatasi cuma ke lead yang masih `is_legacy` DAN belum ada riwayat
+ * follow-up ASLI yang dicatat CS di aplikasi ini (`followups_count === 0`), biar gak pernah
+ * menimpa progress follow-up yang sudah benar-benar berjalan.
  */
 class AkuisisiLeadImportValidator
 {
@@ -35,7 +39,7 @@ class AkuisisiLeadImportValidator
      * @param  array{headers: array, rows: array<int, array>}  $sheet
      * @return array{total: int, valid: array, problems: array, unknown_headers: string[]}
      */
-    public function validate(array $sheet): array
+    public function validate(array $sheet, bool $overwrite = false): array
     {
         [$columns, $unknown] = AkuisisiImportColumns::mapHeaders($sheet['headers']);
 
@@ -50,7 +54,7 @@ class AkuisisiLeadImportValidator
         }
 
         $this->loadChoices();
-        $existing = array_flip(AkuisisiLead::withTrashed()->pluck('whatsapp')->all());
+        $existing = AkuisisiLead::withTrashed()->withCount('followups')->get(['id', 'whatsapp', 'is_legacy', 'deleted_at'])->keyBy('whatsapp');
         $defaultStage = AkuisisiPipelineStage::where('code', 'PROFILING')->value('id');
         $seen = [];
         $valid = [];
@@ -72,10 +76,21 @@ class AkuisisiLeadImportValidator
             }
 
             $phone = $attributes['whatsapp'];
-            if (isset($existing[$phone])) {
-                $problems[] = ['row' => $rowNumber, 'type' => self::TYPE_EXISTING, 'messages' => ["Nomor {$phone} sudah ada di database"], 'values' => $display];
-            } elseif (isset($seen[$phone])) {
+            $match = $existing->get($phone);
+
+            if (isset($seen[$phone])) {
                 $problems[] = ['row' => $rowNumber, 'type' => self::TYPE_DUPLICATE, 'messages' => ["Nomor {$phone} dobel dengan baris {$seen[$phone]}"], 'values' => $display];
+            } elseif ($match && $overwrite && $match->is_legacy && $match->followups_count === 0 && ! $match->deleted_at) {
+                $seen[$phone] = $rowNumber;
+                $attributes['is_legacy'] = true;
+                $valid[] = ['row' => $rowNumber, 'attributes' => $attributes, 'values' => $display, 'overwrite_lead_id' => $match->id];
+            } elseif ($match) {
+                $reason = $overwrite ? match (true) {
+                    (bool) $match->deleted_at => "Nomor {$phone} sudah ada tapi datanya terhapus -- gak bisa ditimpa lewat import",
+                    ! $match->is_legacy || $match->followups_count > 0 => "Nomor {$phone} sudah ada & sudah pernah di-follow-up -- gak bisa ditimpa",
+                    default => "Nomor {$phone} sudah ada di database",
+                } : "Nomor {$phone} sudah ada di database";
+                $problems[] = ['row' => $rowNumber, 'type' => self::TYPE_EXISTING, 'messages' => [$reason], 'values' => $display];
             } else {
                 $seen[$phone] = $rowNumber;
                 $valid[] = ['row' => $rowNumber, 'attributes' => $attributes, 'values' => $display];
