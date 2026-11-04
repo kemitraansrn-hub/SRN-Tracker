@@ -16,6 +16,11 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Akuisisi > Database Lead -- CRM lead calon mitra, diporting dari app
@@ -58,6 +63,70 @@ class AkuisisiLeadController extends Controller
             'statuses' => AkuisisiFollowupStatus::orderBy('sort_order')->get(),
             'closingStatusId' => AkuisisiFollowupStatus::where('is_closed_deal', true)->value('id'),
         ]);
+    }
+
+    /**
+     * Download daftar lead sebagai Excel, ikut filter/tab yang lagi aktif di layar (sama
+     * query-nya kayak index(), tanpa pagination). Pola sama kayak
+     * AkuisisiReferralController::download().
+     */
+    public function download(Request $request): StreamedResponse
+    {
+        $filters = AkuisisiLeadFilters::fromRequest($request);
+        $leads = $filters->orderForTab($filters->applyTab($filters->applyFilters(AkuisisiLead::query())))
+            ->with(['channel', 'businessStatus', 'interestLevel', 'capitalStatus', 'priority', 'pipelineStage', 'latestFollowupStatus'])
+            ->get();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Database Lead');
+
+        $headers = [
+            'Tanggal Masuk', 'Nama Lead', 'Nomor WhatsApp', 'Kota', 'Channel Sumber',
+            'Status Bisnis', 'Respon / Minat', 'Status Modal', 'Skor', 'Prioritas',
+            'Tahapan Pipeline', 'Hasil Follow Up Terakhir', 'Tanggal Follow Up Terakhir',
+            'Tanggal Next Follow Up', 'Catatan Terakhir', 'Data Lama',
+        ];
+        $lastCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($headers));
+        $sheet->fromArray($headers, null, 'A1', true);
+        $sheet->getStyle("A1:{$lastCol}1")->getFont()->setBold(true);
+
+        $r = 2;
+        foreach ($leads as $lead) {
+            $sheet->fromArray([
+                $lead->entry_date->format('d/m/Y'),
+                $lead->display_name,
+                null, // Nomor WhatsApp -- diisi explicit di bawah biar formatnya teks, gak diubah Excel.
+                $lead->city,
+                $lead->channel?->name,
+                $lead->businessStatus?->name,
+                $lead->interestLevel?->name,
+                $lead->capitalStatus?->name,
+                $lead->score,
+                $lead->priority?->name,
+                $lead->pipelineStage?->name,
+                $lead->latestFollowupStatus?->name,
+                $lead->last_followup_date?->format('d/m/Y'),
+                $lead->next_followup_date?->format('d/m/Y'),
+                $lead->latest_note,
+                $lead->is_legacy ? 'Ya' : 'Tidak',
+            ], null, "A{$r}", true);
+            $sheet->setCellValueExplicit("C{$r}", $lead->whatsapp, DataType::TYPE_STRING);
+            $r++;
+        }
+
+        $sheet->getStyle("C2:C{$r}")->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_TEXT);
+        foreach (range('A', $lastCol) as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $fileName = 'Database Lead - '.now()->format('Y-m-d').'.xlsx';
+
+        return response()->streamDownload(
+            fn () => (new Xlsx($spreadsheet))->save('php://output'),
+            $fileName,
+            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        );
     }
 
     public function create(): View

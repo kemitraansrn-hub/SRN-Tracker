@@ -182,6 +182,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
     // Manager/Supervisor, lihat EnsureUserHasRole, bukan grup Admin sidebar).
     Route::prefix('akuisisi/leads')->name('akuisisi-leads.')->group(function () {
         Route::get('/', [\App\Http\Controllers\AkuisisiLeadController::class, 'index'])->name('index');
+        Route::get('/download', [\App\Http\Controllers\AkuisisiLeadController::class, 'download'])->name('download');
         Route::get('/create', [\App\Http\Controllers\AkuisisiLeadController::class, 'create'])->middleware('role:admin')->name('create');
         Route::post('/', [\App\Http\Controllers\AkuisisiLeadController::class, 'store'])->middleware('role:admin')->name('store');
         Route::get('/{lead}', [\App\Http\Controllers\AkuisisiLeadController::class, 'show'])->name('show');
