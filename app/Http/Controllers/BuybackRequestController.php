@@ -37,6 +37,24 @@ class BuybackRequestController extends Controller
         return view('buyback.index', ['requests' => $requests]);
     }
 
+    /**
+     * "Riwayat": rincian hitungan satu pengajuan (per-item nilai beli/penyusutan/buy back),
+     * read-only. Visibility sama kayak index() -- admin/head/finance lihat semua, KAE cuma
+     * pengajuan miliknya sendiri.
+     */
+    public function show(Request $request, BuybackRequest $buybackRequest): View
+    {
+        $user = $request->user();
+
+        if (! $user->isAdmin() && ! $user->canActAsHead() && ! $user->isFinance() && $buybackRequest->created_by !== $user->id) {
+            throw new HttpException(403, 'Kamu tidak punya akses ke pengajuan ini.');
+        }
+
+        $buybackRequest->load(['mitra', 'items', 'creator', 'headApprover', 'financeApprover']);
+
+        return view('buyback.show', ['buybackRequest' => $buybackRequest]);
+    }
+
     public function create(Request $request): View
     {
         return view('buyback.form', [

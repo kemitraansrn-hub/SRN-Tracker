@@ -89,6 +89,9 @@
                             </td>
                             <td>
                                 <div style="display:flex; gap:6px;">
+                                    @if ($r->isApproved())
+                                        <a href="{{ route('buyback.show', $r) }}" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;">Riwayat</a>
+                                    @endif
                                     @if (! $r->isApproved() && (auth()->user()->hasAdminAccess() || $r->created_by === auth()->id()))
                                         <a href="{{ route('buyback.edit', $r) }}" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;">Edit</a>
                                     @endif

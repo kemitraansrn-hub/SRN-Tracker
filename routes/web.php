@@ -104,6 +104,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
             Route::delete('/{buybackRequest}', [BuybackRequestController::class, 'destroy'])->name('destroy');
         });
         Route::post('/{buybackRequest}/approve', [BuybackRequestController::class, 'approve'])->middleware('role:admin,head,finance')->name('approve');
+        Route::get('/{buybackRequest}', [BuybackRequestController::class, 'show'])->name('show');
     });
 
     Route::get('/poin', [PoinController::class, 'index'])->name('poin.index');
