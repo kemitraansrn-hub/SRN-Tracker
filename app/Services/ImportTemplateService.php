@@ -20,14 +20,14 @@ class ImportTemplateService
         $mt->fromArray([
             'TANGGAL', 'BULAN ORDER', 'ID TRANSAKSI (Perpack)', 'RESELLER', 'NAME', 'ADDRESS',
             'QTY', 'TOTAL', 'DISKON', 'DISKON CLAIM', 'DISKON RETURN', 'BIAYA PENDAFTARAN', 'DISKON RETURN ID',
-            'ONGKIR', 'BIAYA PENANGANAN', 'TOTAL TRANSFER', 'STATUS PEMBAYARAN', 'STATUS',
+            'ONGKIR', 'TOTAL TRANSFER', 'STATUS PEMBAYARAN', 'STATUS',
         ], null, 'A1');
         $mt->fromArray([[
             '2026-08-07', 'August', '320260807000000', 'REB2025080001', 'Contoh Nama Mitra', 'Contoh Alamat',
-            10, 2000000, 0, null, null, 0, null, 50000, null, 2050000, 'Lunas', 'Konfirmasi',
+            10, 2000000, 0, null, null, 0, null, 50000, 2050000, 'Lunas', 'Konfirmasi',
         ]], null, 'A2');
-        $this->styleHeader($mt, 18);
-        $this->styleExampleRow($mt, 2, 18);
+        $this->styleHeader($mt, 17);
+        $this->styleExampleRow($mt, 2, 17);
 
         $md = $ss->createSheet();
         $md->setTitle('Master Detail Transaksi');

@@ -42,9 +42,9 @@ class OrderController extends Controller
         $mt->fromArray([
             'TANGGAL', 'BULAN ORDER', 'ID TRANSAKSI (Perpack)', 'RESELLER', 'NAME', 'ADDRESS',
             'QTY', 'TOTAL', 'DISKON', 'DISKON CLAIM', 'DISKON RETURN', 'BIAYA PENDAFTARAN', 'DISKON RETURN ID',
-            'ONGKIR', 'BIAYA PENANGANAN', 'TOTAL TRANSFER', 'STATUS PEMBAYARAN', 'STATUS',
+            'ONGKIR', 'TOTAL TRANSFER', 'STATUS PEMBAYARAN', 'STATUS',
         ], null, 'A1', true);
-        $mt->getStyle('A1:R1')->getFont()->setBold(true);
+        $mt->getStyle('A1:Q1')->getFont()->setBold(true);
 
         $r = 2;
         foreach ($orders as $o) {
@@ -63,7 +63,6 @@ class OrderController extends Controller
                 (float) $o->biaya_pendaftaran,
                 $o->diskon_return_id,
                 (float) $o->ongkir,
-                $o->biaya_penanganan !== null ? (float) $o->biaya_penanganan : null,
                 $o->total_transfer !== null ? (float) $o->total_transfer : null,
                 $o->status_pembayaran,
                 $o->status,
@@ -71,7 +70,7 @@ class OrderController extends Controller
             $r++;
         }
 
-        foreach (range('A', 'R') as $col) {
+        foreach (range('A', 'Q') as $col) {
             $mt->getColumnDimension($col)->setAutoSize(true);
         }
 
