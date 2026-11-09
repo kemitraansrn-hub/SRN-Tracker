@@ -67,6 +67,7 @@ class FollowupLogController extends Controller
         return FollowupLog::with(['mitra', 'kae'])
             ->when(! $user->canViewAll(), fn ($q) => $q->where('kae_user_id', $user->id))
             ->when($request->filled('mitra_id'), fn ($q) => $q->where('mitra_id', $request->input('mitra_id')))
+            ->when($request->filled('q'), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('nama', 'like', '%'.$request->input('q').'%')))
             ->when($request->filled('status_followup'), fn ($q) => $q->where('status_followup', $request->input('status_followup')))
             ->when($request->filled('status_belanja'), fn ($q) => $q->where('status_belanja', $request->input('status_belanja')))
             ->when($request->filled('alasan_kendala'), fn ($q) => $q->where('alasan_kendala', $request->input('alasan_kendala')))

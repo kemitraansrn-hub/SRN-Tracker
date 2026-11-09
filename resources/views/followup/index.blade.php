@@ -29,6 +29,10 @@
         @if (request('mitra_id'))
             <input type="hidden" name="mitra_id" value="{{ request('mitra_id') }}">
         @endif
+        <div class="field" style="margin-bottom:0;">
+            <label>Cari Nama Mitra</label>
+            <input type="text" name="q" value="{{ request('q') }}" placeholder="Ketik nama mitra...">
+        </div>
         @if (auth()->user()->canViewAll())
             <div class="field" style="margin-bottom:0;">
                 <label>KAE</label>
@@ -77,7 +81,7 @@
             </div>
         </div>
         <button type="submit" class="btn" style="width:auto;">Cari</button>
-        @if (request('kae_code') || request('status_followup') || request('status_belanja') || request('alasan_kendala') || request('dari') || request('sampai'))
+        @if (request('q') || request('kae_code') || request('status_followup') || request('status_belanja') || request('alasan_kendala') || request('dari') || request('sampai'))
             <a href="{{ route('followup.index') }}" class="btn" style="width:auto;">Reset</a>
         @endif
     </form>
