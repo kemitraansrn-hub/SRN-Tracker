@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AkuisisiChannel;
 use App\Models\AkuisisiChannelPerformance;
+use App\Models\AkuisisiChannelPerformanceChannel;
 use App\Models\CpCase;
 use App\Models\LmsStep;
 use App\Models\Mitra;
@@ -278,7 +278,7 @@ class DashboardController extends Controller
      */
     private function akuisisiChannelPerformanceData(int $bulan, int $tahun): array
     {
-        $channels = AkuisisiChannel::where('is_active', true)->orderBy('sort_order')->get();
+        $channels = AkuisisiChannelPerformanceChannel::where('is_active', true)->orderBy('sort_order')->get();
 
         $perf = AkuisisiChannelPerformance::where('bulan', $bulan)->where('tahun', $tahun)
             ->whereIn('channel_id', $channels->pluck('id'))
@@ -297,7 +297,7 @@ class DashboardController extends Controller
             ];
         };
 
-        $rows = $channels->map(function (AkuisisiChannel $channel) use ($perf, $calc) {
+        $rows = $channels->map(function (AkuisisiChannelPerformanceChannel $channel) use ($perf, $calc) {
             $d = $perf->get($channel->id);
 
             return [

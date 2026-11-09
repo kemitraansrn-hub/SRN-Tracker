@@ -22,6 +22,6 @@ class AkuisisiChannelPerformance extends Model
 
     public function channel(): BelongsTo
     {
-        return $this->belongsTo(AkuisisiChannel::class, 'channel_id');
+        return $this->belongsTo(AkuisisiChannelPerformanceChannel::class, 'channel_id');
     }
 }
