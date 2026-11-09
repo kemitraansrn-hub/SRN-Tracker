@@ -209,6 +209,15 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
     });
 
     // Import lead (baru atau migrasi data lama) -- seluruh alur mutasi, jadi role:admin semua.
+    // Akuisisi > Performa Channel -- input manual Lead/Prospect/Closing/
+    // Biaya/Investasi Mitra per channel per bulan, sumber Dashboard >
+    // Akuisisi. Akses sama kayak akuisisi-leads (GET semua role kecuali
+    // kae, mutasi hasAdminAccess()).
+    Route::prefix('akuisisi/performa-channel')->name('akuisisi-channel-performance.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\AkuisisiChannelPerformanceController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\AkuisisiChannelPerformanceController::class, 'store'])->middleware('role:admin')->name('store');
+    });
+
     Route::middleware('role:admin')->prefix('akuisisi/leads-imports')->name('akuisisi-leads.imports.')->group(function () {
         Route::get('/', [\App\Http\Controllers\AkuisisiImportController::class, 'index'])->name('index');
         Route::get('/create', [\App\Http\Controllers\AkuisisiImportController::class, 'create'])->name('create');

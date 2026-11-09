@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AkuisisiChannel;
+use App\Models\AkuisisiChannelPerformance;
 use App\Models\CpCase;
 use App\Models\LmsStep;
 use App\Models\Mitra;
@@ -223,6 +225,8 @@ class DashboardController extends Controller
         // jatuh ke scope kosong — bug yang dilaporkan user 2026-10-08.
         $growthSpecialist = $this->growthSpecialistData($user->role !== 'kae', $user->kae_code, $now->month, $now->year);
 
+        $akuisisiChannelPerformance = $this->akuisisiChannelPerformanceData($now->month, $now->year);
+
         return view('dashboard', [
             'trendCard' => $trendCard,
             'companyTarget' => $companyTarget,
@@ -262,7 +266,55 @@ class DashboardController extends Controller
             'topPlatformCp' => $topPlatformCp,
             'topSkuCp' => $topSkuCp,
             'gs' => $growthSpecialist,
+            'akuisisiChannelPerformance' => $akuisisiChannelPerformance,
         ]);
+    }
+
+    /**
+     * Dashboard > Akuisisi -- funnel Lead/Prospect/Closing per channel.
+     * Angkanya semua input manual (lihat AkuisisiChannelPerformanceController
+     * & menu Akuisisi > Performa Channel), cuma konversi closing (by lead &
+     * by prospect) dan CAC yang dihitung di sini dari angka manual tsb.
+     */
+    private function akuisisiChannelPerformanceData(int $bulan, int $tahun): array
+    {
+        $channels = AkuisisiChannel::where('is_active', true)->orderBy('sort_order')->get();
+
+        $perf = AkuisisiChannelPerformance::where('bulan', $bulan)->where('tahun', $tahun)
+            ->whereIn('channel_id', $channels->pluck('id'))
+            ->get()->keyBy('channel_id');
+
+        $calc = function (int $lead, int $prospect, int $closing, float $biaya, float $investasiMitra) {
+            return [
+                'lead' => $lead,
+                'prospect' => $prospect,
+                'closing' => $closing,
+                'biaya' => $biaya,
+                'investasi_mitra' => $investasiMitra,
+                'konv_lead' => $lead > 0 ? round($closing / $lead * 100, 1) : null,
+                'konv_prospect' => $prospect > 0 ? round($closing / $prospect * 100, 1) : null,
+                'cac' => $closing > 0 ? round($biaya / $closing) : null,
+            ];
+        };
+
+        $rows = $channels->map(function (AkuisisiChannel $channel) use ($perf, $calc) {
+            $d = $perf->get($channel->id);
+
+            return [
+                'name' => $channel->name,
+                ...$calc((int) ($d->lead ?? 0), (int) ($d->prospect ?? 0), (int) ($d->closing ?? 0), (float) ($d->biaya ?? 0), (float) ($d->investasi_mitra ?? 0)),
+            ];
+        });
+
+        $totals = $calc(
+            (int) $rows->sum('lead'),
+            (int) $rows->sum('prospect'),
+            (int) $rows->sum('closing'),
+            (float) $rows->sum('biaya'),
+            (float) $rows->sum('investasi_mitra'),
+        );
+
+        return ['rows' => $rows, 'totals' => $totals];
     }
 
     /**

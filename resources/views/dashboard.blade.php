@@ -2,7 +2,7 @@
 
 @php
     $rp = fn ($v) => 'Rp'.number_format((float) $v, 0, ',', '.');
-    $dashTabAktif = request('tab') === 'development' ? 'development' : 'sales';
+    $dashTabAktif = in_array(request('tab'), ['development', 'akuisisi'], true) ? request('tab') : 'sales';
 @endphp
 
 @section('content')
@@ -15,6 +15,7 @@
     <div style="display:flex; gap:4px; margin-bottom:22px; border-bottom:1px solid var(--line);">
         <button type="button" id="dashtab-sales-btn" onclick="switchDashboardTab('sales')" style="padding:10px 4px; margin-right:22px; background:none; border:none; border-bottom:2px solid {{ $dashTabAktif === 'sales' ? 'var(--accent)' : 'transparent' }}; font-family:inherit; font-size:14px; font-weight:{{ $dashTabAktif === 'sales' ? '700' : '600' }}; color:var(--{{ $dashTabAktif === 'sales' ? 'ink' : 'ink-muted' }}); cursor:pointer;">Sales</button>
         <button type="button" id="dashtab-development-btn" onclick="switchDashboardTab('development')" style="padding:10px 4px; margin-right:22px; background:none; border:none; border-bottom:2px solid {{ $dashTabAktif === 'development' ? 'var(--accent)' : 'transparent' }}; font-family:inherit; font-size:14px; font-weight:{{ $dashTabAktif === 'development' ? '700' : '600' }}; color:var(--{{ $dashTabAktif === 'development' ? 'ink' : 'ink-muted' }}); cursor:pointer;">Development</button>
+        <button type="button" id="dashtab-akuisisi-btn" onclick="switchDashboardTab('akuisisi')" style="padding:10px 4px; margin-right:22px; background:none; border:none; border-bottom:2px solid {{ $dashTabAktif === 'akuisisi' ? 'var(--accent)' : 'transparent' }}; font-family:inherit; font-size:14px; font-weight:{{ $dashTabAktif === 'akuisisi' ? '700' : '600' }}; color:var(--{{ $dashTabAktif === 'akuisisi' ? 'ink' : 'ink-muted' }}); cursor:pointer;">Akuisisi</button>
     </div>
 
     <div id="dashtab-sales" style="display:{{ $dashTabAktif === 'sales' ? '' : 'none' }};">
@@ -947,6 +948,81 @@
         </section>
     </div>
 
+    <div id="dashtab-akuisisi" style="display:{{ $dashTabAktif === 'akuisisi' ? '' : 'none' }};">
+        <div class="topbar" style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:22px; flex-wrap:wrap;">
+            <div style="color:var(--ink-muted); font-size:13px;">
+                Performa akuisisi per channel &mdash; {{ $periodeLabel }}
+            </div>
+            @include('partials.bulan-tahun-filter', ['action' => route('dashboard'), 'bulan' => $bulanIni, 'tahun' => $tahunIni, 'isBulanIni' => $isBulanIni, 'extraHidden' => ['tab' => 'akuisisi'], 'resetAction' => route('dashboard', ['tab' => 'akuisisi'])])
+        </div>
+
+        <section class="card table-card" style="padding:0; margin-bottom:20px;">
+            <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px;">
+                <div class="card-title">Performa per Channel</div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div class="card-hint">{{ $periodeLabel }}</div>
+                    @if (auth()->user()->canViewAll())
+                        <a href="{{ route('akuisisi-channel-performance.index', ['bulan' => $bulanIni, 'tahun' => $tahunIni]) }}" class="btn" style="width:auto; font-size:12px; padding:6px 12px;">Input Performa Channel</a>
+                    @endif
+                </div>
+            </div>
+            @php
+                $pct = fn ($v) => $v === null ? '—' : number_format($v, 1, ',', '.').'%';
+                $rpOrDash = fn ($v) => $v === null ? '—' : $rp($v);
+            @endphp
+            <div class="table-scroll" style="max-height:none; overflow-y:visible;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Channel</th>
+                            <th>Lead</th>
+                            <th>Prospect</th>
+                            <th>Closing</th>
+                            <th>Konv. Closing by Lead</th>
+                            <th>Konv. Closing by Prospect</th>
+                            <th>Biaya</th>
+                            <th>CAC</th>
+                            <th>Investasi Mitra</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($akuisisiChannelPerformance['rows'] as $row)
+                            <tr>
+                                <td style="font-weight:600;">{{ $row['name'] }}</td>
+                                <td class="tnum">{{ number_format($row['lead'], 0, ',', '.') }}</td>
+                                <td class="tnum">{{ number_format($row['prospect'], 0, ',', '.') }}</td>
+                                <td class="tnum">{{ number_format($row['closing'], 0, ',', '.') }}</td>
+                                <td class="tnum">{{ $pct($row['konv_lead']) }}</td>
+                                <td class="tnum">{{ $pct($row['konv_prospect']) }}</td>
+                                <td class="tnum">{{ $rp($row['biaya']) }}</td>
+                                <td class="tnum">{{ $rpOrDash($row['cac']) }}</td>
+                                <td class="tnum">{{ $rp($row['investasi_mitra']) }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="9" style="color:var(--ink-muted);">Belum ada channel akuisisi aktif.</td></tr>
+                        @endforelse
+                    </tbody>
+                    @if ($akuisisiChannelPerformance['rows']->isNotEmpty())
+                        @php $t = $akuisisiChannelPerformance['totals']; @endphp
+                        <tfoot>
+                            <tr style="font-weight:700; background:var(--surface-alt);">
+                                <td>Total</td>
+                                <td class="tnum">{{ number_format($t['lead'], 0, ',', '.') }}</td>
+                                <td class="tnum">{{ number_format($t['prospect'], 0, ',', '.') }}</td>
+                                <td class="tnum">{{ number_format($t['closing'], 0, ',', '.') }}</td>
+                                <td class="tnum">{{ $pct($t['konv_lead']) }}</td>
+                                <td class="tnum">{{ $pct($t['konv_prospect']) }}</td>
+                                <td class="tnum">{{ $rp($t['biaya']) }}</td>
+                                <td class="tnum">{{ $rpOrDash($t['cac']) }}</td>
+                                <td class="tnum">{{ $rp($t['investasi_mitra']) }}</td>
+                            </tr>
+                        </tfoot>
+                    @endif
+                </table>
+            </div>
+        </section>
+    </div>
+
     @if (auth()->user()->role === 'admin')
         <div class="modal-overlay" id="modal-omset-parsial" style="display:none;">
             <div class="modal-box">
@@ -987,7 +1063,7 @@
 
     <script>
         function switchDashboardTab(tab) {
-            ['sales', 'development'].forEach(function (t) {
+            ['sales', 'development', 'akuisisi'].forEach(function (t) {
                 document.getElementById('dashtab-' + t).style.display = (t === tab) ? '' : 'none';
                 var btn = document.getElementById('dashtab-' + t + '-btn');
                 btn.style.borderBottomColor = (t === tab) ? 'var(--accent)' : 'transparent';
