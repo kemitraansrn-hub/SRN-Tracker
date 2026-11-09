@@ -251,7 +251,7 @@
                         </a>
                     </div>
                 @elseif (auth()->user()->isGrowthSpecialist())
-                    @php $developmentActive = request()->routeIs('growth-specialist.*'); @endphp
+                    @php $developmentActive = request()->routeIs('growth-specialist.*', 'tracking-webinar.*'); @endphp
                     <a href="{{ route('dashboard') }}" class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" title="Dashboard">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
                         <span class="nav-label">Dashboard</span>
@@ -303,6 +303,10 @@
                             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                             <span class="nav-label">Assignment</span>
                         </a>
+                        <a href="{{ route('tracking-webinar.index') }}" class="nav-item {{ request()->routeIs('tracking-webinar.*') ? 'active' : '' }}" title="Tracking Webinar" style="padding-left:18px;">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 7v10l9-5-9-5z" stroke-linejoin="round"/></svg>
+                            <span class="nav-label">Tracking Webinar</span>
+                        </a>
                     </div>
                     @php $akuisisiActive = request()->routeIs('akuisisi-referral.*', 'pengakuisisi.*', 'akuisisi-leads.*'); @endphp
                     <a class="nav-item nav-item-toggle" tabindex="0" onclick="toggleNavGroup('akuisisiSubmenu', 'akuisisiChevron')" title="Akuisisi">
@@ -341,7 +345,7 @@
                     $salesRoutes = ['sales-overview.*', 'segmentasi.*', 'trend.*', 'omset-bulanan.*', 'weekly-plan.*', 'forecast.*', 'action-plan.*', 'cek-trend-sku.*', 'mitra.*', 'order.*', 'followup.*', 'special-deal.*', 'ar.*', 'sales-draft.*', 'buyback.*', 'poin.*', 'poin-redemption.*', 'price-adjustment.*'];
                     $adminRoutes = ['reward.*', 'produk.*', 'import.*', 'data-health.*', 'pengaturan.*', 'run-rate-target.*', 'tier-target.*', 'buyback-setting.*', 'npd.*', 'users.*', 'backup.*', 'master-lms.*'];
                     $salesActive = request()->routeIs(...$salesRoutes);
-                    $developmentActive = request()->routeIs('development.*', 'data-development.*', 'tracking-cp.*', 'takedown-banding.*', 'price-adjustment-monitoring.*', 'kpi-partnership-compliance.*', 'growth-specialist.*');
+                    $developmentActive = request()->routeIs('development.*', 'data-development.*', 'tracking-cp.*', 'takedown-banding.*', 'price-adjustment-monitoring.*', 'kpi-partnership-compliance.*', 'growth-specialist.*', 'tracking-webinar.*');
                     $adminActive = request()->routeIs(...$adminRoutes);
                 @endphp
 
@@ -504,6 +508,10 @@
                     <a href="{{ route('assignment.index') }}" class="nav-item {{ request()->routeIs('assignment.*') ? 'active' : '' }}" title="Assignment" style="padding-left:18px;">
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                         <span class="nav-label">Assignment</span>
+                    </a>
+                    <a href="{{ route('tracking-webinar.index') }}" class="nav-item {{ request()->routeIs('tracking-webinar.*') ? 'active' : '' }}" title="Tracking Webinar" style="padding-left:18px;">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 7v10l9-5-9-5z" stroke-linejoin="round"/></svg>
+                        <span class="nav-label">Tracking Webinar</span>
                     </a>
                 </div>
 

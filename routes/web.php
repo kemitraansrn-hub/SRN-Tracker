@@ -151,6 +151,14 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::delete('/{mitraAssignment}', [AssignmentController::class, 'destroy'])->name('destroy');
     });
 
+    Route::prefix('tracking-webinar')->name('tracking-webinar.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\WebinarController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\WebinarController::class, 'store'])->name('store');
+        Route::get('/{webinar}/edit', [\App\Http\Controllers\WebinarController::class, 'edit'])->name('edit');
+        Route::put('/{webinar}', [\App\Http\Controllers\WebinarController::class, 'update'])->name('update');
+        Route::delete('/{webinar}', [\App\Http\Controllers\WebinarController::class, 'destroy'])->name('destroy');
+    });
+
     Route::prefix('one-on-one')->name('one-on-one.')->group(function () {
         Route::get('/', [\App\Http\Controllers\OneOnOneController::class, 'index'])->name('index');
         Route::get('/download', [\App\Http\Controllers\OneOnOneController::class, 'download'])->name('download');
