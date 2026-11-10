@@ -22,6 +22,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DashboardController extends Controller
 {
@@ -225,7 +228,14 @@ class DashboardController extends Controller
         // jatuh ke scope kosong — bug yang dilaporkan user 2026-10-08.
         $growthSpecialist = $this->growthSpecialistData($user->role !== 'kae', $user->kae_code, $now->month, $now->year);
 
-        $akuisisiChannelPerformance = $this->akuisisiChannelPerformanceData($now->month, $now->year);
+        $akuisisiTahun = max(2000, min(2100, (int) $request->input('akuisisi_tahun', now()->year)));
+        $akuisisiKuartal = max(1, min(4, (int) $request->input('akuisisi_kuartal', (int) ceil(now()->month / 3))));
+        $akuisisiBulanAwal = ($akuisisiKuartal - 1) * 3 + 1;
+        $akuisisiBulanAkhir = $akuisisiBulanAwal + 2;
+        $akuisisiChannelPerformance = $this->akuisisiChannelPerformanceData($akuisisiTahun, $akuisisiBulanAwal, $akuisisiBulanAkhir);
+        $akuisisiPeriodeLabel = 'Kuartal '.$akuisisiKuartal.' '.$akuisisiTahun.' ('
+            .Carbon::create($akuisisiTahun, $akuisisiBulanAwal, 1)->translatedFormat('M').'–'
+            .Carbon::create($akuisisiTahun, $akuisisiBulanAkhir, 1)->translatedFormat('M').')';
 
         return view('dashboard', [
             'trendCard' => $trendCard,
@@ -267,22 +277,73 @@ class DashboardController extends Controller
             'topSkuCp' => $topSkuCp,
             'gs' => $growthSpecialist,
             'akuisisiChannelPerformance' => $akuisisiChannelPerformance,
+            'akuisisiTahun' => $akuisisiTahun,
+            'akuisisiKuartal' => $akuisisiKuartal,
+            'akuisisiPeriodeLabel' => $akuisisiPeriodeLabel,
+        ]);
+    }
+
+    public function downloadAkuisisiChannelPerformance(Request $request): StreamedResponse
+    {
+        abort_unless(Auth::user()->canViewAll(), 403, 'Anda tidak punya akses ke halaman ini.');
+
+        $akuisisiTahun = max(2000, min(2100, (int) $request->input('akuisisi_tahun', now()->year)));
+        $akuisisiKuartal = max(1, min(4, (int) $request->input('akuisisi_kuartal', (int) ceil(now()->month / 3))));
+        $akuisisiBulanAwal = ($akuisisiKuartal - 1) * 3 + 1;
+        $akuisisiBulanAkhir = $akuisisiBulanAwal + 2;
+        $data = $this->akuisisiChannelPerformanceData($akuisisiTahun, $akuisisiBulanAwal, $akuisisiBulanAkhir);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Performa Channel');
+
+        $headers = ['Channel', 'Lead', 'Prospect', 'Closing', 'Konv. Closing by Lead (%)', 'Konv. Closing by Prospect (%)', 'Biaya', 'CAC', 'Investasi Mitra'];
+        $sheet->fromArray($headers, null, 'A1', true);
+        $sheet->getStyle('A1:I1')->getFont()->setBold(true);
+
+        $r = 2;
+        foreach ($data['rows'] as $row) {
+            $sheet->fromArray([
+                $row['name'], $row['lead'], $row['prospect'], $row['closing'],
+                $row['konv_lead'], $row['konv_prospect'], $row['biaya'], $row['cac'], $row['investasi_mitra'],
+            ], null, 'A'.$r, true);
+            $r++;
+        }
+
+        $t = $data['totals'];
+        $sheet->fromArray([
+            'Total', $t['lead'], $t['prospect'], $t['closing'], $t['konv_lead'], $t['konv_prospect'], $t['biaya'], $t['cac'], $t['investasi_mitra'],
+        ], null, 'A'.$r, true);
+        $sheet->getStyle('A'.$r.':I'.$r)->getFont()->setBold(true);
+
+        foreach (range('A', 'I') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $filename = 'performa_channel_Q'.$akuisisiKuartal.'_'.$akuisisiTahun.'_'.now()->format('Y-m-d').'.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
     }
 
     /**
-     * Dashboard > Akuisisi -- funnel Lead/Prospect/Closing per channel.
-     * Angkanya semua input manual (lihat AkuisisiChannelPerformanceController
-     * & menu Akuisisi > Performa Channel), cuma konversi closing (by lead &
-     * by prospect) dan CAC yang dihitung di sini dari angka manual tsb.
+     * Dashboard > Akuisisi -- funnel Lead/Prospect/Closing per channel,
+     * dijumlahkan per kuartal ($bulanAwal..$bulanAkhir, 3 bulan). Angkanya
+     * semua input manual (lihat AkuisisiChannelPerformanceController & menu
+     * Akuisisi > Performa Channel), cuma konversi closing (by lead & by
+     * prospect) dan CAC yang dihitung di sini dari jumlah angka manual tsb.
      */
-    private function akuisisiChannelPerformanceData(int $bulan, int $tahun): array
+    private function akuisisiChannelPerformanceData(int $tahun, int $bulanAwal, int $bulanAkhir): array
     {
         $channels = AkuisisiChannelPerformanceChannel::where('is_active', true)->orderBy('sort_order')->get();
 
-        $perf = AkuisisiChannelPerformance::where('bulan', $bulan)->where('tahun', $tahun)
+        $perf = AkuisisiChannelPerformance::where('tahun', $tahun)
+            ->whereBetween('bulan', [$bulanAwal, $bulanAkhir])
             ->whereIn('channel_id', $channels->pluck('id'))
-            ->get()->keyBy('channel_id');
+            ->get()->groupBy('channel_id');
 
         $calc = function (int $lead, int $prospect, int $closing, float $biaya, float $investasiMitra) {
             return [
@@ -298,11 +359,11 @@ class DashboardController extends Controller
         };
 
         $rows = $channels->map(function (AkuisisiChannelPerformanceChannel $channel) use ($perf, $calc) {
-            $d = $perf->get($channel->id);
+            $d = $perf->get($channel->id, collect());
 
             return [
                 'name' => $channel->name,
-                ...$calc((int) ($d->lead ?? 0), (int) ($d->prospect ?? 0), (int) ($d->closing ?? 0), (float) ($d->biaya ?? 0), (float) ($d->investasi_mitra ?? 0)),
+                ...$calc((int) $d->sum('lead'), (int) $d->sum('prospect'), (int) $d->sum('closing'), (float) $d->sum('biaya'), (float) $d->sum('investasi_mitra')),
             ];
         });
 

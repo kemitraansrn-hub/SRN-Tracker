@@ -50,6 +50,8 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         ->middleware('role:admin')->name('omset-parsial.update');
     Route::delete('/dashboard/omset-parsial', [\App\Http\Controllers\OmsetParsialController::class, 'destroy'])
         ->middleware('role:admin')->name('omset-parsial.destroy');
+    Route::get('/dashboard/akuisisi-channel-performance/download', [DashboardController::class, 'downloadAkuisisiChannelPerformance'])
+        ->name('dashboard.akuisisi-channel-performance.download');
     Route::get('/trend', [TrendController::class, 'index'])->name('trend.index');
     Route::prefix('action-plan')->name('action-plan.')->group(function () {
         Route::get('/', [\App\Http\Controllers\ActionPlanController::class, 'index'])->name('index');
