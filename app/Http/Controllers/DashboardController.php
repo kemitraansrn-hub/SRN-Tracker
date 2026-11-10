@@ -288,7 +288,7 @@ class DashboardController extends Controller
      */
     private function resolveAkuisisiPeriode(Request $request): array
     {
-        $mode = $request->input('akuisisi_mode') === 'bulan' ? 'bulan' : 'kuartal';
+        $mode = $request->input('akuisisi_mode') === 'kuartal' ? 'kuartal' : 'bulan';
 
         if ($mode === 'bulan') {
             [$dariTahun, $dariBulan] = $this->parseYm($request->input('akuisisi_dari'), now()->format('Y-m'));
