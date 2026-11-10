@@ -20,37 +20,64 @@
         <div class="alert-error" style="margin-bottom:16px;">{{ $errors->first() }}</div>
     @endif
 
-    <section class="card" style="padding:0;">
-        <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px;">
+    <section class="card">
+        <div class="card-head" style="margin-bottom:14px;">
             <div class="card-title">Performa per Channel</div>
-            <div class="card-hint">{{ \Carbon\Carbon::create($tahun, $bulan, 1)->translatedFormat('F Y') }} &mdash; pilih channel untuk {{ $canEdit ? 'input datanya' : 'lihat datanya' }}</div>
+            <div class="card-hint">{{ \Carbon\Carbon::create($tahun, $bulan, 1)->translatedFormat('F Y') }}</div>
         </div>
 
-        <div style="border-top:1px solid var(--line);">
-            @forelse ($rows as $row)
-                @php
-                    $ch = $row['channel'];
-                    $d = $row['data'];
-                    $lead = (int) ($d->lead ?? 0);
-                    $prospect = (int) ($d->prospect ?? 0);
-                    $closing = (int) ($d->closing ?? 0);
-                    $biaya = (float) ($d->biaya ?? 0);
-                    $investasi = (float) ($d->investasi_mitra ?? 0);
-                    $sudahDiisi = ($lead > 0 || $prospect > 0 || $closing > 0 || $biaya > 0 || $investasi > 0);
-                @endphp
-                <button type="button"
-                    onclick="bukaModalChannel({{ $ch->id }}, @js($ch->name), {{ $lead }}, {{ $prospect }}, {{ $closing }}, {{ $biaya }}, {{ $investasi }})"
-                    style="width:100%; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 20px; background:none; border:none; border-bottom:1px solid var(--line); cursor:pointer; text-align:left; font:inherit; color:var(--ink);">
-                    <span style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                        <span style="font-weight:600;">{{ $ch->name }}</span>
-                        <span class="chip {{ $sudahDiisi ? 'chip-good' : 'chip-neutral' }}">&#9679; {{ $sudahDiisi ? 'Sudah diisi' : 'Belum diisi' }}</span>
-                        <span style="color:var(--ink-muted); font-size:12.5px;">Lead {{ $lead }} &middot; Prospect {{ $prospect }} &middot; Closing {{ $closing }}</span>
-                    </span>
-                    <span style="color:var(--ink-muted);">{{ $canEdit ? 'Input Data' : 'Lihat Data' }} &rsaquo;</span>
-                </button>
-            @empty
-                <div style="padding:20px; color:var(--ink-muted);">Belum ada channel aktif.</div>
-            @endforelse
+        <div class="field" style="max-width:360px;">
+            <label>Pilih Channel</label>
+            <select class="select-pill" id="cp-channel-select" onchange="bukaModalDariSelect(this)">
+                <option value="">&mdash; Pilih channel &mdash;</option>
+                @foreach ($rows as $row)
+                    @php
+                        $ch = $row['channel'];
+                        $d = $row['data'];
+                        $lead = (int) ($d->lead ?? 0);
+                        $prospect = (int) ($d->prospect ?? 0);
+                        $closing = (int) ($d->closing ?? 0);
+                        $biaya = (float) ($d->biaya ?? 0);
+                        $investasi = (float) ($d->investasi_mitra ?? 0);
+                        $sudahDiisi = ($lead > 0 || $prospect > 0 || $closing > 0 || $biaya > 0 || $investasi > 0);
+                    @endphp
+                    <option value="{{ $ch->id }}"
+                        data-nama="{{ $ch->name }}"
+                        data-lead="{{ $lead }}" data-prospect="{{ $prospect }}" data-closing="{{ $closing }}"
+                        data-biaya="{{ $biaya }}" data-investasi="{{ $investasi }}">
+                        {{ $ch->name }} {{ $sudahDiisi ? '— Sudah diisi' : '— Belum diisi' }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="table-scroll" style="margin-top:18px;">
+            <table>
+                <thead>
+                    <tr><th>Channel</th><th>Status</th><th>Lead</th><th>Prospect</th><th>Closing</th></tr>
+                </thead>
+                <tbody>
+                    @forelse ($rows as $row)
+                        @php
+                            $ch = $row['channel'];
+                            $d = $row['data'];
+                            $lead = (int) ($d->lead ?? 0);
+                            $prospect = (int) ($d->prospect ?? 0);
+                            $closing = (int) ($d->closing ?? 0);
+                            $sudahDiisi = ($lead > 0 || $prospect > 0 || $closing > 0 || (float) ($d->biaya ?? 0) > 0 || (float) ($d->investasi_mitra ?? 0) > 0);
+                        @endphp
+                        <tr>
+                            <td style="font-weight:600;">{{ $ch->name }}</td>
+                            <td><span class="chip {{ $sudahDiisi ? 'chip-good' : 'chip-neutral' }}">&#9679; {{ $sudahDiisi ? 'Sudah diisi' : 'Belum diisi' }}</span></td>
+                            <td class="tnum">{{ $lead }}</td>
+                            <td class="tnum">{{ $prospect }}</td>
+                            <td class="tnum">{{ $closing }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="5" style="color:var(--ink-muted);">Belum ada channel aktif.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </section>
 
@@ -92,6 +119,16 @@
     </div>
 
     <script>
+        function bukaModalDariSelect(sel) {
+            if (! sel.value) return;
+            const opt = sel.options[sel.selectedIndex];
+            bukaModalChannel(
+                parseInt(sel.value, 10), opt.dataset.nama,
+                opt.dataset.lead, opt.dataset.prospect, opt.dataset.closing,
+                opt.dataset.biaya, opt.dataset.investasi
+            );
+        }
+
         function bukaModalChannel(id, nama, lead, prospect, closing, biaya, investasi) {
             document.getElementById('cp-modal-title').textContent = 'Input Data — ' + nama;
 
@@ -107,6 +144,7 @@
 
         function tutupModalChannel() {
             document.getElementById('modal-cp').style.display = 'none';
+            document.getElementById('cp-channel-select').value = '';
         }
 
         document.getElementById('modal-cp').addEventListener('mousedown', function (e) {
