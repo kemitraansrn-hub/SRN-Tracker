@@ -951,36 +951,63 @@
     <div id="dashtab-akuisisi" style="display:{{ $dashTabAktif === 'akuisisi' ? '' : 'none' }};">
         <div class="topbar" style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:22px; flex-wrap:wrap;">
             <div style="color:var(--ink-muted); font-size:13px;">
-                Performa akuisisi per channel &mdash; {{ $akuisisiPeriodeLabel }}
+                Performa akuisisi per channel &mdash; {{ $akuisisiPeriode['label'] }}
             </div>
             <form method="GET" action="{{ route('dashboard') }}" class="field-row" style="align-items:flex-end;">
                 <input type="hidden" name="tab" value="akuisisi">
                 <div class="field" style="margin-bottom:0;">
-                    <label>Kuartal</label>
-                    <select class="select-pill" name="akuisisi_kuartal" onchange="this.form.submit()">
-                        @foreach ([1 => 'Kuartal 1 (Jan-Mar)', 2 => 'Kuartal 2 (Apr-Jun)', 3 => 'Kuartal 3 (Jul-Sep)', 4 => 'Kuartal 4 (Okt-Des)'] as $q => $label)
-                            <option value="{{ $q }}" {{ $akuisisiKuartal === $q ? 'selected' : '' }}>{{ $label }}</option>
-                        @endforeach
+                    <label>Jenis Filter</label>
+                    <select class="select-pill" name="akuisisi_mode" onchange="akuisisiToggleModeFields(this.value)">
+                        <option value="kuartal" {{ $akuisisiPeriode['mode'] === 'kuartal' ? 'selected' : '' }}>Kuartal</option>
+                        <option value="bulan" {{ $akuisisiPeriode['mode'] === 'bulan' ? 'selected' : '' }}>Rentang Bulan</option>
                     </select>
                 </div>
-                <div class="field" style="margin-bottom:0;">
-                    <label>Tahun</label>
-                    <select class="select-pill" name="akuisisi_tahun" onchange="this.form.submit()">
-                        @for ($y = now()->year + 1; $y >= now()->year - 3; $y--)
-                            <option value="{{ $y }}" {{ $akuisisiTahun === $y ? 'selected' : '' }}>{{ $y }}</option>
-                        @endfor
-                    </select>
+                <div id="akuisisi-mode-kuartal" style="display:{{ $akuisisiPeriode['mode'] === 'kuartal' ? 'contents' : 'none' }};">
+                    <div class="field" style="margin-bottom:0;">
+                        <label>Kuartal</label>
+                        <select class="select-pill" name="akuisisi_kuartal">
+                            @foreach ([1 => 'Kuartal 1 (Jan-Mar)', 2 => 'Kuartal 2 (Apr-Jun)', 3 => 'Kuartal 3 (Jul-Sep)', 4 => 'Kuartal 4 (Okt-Des)'] as $q => $label)
+                                <option value="{{ $q }}" {{ $akuisisiPeriode['kuartal'] === $q ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="field" style="margin-bottom:0;">
+                        <label>Tahun</label>
+                        <select class="select-pill" name="akuisisi_tahun">
+                            @for ($y = now()->year + 1; $y >= now()->year - 3; $y--)
+                                <option value="{{ $y }}" {{ $akuisisiPeriode['tahun'] === $y ? 'selected' : '' }}>{{ $y }}</option>
+                            @endfor
+                        </select>
+                    </div>
                 </div>
+                <div id="akuisisi-mode-bulan" style="display:{{ $akuisisiPeriode['mode'] === 'bulan' ? 'contents' : 'none' }};">
+                    <div class="field" style="margin-bottom:0;">
+                        <label>Dari Bulan</label>
+                        <input type="month" name="akuisisi_dari" value="{{ $akuisisiPeriode['dariInput'] }}">
+                    </div>
+                    <div class="field" style="margin-bottom:0;">
+                        <label>Sampai Bulan</label>
+                        <input type="month" name="akuisisi_sampai" value="{{ $akuisisiPeriode['sampaiInput'] }}">
+                    </div>
+                </div>
+                <button type="submit" class="btn" style="width:auto;">Terapkan</button>
             </form>
         </div>
+
+        <script>
+            function akuisisiToggleModeFields(mode) {
+                document.getElementById('akuisisi-mode-kuartal').style.display = mode === 'kuartal' ? 'contents' : 'none';
+                document.getElementById('akuisisi-mode-bulan').style.display = mode === 'bulan' ? 'contents' : 'none';
+            }
+        </script>
 
         <section class="card table-card" style="padding:0; margin-bottom:20px;">
             <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px;">
                 <div class="card-title">Performa per Channel</div>
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <div class="card-hint">{{ $akuisisiPeriodeLabel }}</div>
+                    <div class="card-hint">{{ $akuisisiPeriode['label'] }}</div>
                     @if (auth()->user()->canViewAll())
-                        <a href="{{ route('dashboard.akuisisi-channel-performance.download', ['akuisisi_kuartal' => $akuisisiKuartal, 'akuisisi_tahun' => $akuisisiTahun]) }}" class="btn" style="width:auto; font-size:12px; padding:6px 12px;">Download Excel</a>
+                        <a href="{{ route('dashboard.akuisisi-channel-performance.download', ['akuisisi_mode' => $akuisisiPeriode['mode'], 'akuisisi_kuartal' => $akuisisiPeriode['kuartal'], 'akuisisi_tahun' => $akuisisiPeriode['tahun'], 'akuisisi_dari' => $akuisisiPeriode['dariInput'], 'akuisisi_sampai' => $akuisisiPeriode['sampaiInput']]) }}" class="btn" style="width:auto; font-size:12px; padding:6px 12px;">Download Excel</a>
                         <a href="{{ route('akuisisi-channel-performance.index', ['bulan' => $bulanIni, 'tahun' => $tahunIni]) }}" class="btn" style="width:auto; font-size:12px; padding:6px 12px;">Input Performa Channel</a>
                     @endif
                 </div>

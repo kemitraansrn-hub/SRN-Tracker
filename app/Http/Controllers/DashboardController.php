@@ -228,14 +228,11 @@ class DashboardController extends Controller
         // jatuh ke scope kosong — bug yang dilaporkan user 2026-10-08.
         $growthSpecialist = $this->growthSpecialistData($user->role !== 'kae', $user->kae_code, $now->month, $now->year);
 
-        $akuisisiTahun = max(2000, min(2100, (int) $request->input('akuisisi_tahun', now()->year)));
-        $akuisisiKuartal = max(1, min(4, (int) $request->input('akuisisi_kuartal', (int) ceil(now()->month / 3))));
-        $akuisisiBulanAwal = ($akuisisiKuartal - 1) * 3 + 1;
-        $akuisisiBulanAkhir = $akuisisiBulanAwal + 2;
-        $akuisisiChannelPerformance = $this->akuisisiChannelPerformanceData($akuisisiTahun, $akuisisiBulanAwal, $akuisisiBulanAkhir);
-        $akuisisiPeriodeLabel = 'Kuartal '.$akuisisiKuartal.' '.$akuisisiTahun.' ('
-            .Carbon::create($akuisisiTahun, $akuisisiBulanAwal, 1)->translatedFormat('M').'–'
-            .Carbon::create($akuisisiTahun, $akuisisiBulanAkhir, 1)->translatedFormat('M').')';
+        $akuisisiPeriode = $this->resolveAkuisisiPeriode($request);
+        $akuisisiChannelPerformance = $this->akuisisiChannelPerformanceData(
+            $akuisisiPeriode['dariTahun'], $akuisisiPeriode['dariBulan'],
+            $akuisisiPeriode['sampaiTahun'], $akuisisiPeriode['sampaiBulan']
+        );
 
         return view('dashboard', [
             'trendCard' => $trendCard,
@@ -277,21 +274,80 @@ class DashboardController extends Controller
             'topSkuCp' => $topSkuCp,
             'gs' => $growthSpecialist,
             'akuisisiChannelPerformance' => $akuisisiChannelPerformance,
-            'akuisisiTahun' => $akuisisiTahun,
-            'akuisisiKuartal' => $akuisisiKuartal,
-            'akuisisiPeriodeLabel' => $akuisisiPeriodeLabel,
+            'akuisisiPeriode' => $akuisisiPeriode,
         ]);
+    }
+
+    /**
+     * Filter periode Dashboard > Akuisisi -- independen dari filter
+     * bulan/tahun global (dipakai Sales & Development). Dua mode:
+     * 'kuartal' (Kuartal 1-4 + Tahun) atau 'bulan' (rentang Dari-Sampai,
+     * input <input type="month">, boleh beda tahun & lintas berapa pun
+     * bulan). Dipakai bareng sama index() (render) & download() (export)
+     * biar query param-nya konsisten.
+     */
+    private function resolveAkuisisiPeriode(Request $request): array
+    {
+        $mode = $request->input('akuisisi_mode') === 'bulan' ? 'bulan' : 'kuartal';
+
+        if ($mode === 'bulan') {
+            [$dariTahun, $dariBulan] = $this->parseYm($request->input('akuisisi_dari'), now()->format('Y-m'));
+            [$sampaiTahun, $sampaiBulan] = $this->parseYm($request->input('akuisisi_sampai'), now()->format('Y-m'));
+
+            if ($sampaiTahun * 12 + $sampaiBulan < $dariTahun * 12 + $dariBulan) {
+                [$dariBulan, $sampaiBulan] = [$sampaiBulan, $dariBulan];
+                [$dariTahun, $sampaiTahun] = [$sampaiTahun, $dariTahun];
+            }
+
+            $kuartal = (int) ceil($dariBulan / 3);
+            $tahun = $dariTahun;
+            $label = Carbon::create($dariTahun, $dariBulan, 1)->translatedFormat('M Y')
+                .($dariTahun === $sampaiTahun && $dariBulan === $sampaiBulan ? '' : ' – '.Carbon::create($sampaiTahun, $sampaiBulan, 1)->translatedFormat('M Y'));
+        } else {
+            $tahun = max(2000, min(2100, (int) $request->input('akuisisi_tahun', now()->year)));
+            $kuartal = max(1, min(4, (int) $request->input('akuisisi_kuartal', (int) ceil(now()->month / 3))));
+            $dariBulan = ($kuartal - 1) * 3 + 1;
+            $dariTahun = $tahun;
+            $sampaiBulan = $dariBulan + 2;
+            $sampaiTahun = $tahun;
+            $label = 'Kuartal '.$kuartal.' '.$tahun.' ('
+                .Carbon::create($tahun, $dariBulan, 1)->translatedFormat('M').'–'
+                .Carbon::create($tahun, $sampaiBulan, 1)->translatedFormat('M').')';
+        }
+
+        return [
+            'mode' => $mode,
+            'kuartal' => $kuartal,
+            'tahun' => $tahun,
+            'dariBulan' => $dariBulan,
+            'dariTahun' => $dariTahun,
+            'sampaiBulan' => $sampaiBulan,
+            'sampaiTahun' => $sampaiTahun,
+            'dariInput' => sprintf('%04d-%02d', $dariTahun, $dariBulan),
+            'sampaiInput' => sprintf('%04d-%02d', $sampaiTahun, $sampaiBulan),
+            'label' => $label,
+        ];
+    }
+
+    /** @return array{0: int, 1: int} [tahun, bulan] dari string "YYYY-MM", fallback kalau kosong/rusak. */
+    private function parseYm(?string $value, string $fallback): array
+    {
+        if (! preg_match('/^(\d{4})-(\d{1,2})$/', (string) $value, $m)) {
+            preg_match('/^(\d{4})-(\d{1,2})$/', $fallback, $m);
+        }
+
+        return [max(2000, min(2100, (int) $m[1])), max(1, min(12, (int) $m[2]))];
     }
 
     public function downloadAkuisisiChannelPerformance(Request $request): StreamedResponse
     {
         abort_unless(Auth::user()->canViewAll(), 403, 'Anda tidak punya akses ke halaman ini.');
 
-        $akuisisiTahun = max(2000, min(2100, (int) $request->input('akuisisi_tahun', now()->year)));
-        $akuisisiKuartal = max(1, min(4, (int) $request->input('akuisisi_kuartal', (int) ceil(now()->month / 3))));
-        $akuisisiBulanAwal = ($akuisisiKuartal - 1) * 3 + 1;
-        $akuisisiBulanAkhir = $akuisisiBulanAwal + 2;
-        $data = $this->akuisisiChannelPerformanceData($akuisisiTahun, $akuisisiBulanAwal, $akuisisiBulanAkhir);
+        $akuisisiPeriode = $this->resolveAkuisisiPeriode($request);
+        $data = $this->akuisisiChannelPerformanceData(
+            $akuisisiPeriode['dariTahun'], $akuisisiPeriode['dariBulan'],
+            $akuisisiPeriode['sampaiTahun'], $akuisisiPeriode['sampaiBulan']
+        );
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -320,7 +376,10 @@ class DashboardController extends Controller
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
-        $filename = 'performa_channel_Q'.$akuisisiKuartal.'_'.$akuisisiTahun.'_'.now()->format('Y-m-d').'.xlsx';
+        $filenamePeriode = $akuisisiPeriode['mode'] === 'kuartal'
+            ? 'Q'.$akuisisiPeriode['kuartal'].'_'.$akuisisiPeriode['tahun']
+            : $akuisisiPeriode['dariInput'].'_sd_'.$akuisisiPeriode['sampaiInput'];
+        $filename = 'performa_channel_'.$filenamePeriode.'_'.now()->format('Y-m-d').'.xlsx';
 
         return response()->streamDownload(function () use ($spreadsheet) {
             (new Xlsx($spreadsheet))->save('php://output');
@@ -331,17 +390,21 @@ class DashboardController extends Controller
 
     /**
      * Dashboard > Akuisisi -- funnel Lead/Prospect/Closing per channel,
-     * dijumlahkan per kuartal ($bulanAwal..$bulanAkhir, 3 bulan). Angkanya
-     * semua input manual (lihat AkuisisiChannelPerformanceController & menu
-     * Akuisisi > Performa Channel), cuma konversi closing (by lead & by
-     * prospect) dan CAC yang dihitung di sini dari jumlah angka manual tsb.
+     * dijumlahkan dari $dariTahun/$dariBulan sampai $sampaiTahun/$sampaiBulan
+     * (inklusif, boleh lintas tahun -- dipakai baik buat mode Kuartal
+     * maupun mode Bulan di resolveAkuisisiPeriode()). Angkanya semua input
+     * manual (lihat AkuisisiChannelPerformanceController & menu Akuisisi >
+     * Performa Channel), cuma konversi closing (by lead & by prospect) dan
+     * CAC yang dihitung di sini dari jumlah angka manual tsb.
      */
-    private function akuisisiChannelPerformanceData(int $tahun, int $bulanAwal, int $bulanAkhir): array
+    private function akuisisiChannelPerformanceData(int $dariTahun, int $dariBulan, int $sampaiTahun, int $sampaiBulan): array
     {
         $channels = AkuisisiChannelPerformanceChannel::where('is_active', true)->orderBy('sort_order')->get();
 
-        $perf = AkuisisiChannelPerformance::where('tahun', $tahun)
-            ->whereBetween('bulan', [$bulanAwal, $bulanAkhir])
+        $awal = $dariTahun * 12 + $dariBulan;
+        $akhir = $sampaiTahun * 12 + $sampaiBulan;
+
+        $perf = AkuisisiChannelPerformance::whereRaw('(tahun * 12 + bulan) between ? and ?', [$awal, $akhir])
             ->whereIn('channel_id', $channels->pluck('id'))
             ->get()->groupBy('channel_id');
 
