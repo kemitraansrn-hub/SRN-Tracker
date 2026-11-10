@@ -1001,6 +1001,14 @@
             }
         </script>
 
+        <section class="card" style="margin-bottom:20px;">
+            <div class="card-head" style="margin-bottom:14px;">
+                <div class="card-title">Pipeline per Channel</div>
+                <div class="card-hint">{{ $akuisisiPeriode['label'] }} &mdash; channel mana yang paling efisien, bukan cuma paling besar volumenya</div>
+            </div>
+            @include('partials.akuisisi-channel-funnel', ['rows' => $akuisisiChannelPerformance['rows']])
+        </section>
+
         <section class="card table-card" style="padding:0; margin-bottom:20px;">
             <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px;">
                 <div class="card-title">Performa per Channel</div>
