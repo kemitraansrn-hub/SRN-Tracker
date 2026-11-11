@@ -1001,6 +1001,8 @@
             }
         </script>
 
+        @include('partials.akuisisi-summary-pipeline', ['totals' => $akuisisiChannelPerformance['totals']])
+
         <section class="card" style="margin-bottom:20px;">
             <div class="card-head" style="margin-bottom:14px;">
                 <div class="card-title">Pipeline per Channel</div>
