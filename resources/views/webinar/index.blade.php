@@ -55,6 +55,19 @@
                             <td class="tnum" style="{{ $m === now()->month && $tahun === now()->year ? 'background:var(--accent-soft);' : '' }}">{{ number_format($totalPerMonth[$m], 0, ',', '.') }}</td>
                         @endforeach
                     </tr>
+                    <tr style="font-size:12px; color:var(--ink-muted);">
+                        <td>% Growth vs bulan lalu</td>
+                        @foreach ($months as $m)
+                            @php $g = $growthPerMonth[$m]; @endphp
+                            <td class="tnum" style="{{ $m === now()->month && $tahun === now()->year ? 'background:var(--accent-soft);' : '' }}">
+                                @if ($g === null)
+                                    &mdash;
+                                @else
+                                    <span style="color:{{ $g >= 0 ? 'var(--good)' : 'var(--critical)' }}; font-weight:600;">{{ $g >= 0 ? '▲' : '▼' }} {{ number_format(abs($g), 1, ',', '.') }}%</span>
+                                @endif
+                            </td>
+                        @endforeach
+                    </tr>
                 </tbody>
             </table>
         </div>

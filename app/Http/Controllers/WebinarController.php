@@ -47,12 +47,33 @@ class WebinarController extends Controller
 
         $totalPerMonth = collect($months)->mapWithKeys(fn ($m) => [$m => $rows->sum(fn (array $r) => $r['counts'][$m])]);
 
+        // Growth % vs bulan sebelumnya -- bulan kalender asli (bisa lintas
+        // tahun buat Januari, dibandingkan ke Desember tahun sebelumnya),
+        // bukan dibatasi ke bulan-bulan yang ditampilkan di tabel tahun ini.
+        $prevMonthTotal = function (int $tahun, int $bulan): int {
+            $prevBulan = $bulan - 1;
+            $prevTahun = $tahun;
+            if ($prevBulan < 1) {
+                $prevBulan = 12;
+                $prevTahun--;
+            }
+
+            return (int) Webinar::whereYear('tanggal_webinar', $prevTahun)->whereMonth('tanggal_webinar', $prevBulan)->sum('jumlah_peserta');
+        };
+
+        $growthPerMonth = collect($months)->mapWithKeys(function ($m) use ($tahun, $totalPerMonth, $prevMonthTotal) {
+            $prev = $prevMonthTotal($tahun, $m);
+
+            return [$m => $prev > 0 ? round(($totalPerMonth[$m] - $prev) / $prev * 100, 1) : null];
+        });
+
         return view('webinar.index', [
             'items' => $items,
             'rows' => $rows,
             'months' => $months,
             'monthLabels' => $monthLabels,
             'totalPerMonth' => $totalPerMonth,
+            'growthPerMonth' => $growthPerMonth,
             'tahun' => $tahun,
             'tahunOptions' => $tahunOptions,
             'namaOptions' => Webinar::NAMA_OPTIONS,
