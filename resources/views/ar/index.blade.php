@@ -109,7 +109,7 @@
                 <div class="table-scroll" style="margin-top:16px;">
                     <table>
                         <thead>
-                            <tr><th>No Order</th><th>Tgl Order</th><th>Mitra</th><th>Total Order</th><th></th></tr>
+                            <tr><th>No Order</th><th>Tgl Order</th><th>Mitra</th><th></th></tr>
                         </thead>
                         <tbody>
                             @forelse ($orderResults as $o)
@@ -117,19 +117,26 @@
                                     <td class="tnum">{{ $o->no_order }}</td>
                                     <td class="tnum">{{ $o->tanggal_order->format('d/m/Y') }}</td>
                                     <td>{{ $o->mitra->nama ?? '—' }}</td>
-                                    <td class="tnum">{{ $rp($o->total_transaksi) }}</td>
                                     <td>
                                         <button type="button" class="btn" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="const d = document.getElementById('input-ar-{{ $o->id }}'); d.style.display = d.style.display === 'none' ? '' : 'none';">Input AR</button>
                                     </td>
                                 </tr>
                                 <tr id="input-ar-{{ $o->id }}" style="display:none;">
-                                    <td colspan="5" style="background:var(--surface-alt);">
+                                    <td colspan="4" style="background:var(--surface-alt);">
                                         <form method="POST" action="{{ route('ar.store') }}" class="field-row" style="align-items:flex-end; padding:10px 4px;">
                                             @csrf
                                             <input type="hidden" name="order_id" value="{{ $o->id }}">
                                             <div class="field" style="margin-bottom:0;">
+                                                <label>Total Transaksi (Rp)</label>
+                                                <input type="number" name="total_transaksi" min="1" placeholder="mis. 5000000" required>
+                                            </div>
+                                            <div class="field" style="margin-bottom:0;">
+                                                <label>Tanggal Kirim</label>
+                                                <input type="date" name="tanggal_kirim" value="{{ now()->toDateString() }}" required>
+                                            </div>
+                                            <div class="field" style="margin-bottom:0;">
                                                 <label>Jumlah AR (Rp)</label>
-                                                <input type="number" name="jumlah_ar" min="1" placeholder="mis. {{ (int) $o->total_transaksi }}" required>
+                                                <input type="number" name="jumlah_ar" min="1" placeholder="mis. 5000000" required>
                                             </div>
                                             <div class="field" style="margin-bottom:0;">
                                                 <label>Jatuh Tempo</label>
@@ -143,7 +150,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="5" style="color:var(--ink-muted);">Tidak ada order yang cocok (atau semuanya sudah punya AR).</td></tr>
+                                <tr><td colspan="4" style="color:var(--ink-muted);">Tidak ada order yang cocok (atau semuanya sudah punya AR).</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -188,7 +195,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Mitra</th><th>No Order</th><th>Tgl Order</th><th>Total Order</th><th>Jumlah AR</th><th>Sisa AR</th>
+                        <th>Mitra</th><th>No Order</th><th>Tgl Order</th><th>Tgl Kirim</th><th>Total Transaksi</th><th>Jumlah AR</th><th>Sisa AR</th>
                         <th>Jatuh Tempo</th><th>Umur</th><th>Status</th><th>Cicilan</th><th></th>
                     </tr>
                 </thead>
@@ -201,15 +208,17 @@
                             </td>
                             <td class="tnum">{{ $ar->order->no_order }}</td>
                             <td class="tnum">{{ $ar->order->tanggal_order->format('d/m/Y') }}</td>
-                            <td class="tnum">{{ $rp($ar->order->total_transaksi) }}</td>
+                            <td class="tnum">{{ $ar->tanggal_kirim->format('d/m/Y') }}</td>
+                            <td class="tnum">{{ $rp($ar->total_transaksi) }}</td>
                             <td class="tnum">{{ $rp($ar->jumlah_ar) }}</td>
                             <td class="tnum" style="font-weight:700;">{{ $rp($ar->sisa_ar) }}</td>
                             <td class="tnum">{{ $ar->tanggal_jatuh_tempo->format('d/m/Y') }}</td>
                             <td class="tnum">
-                                @if ($ar->hari_terlambat !== null)
-                                    <span class="chip chip-critical">{{ $ar->hari_terlambat }} hari</span>
-                                @else
+                                @if ($ar->sisa_hari === null)
                                     <span style="color:var(--ink-faint); font-size:12px;">—</span>
+                                @else
+                                    @php $umurColor = $ar->sisa_hari < 0 ? 'critical' : ($ar->sisa_hari <= 3 ? 'warn' : 'good'); @endphp
+                                    <span class="chip chip-{{ $umurColor }}">{{ $ar->sisa_hari }} hari</span>
                                 @endif
                             </td>
                             <td>
@@ -248,10 +257,18 @@
                         </tr>
                         @if (auth()->user()->hasAdminAccess())
                             <tr id="edit-ar-{{ $ar->id }}" style="display:none;">
-                                <td colspan="11" style="background:var(--surface-alt);">
+                                <td colspan="12" style="background:var(--surface-alt);">
                                     <form method="POST" action="{{ route('ar.update', $ar) }}" class="field-row" style="align-items:flex-end; padding:10px 4px;">
                                         @csrf
                                         @method('PUT')
+                                        <div class="field" style="margin-bottom:0;">
+                                            <label>Total Transaksi (Rp)</label>
+                                            <input type="number" name="total_transaksi" min="1" value="{{ (int) $ar->total_transaksi }}" required>
+                                        </div>
+                                        <div class="field" style="margin-bottom:0;">
+                                            <label>Tanggal Kirim</label>
+                                            <input type="date" name="tanggal_kirim" value="{{ $ar->tanggal_kirim->toDateString() }}" required>
+                                        </div>
                                         <div class="field" style="margin-bottom:0;">
                                             <label>Jumlah AR (Rp)</label>
                                             <input type="number" name="jumlah_ar" min="{{ max(1, (int) $ar->totalDibayar()) }}" value="{{ (int) $ar->jumlah_ar }}" required>
@@ -265,7 +282,7 @@
                                                 <option value="14" {{ $ar->jatuh_tempo_hari == 14 ? 'selected' : '' }}>14 hari</option>
                                                 <option value="30" {{ $ar->jatuh_tempo_hari == 30 ? 'selected' : '' }}>30 hari</option>
                                             </select>
-                                            <div style="font-size:11px; color:var(--ink-muted); margin-top:4px;">Dihitung ulang dari tanggal input ({{ $ar->tanggal_input->format('d/m/Y') }}).</div>
+                                            <div style="font-size:11px; color:var(--ink-muted); margin-top:4px;">Dihitung ulang dari tanggal kirim.</div>
                                         </div>
                                         <button type="submit" class="btn btn-primary" style="width:auto;">Simpan Perubahan</button>
                                     </form>
@@ -274,7 +291,7 @@
                         @endif
                         @if ($ar->payments->isNotEmpty())
                             <tr id="cicilan-{{ $ar->id }}" style="display:none;">
-                                <td colspan="11" style="background:var(--surface-alt); padding:10px 20px;">
+                                <td colspan="12" style="background:var(--surface-alt); padding:10px 20px;">
                                     <div class="info-label" style="margin-bottom:6px;">Riwayat Cicilan</div>
                                     @foreach ($ar->payments as $p)
                                         <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink-muted); margin-bottom:2px;">
@@ -293,7 +310,7 @@
                         @endif
                         @if (! $ar->lunas && (auth()->user()->hasAdminAccess() || auth()->user()->kae_code === ($ar->order->mitra->kae_code ?? null)))
                             <tr id="bayar-ar-{{ $ar->id }}" style="display:none;">
-                                <td colspan="11" style="background:var(--surface-alt);">
+                                <td colspan="12" style="background:var(--surface-alt);">
                                     <form method="POST" action="{{ route('ar.pay', $ar) }}" class="field-row" style="align-items:flex-end; padding:10px 4px;">
                                         @csrf
                                         <div class="field" style="margin-bottom:0;">
@@ -310,7 +327,7 @@
                             </tr>
                         @endif
                     @empty
-                        <tr><td colspan="11" style="color:var(--ink-muted);">Belum ada data AR.</td></tr>
+                        <tr><td colspan="12" style="color:var(--ink-muted);">Belum ada data AR.</td></tr>
                     @endforelse
                 </tbody>
             </table>

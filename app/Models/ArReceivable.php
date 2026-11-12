@@ -5,12 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['order_id', 'jumlah_ar', 'tanggal_input', 'jatuh_tempo_hari', 'tanggal_jatuh_tempo', 'created_by'])]
+#[Fillable(['order_id', 'total_transaksi', 'tanggal_kirim', 'jumlah_ar', 'tanggal_input', 'jatuh_tempo_hari', 'tanggal_jatuh_tempo', 'created_by'])]
 class ArReceivable extends Model
 {
     protected function casts(): array
     {
         return [
+            'tanggal_kirim' => 'date',
             'tanggal_input' => 'date',
             'tanggal_jatuh_tempo' => 'date',
         ];
@@ -62,6 +63,22 @@ class ArReceivable extends Model
         }
 
         return $this->tanggal_jatuh_tempo->copy()->startOfDay()->diffInDays(now()->startOfDay());
+    }
+
+    /**
+     * Sisa hari ke tanggal jatuh tempo (positif = belum jatuh tempo, 0 =
+     * jatuh tempo hari ini, negatif = sudah lewat sekian hari). Null kalau
+     * sudah lunas, karena hitungan waktu tidak relevan lagi.
+     */
+    public function sisaHari(): ?int
+    {
+        if ($this->isLunas()) {
+            return null;
+        }
+
+        $selisihDetik = $this->tanggal_jatuh_tempo->copy()->startOfDay()->timestamp - now()->startOfDay()->timestamp;
+
+        return intdiv($selisihDetik, 86400);
     }
 
     /**

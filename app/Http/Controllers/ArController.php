@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\ArPayment;
 use App\Models\ArReceivable;
 use App\Models\Order;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -17,12 +20,15 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
  * "Data Piutang / AR": admin picks an already-confirmed order and records
- * how much of it is still owed (jumlah AR is entered manually — it doesn't
- * have to equal the order total, e.g. when part was already paid cash) plus
- * a due date of now+14 or now+30 days. Payments are logged one at a time
- * (cicilan), and the AR is "Lunas" once payments cover jumlah_ar. Admin
- * does the initial input; KAE can view and record payments for their own
- * mitra only.
+ * the real transaction total (total_transaksi — entered manually, since
+ * the real transaction amount isn't the same as orders.total_transaksi and
+ * isn't captured anywhere else in the system) plus how much of it is still
+ * owed (jumlah AR is entered manually too — it doesn't have to equal
+ * total_transaksi, e.g. when part was already paid cash) plus a shipping
+ * date (tanggal_kirim, entered manually) that the due date is computed
+ * from: tanggal_kirim + 14 or 30 days. Payments are logged one at a time (cicilan),
+ * and the AR is "Lunas" once payments cover jumlah_ar. Admin does the
+ * initial input; KAE can view and record payments for their own mitra only.
  */
 class ArController extends Controller
 {
@@ -95,7 +101,7 @@ class ArController extends Controller
             'arList' => $arList,
             'stats' => $stats,
             'agingBuckets' => $agingBuckets,
-            'kaeOptions' => $user->canViewAll() ? \App\Models\User::where('role', 'kae')->orderBy('name')->get() : collect(),
+            'kaeOptions' => $user->canViewAll() ? User::where('role', 'kae')->orderBy('name')->get() : collect(),
         ]);
     }
 
@@ -111,6 +117,7 @@ class ArController extends Controller
                 $ar->lunas = $ar->isLunas();
                 $ar->jatuh_tempo_flag = $ar->isJatuhTempo();
                 $ar->hari_terlambat = $ar->hariTerlambat();
+                $ar->sisa_hari = $ar->sisaHari();
                 $ar->aging_bucket = $ar->agingBucket();
 
                 return $ar;
@@ -130,6 +137,7 @@ class ArController extends Controller
             ->values();
 
         $statusLabel = fn ($ar) => $ar->lunas ? 'Lunas' : ($ar->jatuh_tempo_flag ? 'Jatuh Tempo' : 'Belum Jatuh Tempo');
+        $kaeNameByCode = User::where('role', 'kae')->whereNotNull('kae_code')->pluck('name', 'kae_code');
 
         $spreadsheet = new Spreadsheet();
         $spreadsheet->removeSheetByIndex(0);
@@ -138,10 +146,10 @@ class ArController extends Controller
         // sisa, jatuh tempo, status.
         $sheetAr = $spreadsheet->createSheet();
         $sheetAr->setTitle('Piutang');
-        $headersAr = ['Kode Mitra', 'Nama Mitra', 'KAE', 'No Order', 'Tanggal Order', 'Jumlah AR', 'Total Dibayar', 'Sisa AR', 'Tanggal Input', 'Termin (hari)', 'Tanggal Jatuh Tempo', 'Status', 'Hari Terlambat', 'Jumlah Cicilan'];
+        $headersAr = ['Kode Mitra', 'Nama Mitra', 'KAE', 'No Order', 'Tanggal Order', 'Tanggal Kirim', 'Total Transaksi', 'Jumlah AR', 'Total Dibayar', 'Sisa AR', 'Tanggal Input', 'Termin (hari)', 'Tanggal Jatuh Tempo', 'Status', 'Hari Terlambat', 'Jumlah Cicilan'];
         $sheetAr->fromArray($headersAr, null, 'A1', true);
-        $sheetAr->getStyle('A1:N1')->getFont()->setBold(true);
-        $sheetAr->getStyle('A1:N1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('EBE5EF');
+        $sheetAr->getStyle('A1:P1')->getFont()->setBold(true);
+        $sheetAr->getStyle('A1:P1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('EBE5EF');
 
         $r = 2;
         foreach ($arList as $ar) {
@@ -149,9 +157,11 @@ class ArController extends Controller
             $sheetAr->fromArray([
                 $mitra->kode_mitra ?? '—',
                 $mitra->nama ?? '—',
-                $mitra->kae_code ?? '—',
+                $kaeNameByCode[$mitra->kae_code ?? ''] ?? ($mitra->kae_code ?? '—'),
                 $ar->order->no_order,
                 optional($ar->order->tanggal_order)->format('d/m/Y'),
+                $ar->tanggal_kirim->format('d/m/Y'),
+                (float) $ar->total_transaksi,
                 (float) $ar->jumlah_ar,
                 $ar->totalDibayar(),
                 $ar->sisa_ar,
@@ -162,9 +172,10 @@ class ArController extends Controller
                 $ar->hari_terlambat,
                 $ar->payments->count(),
             ], null, 'A'.$r, true);
+            $sheetAr->setCellValueExplicit('D'.$r, $ar->order->no_order, DataType::TYPE_STRING);
             $r++;
         }
-        foreach (range('A', 'N') as $col) {
+        foreach (range('A', 'P') as $col) {
             $sheetAr->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -189,6 +200,7 @@ class ArController extends Controller
                     (float) $p->jumlah_bayar,
                     $p->creator->name ?? '—',
                 ], null, 'A'.$r, true);
+                $sheetCicilan->setCellValueExplicit('C'.$r, $ar->order->no_order, DataType::TYPE_STRING);
                 $r++;
             }
         }
@@ -209,6 +221,8 @@ class ArController extends Controller
     {
         $data = $request->validate([
             'order_id' => ['required', 'exists:orders,id'],
+            'total_transaksi' => ['required', 'integer', 'min:1'],
+            'tanggal_kirim' => ['required', 'date'],
             'jumlah_ar' => ['required', 'integer', 'min:1'],
             'jatuh_tempo_hari' => ['required', 'in:14,30'],
         ]);
@@ -217,14 +231,14 @@ class ArController extends Controller
             return back()->withErrors(['order_id' => 'Order ini sudah punya data AR.']);
         }
 
-        $tanggalInput = now()->toDateString();
-
         ArReceivable::create([
             'order_id' => $data['order_id'],
+            'total_transaksi' => $data['total_transaksi'],
+            'tanggal_kirim' => $data['tanggal_kirim'],
             'jumlah_ar' => $data['jumlah_ar'],
-            'tanggal_input' => $tanggalInput,
+            'tanggal_input' => now()->toDateString(),
             'jatuh_tempo_hari' => $data['jatuh_tempo_hari'],
-            'tanggal_jatuh_tempo' => now()->addDays((int) $data['jatuh_tempo_hari'])->toDateString(),
+            'tanggal_jatuh_tempo' => Carbon::parse($data['tanggal_kirim'])->addDays((int) $data['jatuh_tempo_hari'])->toDateString(),
             'created_by' => $request->user()->id,
         ]);
 
@@ -237,6 +251,8 @@ class ArController extends Controller
         $sudahDibayar = (int) $arReceivable->totalDibayar();
 
         $data = $request->validate([
+            'total_transaksi' => ['required', 'integer', 'min:1'],
+            'tanggal_kirim' => ['required', 'date'],
             'jumlah_ar' => ['required', 'integer', 'min:'.max(1, $sudahDibayar)],
             'jatuh_tempo_hari' => ['required', 'in:14,30'],
         ], [
@@ -244,9 +260,11 @@ class ArController extends Controller
         ]);
 
         $arReceivable->update([
+            'total_transaksi' => $data['total_transaksi'],
+            'tanggal_kirim' => $data['tanggal_kirim'],
             'jumlah_ar' => $data['jumlah_ar'],
             'jatuh_tempo_hari' => $data['jatuh_tempo_hari'],
-            'tanggal_jatuh_tempo' => $arReceivable->tanggal_input->copy()->addDays((int) $data['jatuh_tempo_hari'])->toDateString(),
+            'tanggal_jatuh_tempo' => Carbon::parse($data['tanggal_kirim'])->addDays((int) $data['jatuh_tempo_hari'])->toDateString(),
         ]);
 
         return redirect()->route('ar.index')->with('status', 'Data AR berhasil diperbarui.');
