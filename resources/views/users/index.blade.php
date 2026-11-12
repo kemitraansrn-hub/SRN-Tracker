@@ -14,6 +14,9 @@
     @if (session('status'))
         <div class="alert-success">{{ session('status') }}</div>
     @endif
+    @if ($errors->any())
+        <div class="alert-error">{{ $errors->first() }}</div>
+    @endif
 
     <section class="card table-card" style="padding:0;">
         <div class="table-scroll">
@@ -75,7 +78,18 @@
                                     <span class="chip chip-critical">Nonaktif</span>
                                 @endif
                             </td>
-                            <td><a href="{{ route('users.edit', $u) }}" class="link-action" style="color:var(--accent-ink); font-size:12.5px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 10px;">Edit</a></td>
+                            <td>
+                                <div style="display:flex; gap:6px;">
+                                    <a href="{{ route('users.edit', $u) }}" class="link-action" style="color:var(--accent-ink); font-size:12.5px; font-weight:600; text-decoration:none; border:1px solid var(--line); border-radius:7px; padding:5px 10px;">Edit</a>
+                                    @if ($u->id !== auth()->id())
+                                        <form method="POST" action="{{ route('users.destroy', $u) }}" onsubmit="return confirm('Hapus user {{ $u->name }}? Data tidak bisa dikembalikan.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger" style="width:auto; font-size:12.5px; padding:5px 10px;">Hapus</button>
+                                        </form>
+                                    @endif
+                                </div>
+                            </td>
                         </tr>
                     @empty
                         <tr><td colspan="7" style="color:var(--ink-muted);">Belum ada user.</td></tr>

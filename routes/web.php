@@ -291,6 +291,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::post('/', [UserController::class, 'store'])->name('store');
         Route::get('/{targetUser}/edit', [UserController::class, 'edit'])->name('edit');
         Route::put('/{targetUser}', [UserController::class, 'update'])->name('update');
+        Route::delete('/{targetUser}', [UserController::class, 'destroy'])->name('destroy');
     });
 
     Route::middleware('role:admin')->prefix('import')->name('import.')->group(function () {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -66,6 +67,29 @@ class UserController extends Controller
         $targetUser->update($data);
 
         return redirect()->route('users.index')->with('status', 'User berhasil diperbarui.');
+    }
+
+    public function destroy(Request $request, User $targetUser): RedirectResponse
+    {
+        if ($targetUser->id === $request->user()->id) {
+            return back()->withErrors(['hapus' => 'Kamu tidak bisa menghapus akun sendiri.']);
+        }
+
+        try {
+            if ($targetUser->photo) {
+                Storage::disk('public')->delete($targetUser->photo);
+            }
+
+            $targetUser->delete();
+        } catch (QueryException $e) {
+            if ((int) $e->getCode() === 23000) {
+                return back()->withErrors(['hapus' => 'User ini tidak bisa dihapus karena masih berelasi dengan data lain di sistem (order, follow-up, dsb). Nonaktifkan saja lewat tombol Edit.']);
+            }
+
+            throw $e;
+        }
+
+        return redirect()->route('users.index')->with('status', 'User berhasil dihapus.');
     }
 
     /**
