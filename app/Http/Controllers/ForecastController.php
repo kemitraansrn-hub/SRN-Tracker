@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ForecastRo;
 use App\Models\Mitra;
+use App\Models\OmsetParsial;
 use App\Models\RunRateTarget;
 use App\Models\SpecialDeal;
 use App\Models\TargetBulanan;
@@ -208,10 +209,17 @@ class ForecastController extends Controller
         ]);
 
         $companyTarget = RunRateTarget::companyTarget($bulan, $tahun);
+        // Parsial cuma diinput lewat Dashboard (angka manual bulanan,
+        // perusahaan-wide, gak bisa diatribusikan ke 1 segmen) -- di sini
+        // cuma ditampilkan biar Best Estimate perusahaan konsisten sama
+        // yang di Dashboard, gak ada input terpisah di halaman ini.
+        $omsetParsial = $user->canViewAll() ? OmsetParsial::forPeriode($bulan, $tahun) : null;
+        $parsialJumlah = (float) ($omsetParsial->jumlah ?? 0);
         $bestEstimateVsCompany = $companyTarget ? [
             'target' => $companyTarget,
-            'best_estimate' => $totalRow['best_estimate'],
-            'pct' => round($totalRow['best_estimate'] / $companyTarget * 100, 1),
+            'best_estimate' => $totalRow['best_estimate'] + $parsialJumlah,
+            'parsial' => $omsetParsial,
+            'pct' => round(($totalRow['best_estimate'] + $parsialJumlah) / $companyTarget * 100, 1),
         ] : null;
 
         return view('forecast.index', [

@@ -60,6 +60,12 @@
                 @php $c = $bestEstimateVsCompany['pct'] >= 100 ? 'good' : ($bestEstimateVsCompany['pct'] >= 70 ? 'warn' : 'critical'); @endphp
                 <span class="chip chip-{{ $c }}">{{ $bestEstimateVsCompany['pct'] }}%</span>
             </div>
+            @if ($bestEstimateVsCompany['parsial'])
+                <div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                    <span style="font-size:11.5px; color:var(--ink-muted);">Termasuk Parsial (manual){{ $bestEstimateVsCompany['parsial']->keterangan ? ' — '.$bestEstimateVsCompany['parsial']->keterangan : '' }}</span>
+                    <span class="tnum" style="font-size:12px; font-weight:600;">{{ $rp($bestEstimateVsCompany['parsial']->jumlah) }}</span>
+                </div>
+            @endif
         </div>
     @endif
 
