@@ -16,10 +16,11 @@ use Illuminate\Support\Facades\DB;
  * diimport -- supaya baris `is_legacy` (lihat AkuisisiLeadImportValidator) TETAP dapat skor yang
  * benar sekali di awal, karena hook AkuisisiLead sengaja TIDAK menghitung ulang skor buat lead
  * legacy. Buat lead baru (non-legacy) ini cuma dobel hitung dengan hasil yang sama, gak masalah.
- * DITAMBAH lagi (2026-11-02): baris dengan `overwrite_lead_id` (lihat AkuisisiLeadImportValidator,
- * cuma lead legacy tanpa riwayat follow-up asli yang bisa lewat sini) MENIMPA seluruh kolom yang
- * diimport pada lead yang sudah ada itu, bukan bikin baris baru -- replace penuh, bukan patch
- * sebagian (kolom yang dikosongkan di file baru akan ikut kekosongan di lead-nya).
+ * DITAMBAH lagi (2026-11-02, DIPERLUAS 2026-11-12): baris dengan `overwrite_lead_id` (lihat
+ * AkuisisiLeadImportValidator -- sejak 2026-11-12 berlaku ke lead APA PUN yang nomor WA-nya
+ * cocok, termasuk yang sudah ada riwayat follow-up asli) MENIMPA seluruh kolom yang diimport
+ * pada lead yang sudah ada itu, bukan bikin baris baru -- replace penuh, bukan patch sebagian
+ * (kolom yang dikosongkan di file baru akan ikut kekosongan di lead-nya).
  */
 class AkuisisiLeadImporter
 {

@@ -31,7 +31,7 @@
 
                 <label style="display:flex; align-items:flex-start; gap:8px; border:1px solid var(--warn); background:var(--warn-soft); border-radius:8px; padding:8px 12px; margin-top:12px; font-size:11.5px; color:var(--warn);">
                     <input type="checkbox" name="overwrite_existing" value="1" style="margin-top:2px;" {{ old('overwrite_existing') ? 'checked' : '' }}>
-                    <span>Timpa data lead lama yang nomor WA-nya sudah ada di database. Hanya berlaku untuk lead <strong>data lama</strong> yang belum pernah di-follow-up beneran di aplikasi ini (lead yang sudah ada riwayat follow-up aslinya tetap gak akan ditimpa, apapun pilihan ini).</span>
+                    <span>Timpa data lead yang nomor WA-nya sudah ada di database -- <strong>seluruh kolom diganti</strong> dengan isi file ini, termasuk lead yang sudah ada riwayat follow-up-nya (Tahapan Pipeline, Hasil Follow Up, Tanggal Next Follow Up, Skor &amp; Prioritas ikut diganti sesuai isi file). Pastikan file ini datanya terbaru sebelum upload -- lead yang gak dicentang di sini (nomor WA-nya sudah ada tapi filenya gak ditandai timpa) akan dilewati, gak diubah sama sekali.</span>
                 </label>
 
                 <button type="submit" class="btn btn-primary" style="width:auto; margin-top:12px;">Upload &amp; Pratinjau</button>

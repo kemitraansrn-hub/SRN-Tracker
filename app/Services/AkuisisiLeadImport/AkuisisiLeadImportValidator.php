@@ -17,10 +17,12 @@ use Throwable;
  * "Hasil Follow Up" & "Tanggal Next Follow Up" (lihat AkuisisiImportColumns) -- mengisi salah satu
  * menandai baris itu `is_legacy` (permintaan eksplisit 2026-11-02, biar data lead lama yang sudah
  * ada status/jadwalnya bisa dibawa langsung tanpa harus bikin riwayat follow-up palsu), DITAMBAH
- * lagi opsi `$overwrite` (permintaan eksplisit 2026-11-02 lainnya) buat upload ulang menimpa data
- * lead LAMA yang salah -- dibatasi cuma ke lead yang masih `is_legacy` DAN belum ada riwayat
- * follow-up ASLI yang dicatat CS di aplikasi ini (`followups_count === 0`), biar gak pernah
- * menimpa progress follow-up yang sudah benar-benar berjalan.
+ * lagi opsi `$overwrite` (permintaan eksplisit 2026-11-02, DIPERLUAS 2026-11-12) buat upload
+ * ulang menimpa data lead yang nomor WA-nya sudah ada -- replace PENUH semua kolom yang
+ * diimport, termasuk lead yang sudah ada riwayat follow-up asli (pilihan eksplisit user,
+ * demi efisiensi edit massal rutin lewat Excel; sebelum 2026-11-12 ini dibatasi cuma ke lead
+ * `is_legacy` tanpa riwayat follow-up sama sekali). `is_legacy` lead yang ditimpa TIDAK
+ * dipaksa true -- ikut apa adanya hasil kolom Hasil Follow Up/Next Follow Up baris itu sendiri.
  */
 class AkuisisiLeadImportValidator
 {
@@ -54,7 +56,7 @@ class AkuisisiLeadImportValidator
         }
 
         $this->loadChoices();
-        $existing = AkuisisiLead::withTrashed()->withCount('followups')->get(['id', 'whatsapp', 'is_legacy', 'deleted_at'])->keyBy('whatsapp');
+        $existing = AkuisisiLead::withTrashed()->get(['id', 'whatsapp', 'is_legacy', 'deleted_at'])->keyBy('whatsapp');
         $defaultStage = AkuisisiPipelineStage::where('code', 'PROFILING')->value('id');
         $seen = [];
         $valid = [];
@@ -80,16 +82,20 @@ class AkuisisiLeadImportValidator
 
             if (isset($seen[$phone])) {
                 $problems[] = ['row' => $rowNumber, 'type' => self::TYPE_DUPLICATE, 'messages' => ["Nomor {$phone} dobel dengan baris {$seen[$phone]}"], 'values' => $display];
-            } elseif ($match && $overwrite && $match->is_legacy && $match->followups_count === 0 && ! $match->deleted_at) {
+            } elseif ($match && $overwrite && ! $match->deleted_at) {
+                // Replace penuh (bukan patch sebagian) termasuk Tahapan Pipeline/Hasil Follow
+                // Up/Next Follow Up/Skor/Prioritas, walau lead-nya sudah ada riwayat follow-up
+                // asli -- pilihan eksplisit user 2026-11-12 demi efisiensi edit massal lewat
+                // Excel, meski artinya Excel yang gak sinkron bisa bikin tahapan/jadwal lead
+                // aktif jadi salah/mundur. `is_legacy` TIDAK dipaksa true di sini (beda dari
+                // perilaku lama) -- nilainya ikut apa adanya hasil validateRow() di atas,
+                // berdasarkan kolom Hasil Follow Up/Next Follow Up baris ini sendiri.
                 $seen[$phone] = $rowNumber;
-                $attributes['is_legacy'] = true;
                 $valid[] = ['row' => $rowNumber, 'attributes' => $attributes, 'values' => $display, 'overwrite_lead_id' => $match->id];
             } elseif ($match) {
-                $reason = $overwrite ? match (true) {
-                    (bool) $match->deleted_at => "Nomor {$phone} sudah ada tapi datanya terhapus -- gak bisa ditimpa lewat import",
-                    ! $match->is_legacy || $match->followups_count > 0 => "Nomor {$phone} sudah ada & sudah pernah di-follow-up -- gak bisa ditimpa",
-                    default => "Nomor {$phone} sudah ada di database",
-                } : "Nomor {$phone} sudah ada di database";
+                $reason = ($overwrite && $match->deleted_at)
+                    ? "Nomor {$phone} sudah ada tapi datanya terhapus -- gak bisa ditimpa lewat import"
+                    : "Nomor {$phone} sudah ada di database";
                 $problems[] = ['row' => $rowNumber, 'type' => self::TYPE_EXISTING, 'messages' => [$reason], 'values' => $display];
             } else {
                 $seen[$phone] = $rowNumber;
