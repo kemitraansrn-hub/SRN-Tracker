@@ -188,13 +188,9 @@
                         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         <span class="nav-label">Pengakuisisi</span>
                     </a>
-                    <a href="{{ route('akuisisi-leads.index') }}" class="nav-item {{ request()->routeIs('akuisisi-leads.*') ? 'active' : '' }}" title="Database Lead">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-                        <span class="nav-label">Database Lead</span>
-                    </a>
-                    <a href="{{ route('akuisisi-channel-performance.index') }}" class="nav-item {{ request()->routeIs('akuisisi-channel-performance.*') ? 'active' : '' }}" title="Performa Channel">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                        <span class="nav-label">Performa Channel</span>
+                    <a href="{{ route('ar.index') }}" class="nav-item {{ request()->routeIs('ar.*') ? 'active' : '' }}" title="Tracking AR">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                        <span class="nav-label">Tracking AR</span>
                     </a>
                 @elseif (auth()->user()->isCompliance())
                     @php $developmentActive = request()->routeIs('development.*', 'data-development.*', 'tracking-cp.*', 'takedown-banding.*', 'price-adjustment-monitoring.*', 'kpi-partnership-compliance.*'); @endphp
