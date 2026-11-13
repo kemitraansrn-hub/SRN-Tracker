@@ -17,6 +17,10 @@ use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Profiling Mitra — modul Growth Specialist (dari sheet "Kartu Profil
@@ -30,6 +34,38 @@ class GrowthSpecialistController extends Controller
     private const PLATFORM_OPTIONS = ['Shopee', 'Tokopedia', 'Tiktok', 'Lazada', 'Meta Ads', 'WA', 'Reseller', 'Offline Toko'];
 
     public function index(Request $request): View
+    {
+        $rows = $this->filteredRows($request);
+        $kaeMap = User::kaeNameMap();
+
+        $perPage = 20;
+        $page = (int) $request->input('page', 1);
+        $rowsPage = new LengthAwarePaginator(
+            $rows->forPage($page, $perPage)->values(),
+            $rows->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
+        return view('growth-specialist.profiling-mitra-index', [
+            'rowsPage' => $rowsPage,
+            'totalMitra' => MitraProfilGrowth::count(),
+            'kaeOptions' => $kaeMap,
+            'filters' => $request->only(['cari', 'tipe_mitra', 'kae_code', 'lms_status']),
+        ]);
+    }
+
+    /**
+     * Baris Master Database (SEMUA mitra dengan profil, sudah kena filter
+     * cari/tipe_mitra/kae_code/lms_status + scope KAE) sebelum dipaginasi —
+     * dipakai bareng oleh index() (dipaginasi 20/halaman) dan export()
+     * (semua baris hasil filter, tanpa paginasi, pola yang sama kayak
+     * export AR/Webinar/dst di app ini).
+     *
+     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     */
+    private function filteredRows(Request $request): \Illuminate\Support\Collection
     {
         $user = $request->user();
         $now = now();
@@ -81,23 +117,81 @@ class GrowthSpecialistController extends Controller
             $rows = $rows->filter(fn ($r) => $lmsStatus === 'belum' ? $r['profil']->lms_status === null : $r['profil']->lms_status === $lmsStatus);
         }
 
-        $rows = $rows->values();
+        return $rows->values();
+    }
 
-        $perPage = 20;
-        $page = (int) $request->input('page', 1);
-        $rowsPage = new LengthAwarePaginator(
-            $rows->forPage($page, $perPage)->values(),
-            $rows->count(),
-            $perPage,
-            $page,
-            ['path' => $request->url(), 'query' => $request->query()]
-        );
+    public function export(Request $request): StreamedResponse
+    {
+        $rows = $this->filteredRows($request);
 
-        return view('growth-specialist.profiling-mitra-index', [
-            'rowsPage' => $rowsPage,
-            'totalMitra' => MitraProfilGrowth::count(),
-            'kaeOptions' => $kaeMap,
-            'filters' => $request->only(['cari', 'tipe_mitra', 'kae_code', 'lms_status']),
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Profiling Mitra');
+
+        $headers = [
+            'Kode Mitra', 'Nama Mitra', 'KAE RO', 'Channel', 'Status', 'No. WA', 'Domisili/Kota', 'Tgl Onboarding',
+            'Modal Bisnis', 'Modal SRN', 'Cost', '% Op. Cost', 'Toleransi Cashflow', 'Tim/Sendiri', 'Pengalaman Jualan', 'Platform Jualan', 'Jam Aktif',
+            'Tipe Channel', 'Channel Fokus 1', 'Channel Fokus 2',
+            'Motivasi', 'Kemampuan', 'Keaktifan', 'Tipe Mitra', 'Deadline Setup Channel',
+            'Target Traffic', 'Target Leads', 'Deadline Closing',
+            'Status LMS',
+            'Catatan',
+        ];
+        $lastCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($headers));
+        $sheet->fromArray($headers, null, 'A1', true);
+        $sheet->getStyle("A1:{$lastCol}1")->getFont()->setBold(true);
+        $sheet->getStyle("A1:{$lastCol}1")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('EBE5EF');
+
+        $r = 2;
+        foreach ($rows as $row) {
+            $m = $row['mitra'];
+            $p = $row['profil'];
+
+            $sheet->fromArray([
+                $m->kode_mitra,
+                $m->nama,
+                $row['kae_nama'] ?? '—',
+                $row['channel'] ?? '—',
+                $p->status ?? '—',
+                $p->no_wa ?? '—',
+                $p->domisili_kota ?? '—',
+                $p->tanggal_onboarding?->format('d/m/Y') ?? '—',
+                $p->modal_bisnis !== null ? (float) $p->modal_bisnis : null,
+                $p->modal_srn !== null ? (float) $p->modal_srn : null,
+                $p->cost !== null ? (float) $p->cost : null,
+                $row['pct'] !== null ? $row['pct'].'%' : '—',
+                $row['toleransi_cashflow'] ?? '—',
+                $p->tim_sendiri ?? '—',
+                $p->pengalaman_jualan ?? '—',
+                $p->platform_jualan ? implode(', ', $p->platform_jualan) : '—',
+                $p->jam_aktif ?? '—',
+                $p->tipe_channel ?? '—',
+                $p->channel_fokus_1 ? implode(', ', $p->channel_fokus_1) : '—',
+                $p->channel_fokus_2 ? implode(', ', $p->channel_fokus_2) : '—',
+                $p->motivasi ?? '—',
+                $p->kemampuan ?? '—',
+                $p->keaktifan ?? '—',
+                $row['tipe_mitra'] ?? '—',
+                $p->deadline_setup_channel?->format('d/m/Y') ?? '—',
+                $p->target_traffic ?? '—',
+                $p->target_leads ?? '—',
+                $row['deadline_closing']?->format('d/m/Y') ?? '—',
+                $p->lms_status ?? '—',
+                $p->catatan ?? '—',
+            ], null, 'A'.$r, true);
+            $r++;
+        }
+
+        for ($i = 1; $i <= count($headers); $i++) {
+            $sheet->getColumnDimension(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i))->setAutoSize(true);
+        }
+
+        $filename = 'Profiling_Mitra_'.now()->format('Y-m-d').'.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
     }
 

@@ -398,6 +398,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
     Route::prefix('growth-specialist')->name('growth-specialist.')->group(function () {
         Route::get('profiling-mitra', [\App\Http\Controllers\GrowthSpecialistController::class, 'index'])->name('profiling-mitra');
         Route::get('profiling-mitra/pilih-mitra', [\App\Http\Controllers\GrowthSpecialistController::class, 'create'])->name('profiling-mitra.create');
+        Route::get('profiling-mitra/export', [\App\Http\Controllers\GrowthSpecialistController::class, 'export'])->name('profiling-mitra.export');
         Route::get('profiling-mitra/{mitra}', [\App\Http\Controllers\GrowthSpecialistController::class, 'edit'])->name('profiling-mitra.edit');
         Route::put('profiling-mitra/{mitra}', [\App\Http\Controllers\GrowthSpecialistController::class, 'update'])->name('profiling-mitra.update');
         Route::get('profiling-mitra/{mitra}/kartu', [\App\Http\Controllers\GrowthSpecialistController::class, 'kartu'])->name('profiling-mitra.kartu');

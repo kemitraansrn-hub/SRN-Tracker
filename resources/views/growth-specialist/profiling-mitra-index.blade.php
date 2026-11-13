@@ -8,7 +8,10 @@
 @section('content')
     <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:4px;">
         <h1 class="display" style="font-size:24px;">Profiling Mitra</h1>
-        <a href="{{ route('growth-specialist.profiling-mitra.create') }}" class="btn btn-primary" style="width:auto; padding:9px 18px; text-decoration:none; display:inline-block;">+ Input Mitra</a>
+        <div style="display:flex; gap:10px;">
+            <a href="{{ route('growth-specialist.profiling-mitra.export', $filters) }}" class="btn" style="width:auto; padding:9px 18px; text-decoration:none; display:inline-block;">Download Excel</a>
+            <a href="{{ route('growth-specialist.profiling-mitra.create') }}" class="btn btn-primary" style="width:auto; padding:9px 18px; text-decoration:none; display:inline-block;">+ Input Mitra</a>
+        </div>
     </div>
     <div class="card-hint" style="margin-bottom:16px;">Master Database &mdash; {{ $totalMitra }} mitra sudah diinput datanya.</div>
 
