@@ -7,14 +7,16 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Finance only ever gets Poin Mitra, Penukaran Poin, Pengajuan Buy Back, dan
- * Dashboard (view + approve only di buyback — create/edit/delete tetap
- * digerbang per-route). Deny-by-default: every route not in the allowlist is
- * blocked, so a future new route doesn't accidentally leak through.
+ * Finance only ever gets Poin Mitra, Penukaran Poin, Pengajuan Buy Back,
+ * Tracking AR / Data Piutang, dan Dashboard (view + approve only di
+ * buyback/poin-redemption, view-only di ar — create/edit/delete tetap
+ * digerbang per-route lewat role:admin). Deny-by-default: every route not
+ * in the allowlist is blocked, so a future new route doesn't accidentally
+ * leak through.
  */
 class RestrictFinanceAccess
 {
-    private const ALLOWED_PREFIXES = ['poin.', 'poin-redemption.', 'buyback.', 'dashboard'];
+    private const ALLOWED_PREFIXES = ['poin.', 'poin-redemption.', 'buyback.', 'ar.', 'dashboard'];
 
     public function handle(Request $request, Closure $next): Response
     {
