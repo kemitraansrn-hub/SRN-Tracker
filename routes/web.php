@@ -126,7 +126,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::get('/{poinRedemption}/edit', [PoinRedemptionController::class, 'edit'])->name('edit');
         Route::put('/{poinRedemption}', [PoinRedemptionController::class, 'update'])->name('update');
         Route::delete('/{poinRedemption}', [PoinRedemptionController::class, 'destroy'])->name('destroy');
-        Route::post('/{poinRedemption}/approve', [PoinRedemptionController::class, 'approve'])->middleware('role:admin,head')->name('approve');
+        Route::post('/{poinRedemption}/approve', [PoinRedemptionController::class, 'approve'])->middleware('role:admin,head,finance')->name('approve');
     });
 
     Route::prefix('input-penjualan')->name('sales-draft.')->group(function () {
