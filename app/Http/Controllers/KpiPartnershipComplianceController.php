@@ -14,7 +14,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * KPI Partnership Compliance — scorecard bulanan buat tim Compliance,
  * dihitung langsung dari data Tracking CP (bukan input manual). 4 KPI,
  * masing-masing bobot 25%, formula & batas SLA sudah disepakati:
- * - Identifikasi Mitra: mitra_id keisi / total kasus bulan itu.
+ * - Identifikasi Mitra: mitra_id ATAU nama_mitra_manual keisi / total kasus
+ *   bulan itu — manual tetap dihitung "teridentifikasi" karena tim sudah
+ *   berhasil menemukan nama mitranya, cuma memang belum ada/ketemu di
+ *   Data Mitra (lihat CpCase::namaMitraTampil() yang juga fallback ke
+ *   nama_mitra_manual).
  * - Penyelesaian Kasus: Case Closed / (Case Closed + beneran Take Down)
  *   — kasus yang masih Progres/Pengajuan Takedown gak ikut jadi pembagi
  *   soalnya belum "selesai".
@@ -99,7 +103,9 @@ class KpiPartnershipComplianceController extends Controller
         $totalKasus = $baseQuery()->count();
         $pct = fn (int $n, int $d) => $d > 0 ? round($n / $d * 100, 1) : null;
 
-        $mitraTeridentifikasi = $baseQuery()->whereNotNull('mitra_id')->count();
+        $mitraTeridentifikasi = $baseQuery()
+            ->where(fn ($q) => $q->whereNotNull('mitra_id')->orWhereNotNull('nama_mitra_manual'))
+            ->count();
 
         $caseClosedCount = $baseQuery()->where('status_kasus', 'Case Closed')->count();
         $takenDownCount = $baseQuery()->whereHas('takedownBanding')->count();
@@ -123,8 +129,8 @@ class KpiPartnershipComplianceController extends Controller
                 'target' => 90,
                 'target_op' => '>',
                 'realisasi' => $pct($mitraTeridentifikasi, $totalKasus),
-                'keterangan' => 'Mengukur kemampuan tim menemukan identitas mitra dari link pelanggaran yang ditemukan.',
-                'rumus' => 'Jumlah kasus dengan Mitra teridentifikasi ÷ Total kasus bulan ini',
+                'keterangan' => 'Mengukur kemampuan tim menemukan identitas mitra dari link pelanggaran yang ditemukan. Mitra yang diisi manual (gak ketemu di Data Mitra) tetap dihitung teridentifikasi, selama namanya sudah ditemukan.',
+                'rumus' => 'Jumlah kasus dengan Mitra teridentifikasi (dari Data Mitra ATAU diisi manual) ÷ Total kasus bulan ini',
                 'numerator' => $mitraTeridentifikasi,
                 'denominator' => $totalKasus,
                 'numerator_label' => 'kasus mitra teridentifikasi',
