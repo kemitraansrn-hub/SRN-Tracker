@@ -41,6 +41,13 @@ class DashboardController extends Controller
         $kaeCode = $canViewAll ? null : $user->kae_code;
         $omsetParsial = $canViewAll ? OmsetParsial::forPeriode($now->month, $now->year) : null;
 
+        // Card "Omset Hari Ini" -- buat cek cepat habis klik Synchronize di
+        // menu Import Data, apakah data yang masuk hari itu sudah sesuai.
+        // Admin-only (sejalan sama halaman Import Data yang role:admin),
+        // selalu "hari ini" beneran jadi otomatis reset tiap ganti tanggal.
+        $omsetHariIni = $canViewAll ? Order::omsetHariIni() : null;
+        $jumlahOrderHariIni = $canViewAll ? Order::jumlahOrderHariIni() : null;
+
         $ordersThisMonth = Order::query()
             ->whereYear('tanggal_order', $now->year)
             ->whereMonth('tanggal_order', $now->month)
@@ -259,6 +266,8 @@ class DashboardController extends Controller
             'mtdGrowthPct' => $mtdGrowthPct,
             'dayCap' => $dayCap,
             'omsetParsial' => $omsetParsial,
+            'omsetHariIni' => $omsetHariIni,
+            'jumlahOrderHariIni' => $jumlahOrderHariIni,
             'totalOmsetBulanIni' => $totalOmsetBulanIni,
             'jumlahOrderBulanIni' => $jumlahOrderBulanIni,
             'adaTargetBulanIni' => $adaTargetBulanIni,

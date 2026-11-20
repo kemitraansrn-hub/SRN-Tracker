@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@php
+    $rp = fn ($v) => 'Rp'.number_format((float) $v, 0, ',', '.');
+@endphp
+
 @section('content')
     <h1 class="display" style="font-size:24px;">Import Data</h1>
     <div style="color:var(--ink-muted); font-size:13px; margin-top:4px; margin-bottom:24px;">
@@ -73,23 +77,30 @@
         </form>
     </section>
 
-    <section class="card" style="margin-bottom:20px;">
-        <div class="card-head">
-            <div class="card-title">Synchronize dari Perpack</div>
-            <div class="card-hint">Tarik Order Harian langsung dari API Perpack, tanpa upload Excel manual.</div>
-        </div>
-        @if ($perpackConfigured)
-            <form method="POST" action="{{ route('import.sync') }}" style="margin-top:12px;"
-                  onsubmit="this.querySelector('button').disabled = true; this.querySelector('button').textContent = 'Menyinkronkan...';">
-                @csrf
-                <button type="submit" class="btn btn-primary" style="width:auto;">Synchronize</button>
-            </form>
-        @else
-            <div style="color:var(--ink-muted); font-size:13px; margin-top:12px;">
-                Belum dikonfigurasi — kunci API Perpack belum diisi di server ini.
+    <div style="display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:20px; align-items:stretch;">
+        <section class="card" style="min-width:0;">
+            <div class="card-head">
+                <div class="card-title">Synchronize dari Perpack</div>
+                <div class="card-hint">Tarik Order Harian langsung dari API Perpack, tanpa upload Excel manual.</div>
             </div>
-        @endif
-    </section>
+            @if ($perpackConfigured)
+                <form method="POST" action="{{ route('import.sync') }}" style="margin-top:12px;"
+                      onsubmit="this.querySelector('button').disabled = true; this.querySelector('button').textContent = 'Menyinkronkan...';">
+                    @csrf
+                    <button type="submit" class="btn btn-primary" style="width:auto;">Synchronize</button>
+                </form>
+            @else
+                <div style="color:var(--ink-muted); font-size:13px; margin-top:12px;">
+                    Belum dikonfigurasi — kunci API Perpack belum diisi di server ini.
+                </div>
+            @endif
+        </section>
+        <div class="card" style="min-width:0;">
+            <div class="info-label" style="margin-bottom:10px;">Omset Hari Ini</div>
+            <div style="font-size:19px; font-weight:700; min-width:0; overflow-wrap:anywhere;" class="tnum">{{ $rp($omsetHariIni) }}</div>
+            <div style="font-size:11.5px; color:var(--ink-muted); margin-top:6px;">{{ $jumlahOrderHariIni }} order &middot; reset tiap ganti tanggal &middot; buat cek hasil Synchronize</div>
+        </div>
+    </div>
 
     <script>
         const templateUrls = {

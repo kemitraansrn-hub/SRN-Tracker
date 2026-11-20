@@ -48,4 +48,20 @@ class Order extends Model
     {
         return $this->hasOne(ArReceivable::class);
     }
+
+    /**
+     * Total omset order dengan Tanggal Order = hari ini, dari sumber manapun
+     * (sync API maupun upload manual). Dipakai buat card "Omset Hari Ini" di
+     * Dashboard & Import Data -- sengaja gak di-cache, biar resetnya otomatis
+     * tiap ganti tanggal cuma karena query-nya selalu "hari ini".
+     */
+    public static function omsetHariIni(): float
+    {
+        return (float) static::whereDate('tanggal_order', today())->sum('total_transaksi');
+    }
+
+    public static function jumlahOrderHariIni(): int
+    {
+        return static::whereDate('tanggal_order', today())->count();
+    }
 }

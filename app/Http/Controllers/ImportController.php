@@ -46,6 +46,8 @@ class ImportController extends Controller
             'history' => ImportBatch::with('uploader')->latest()->limit(15)->get(),
             'pending' => null,
             'perpackConfigured' => app(\App\Services\PerpackApiClient::class)->isConfigured(),
+            'omsetHariIni' => Order::omsetHariIni(),
+            'jumlahOrderHariIni' => Order::jumlahOrderHariIni(),
         ]);
     }
 
