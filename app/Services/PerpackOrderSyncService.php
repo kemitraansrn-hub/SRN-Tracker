@@ -17,12 +17,19 @@ use Carbon\Carbon;
  * Dua pass per sync run:
  *  1. Order baru: dari tanggal sync sukses terakhir (atau awal bulan berjalan
  *     kalau belum pernah sync) sampai hari ini. Order berstatus "cancelled"
- *     di Perpack tidak pernah dimasukkan sama sekali.
- *  2. Reconcile pembatalan: re-cek 2 hari terakhir saja -- order yang sudah
- *     ada di SRN tapi sekarang "cancelled" di Perpack di-hard-delete (cascade
- *     ke order_items). Order lebih lama dari 2 hari tidak di-re-cek otomatis;
- *     kalau ada pembatalan telat ketahuan, fallback-nya hapus manual lewat
- *     menu Transaksi (keputusan produk, bukan keterbatasan teknis).
+ *     ATAU "pending" di Perpack tidak pernah dimasukkan sama sekali --
+ *     "pending" ternyata order yang belum benar-benar jadi (semacam draft),
+ *     gak pernah muncul juga di export manual (ketahuan 2026-11-20 dari
+ *     insiden omset kelebihan hitung, order pending ikut ke-insert).
+ *  2. Reconcile: re-cek 30 hari terakhir (disamakan ke saran resmi Perpack
+ *     sendiri di dokumentasi API -- "setiap hari tarik ulang 30 hari
+ *     terakhir", sebelumnya cuma 2 hari dan kebukti kurang: ada order yang
+ *     baru dibatalkan 9 hari setelah dibuat, kelewat kecek dan omset
+ *     kelebihan hitung ~Rp105jt sampai ketahuan user). Order yang sudah ada
+ *     di SRN tapi sekarang "cancelled"/"pending" di Perpack di-hard-delete
+ *     (cascade ke order_items). Order lebih lama dari 30 hari tidak di-re-cek
+ *     otomatis; kalau ada pembatalan lebih telat dari itu, fallback-nya hapus
+ *     manual lewat menu Transaksi.
  *
  * "Tanggal sync terakhir" disimpan di kolom import_batches.tanggal_data yang
  * SUDAH ADA (jenis='order_sync', status='berhasil') -- sengaja tidak nambah
@@ -30,7 +37,10 @@ use Carbon\Carbon;
  */
 class PerpackOrderSyncService
 {
-    private const RECONCILE_DAYS = 2;
+    private const RECONCILE_DAYS = 30;
+
+    /** Status Perpack yang bukan order "jadi" -- gak pernah dimasukkan/disimpan di SRN. */
+    private const STATUS_BUKAN_ORDER_SAH = ['cancelled', 'pending'];
 
     public function __construct(
         private readonly PerpackApiClient $client,
@@ -100,7 +110,7 @@ class PerpackOrderSyncService
         ];
 
         $orderRows = $this->client->listOrders($query);
-        $candidateRows = array_filter($orderRows, fn (array $row) => ($row['status'] ?? null) !== 'cancelled');
+        $candidateRows = array_filter($orderRows, fn (array $row) => ! in_array($row['status'] ?? null, self::STATUS_BUKAN_ORDER_SAH, true));
 
         if ($candidateRows === []) {
             return 0;
@@ -229,7 +239,7 @@ class PerpackOrderSyncService
         ]);
 
         $cancelledRefs = array_column(
-            array_filter($rows, fn (array $row) => ($row['status'] ?? null) === 'cancelled'),
+            array_filter($rows, fn (array $row) => in_array($row['status'] ?? null, self::STATUS_BUKAN_ORDER_SAH, true)),
             'reference_no',
         );
 
