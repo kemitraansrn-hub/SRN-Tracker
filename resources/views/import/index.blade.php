@@ -73,6 +73,24 @@
         </form>
     </section>
 
+    <section class="card" style="margin-bottom:20px;">
+        <div class="card-head">
+            <div class="card-title">Synchronize dari Perpack</div>
+            <div class="card-hint">Tarik Order Harian langsung dari API Perpack, tanpa upload Excel manual.</div>
+        </div>
+        @if ($perpackConfigured)
+            <form method="POST" action="{{ route('import.sync') }}" style="margin-top:12px;"
+                  onsubmit="this.querySelector('button').disabled = true; this.querySelector('button').textContent = 'Menyinkronkan...';">
+                @csrf
+                <button type="submit" class="btn btn-primary" style="width:auto;">Synchronize</button>
+            </form>
+        @else
+            <div style="color:var(--ink-muted); font-size:13px; margin-top:12px;">
+                Belum dikonfigurasi — kunci API Perpack belum diisi di server ini.
+            </div>
+        @endif
+    </section>
+
     <script>
         const templateUrls = {
             order_harian: "{{ route('import.template', 'order_harian') }}",
@@ -168,6 +186,7 @@
                                 @switch($batch->jenis)
                                     @case('order_harian') Order Harian @break
                                     @case('order_historis') Order Historis @break
+                                    @case('order_sync') Sinkronisasi API @break
                                     @default Target Bulanan
                                 @endswitch
                             </td>

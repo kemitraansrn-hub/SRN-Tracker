@@ -41,4 +41,9 @@ return [
         'redirect_uri' => env('GOOGLE_CALENDAR_REDIRECT_URI'),
     ],
 
+    'perpack' => [
+        'base_url' => env('PERPACK_API_BASE_URL'),
+        'api_key' => env('PERPACK_API_KEY'),
+    ],
+
 ];

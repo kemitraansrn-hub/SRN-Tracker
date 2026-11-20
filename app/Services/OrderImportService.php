@@ -26,6 +26,12 @@ class OrderImportService
 {
     use ParsesSpreadsheetHeaders;
 
+    /** @var array<string, Mitra> per-request cache, also reused by PerpackOrderSyncService */
+    private array $mitraCache = [];
+
+    /** @var array<string, Produk> per-request cache, also reused by PerpackOrderSyncService */
+    private array $produkCache = [];
+
     private const HEADER_ALIASES_TRANSAKSI = [
         'tanggal' => ['TANGGAL', 'TANGGAL ORDER'],
         'bulan_order' => ['BULAN ORDER', 'BULAN'],
@@ -304,27 +310,6 @@ class OrderImportService
      */
     private function persistRows(array $parsed, ImportBatch $batch): void
     {
-        $mitraByKode = [];
-        $resolveMitra = function (string $kode, string $nama, ?string $alamat, ?string $kaeCode) use (&$mitraByKode) {
-            $mitra = $mitraByKode[$kode] ?? Mitra::firstOrNew(['kode_mitra' => $kode]);
-
-            $mitra->nama = $nama ?: ($mitra->nama ?? $kode);
-            if ($alamat) {
-                $mitra->alamat = $alamat;
-            }
-            if ($kaeCode) {
-                $mitra->kae_code = $kaeCode;
-            }
-            if (! $mitra->exists) {
-                $mitra->status = 'aktif';
-            }
-            if ($mitra->isDirty()) {
-                $mitra->save();
-            }
-
-            return $mitraByKode[$kode] = $mitra;
-        };
-
         $orderIdByNoOrder = [];
 
         foreach ($parsed['orders'] as $row) {
@@ -334,7 +319,7 @@ class OrderImportService
                 continue;
             }
 
-            $mitra = $resolveMitra($row['reseller'], $row['name'] ?? $row['reseller'], $row['address'] ?? null, null);
+            $mitra = $this->resolveMitra($row['reseller'], $row['name'] ?? $row['reseller'], $row['address'] ?? null, null);
 
             $order = Order::create([
                 'import_batch_id' => $batch->id,
@@ -359,29 +344,6 @@ class OrderImportService
             $orderIdByNoOrder[$joinKey] = $order->id;
         }
 
-        $produkByKey = [];
-        $resolveProduk = function (string $brand, string $nama, ?string $sku) use (&$produkByKey) {
-            $sku ??= self::PRODUK_ALIASES[$brand][$nama] ?? null;
-            $cacheKey = $sku ? 'sku:'.mb_strtolower($sku) : mb_strtolower($brand.'|'.$nama);
-            if (isset($produkByKey[$cacheKey])) {
-                return $produkByKey[$cacheKey];
-            }
-
-            $produk = $sku ? Produk::where('kode_sku', $sku)->first() : null;
-            $produk ??= Produk::where('brand', $brand)->where('nama', $nama)->first();
-
-            if ($produk) {
-                if ($sku && ! $produk->kode_sku) {
-                    $produk->kode_sku = $sku;
-                    $produk->save();
-                }
-            } else {
-                $produk = Produk::create(['brand' => $brand, 'nama' => $nama, 'kode_sku' => $sku, 'status' => 'aktif', 'auto_created' => true]);
-            }
-
-            return $produkByKey[$cacheKey] = $produk;
-        };
-
         foreach ($parsed['items'] as $row) {
             $joinKey = ($row['id_transaksi'] ?? null) ?: ($row['id_transaksi_perpack'] ?? null);
             $orderId = $orderIdByNoOrder[$joinKey ?? ''] ?? null;
@@ -390,7 +352,7 @@ class OrderImportService
                 continue;
             }
 
-            $mitra = $resolveMitra(
+            $mitra = $this->resolveMitra(
                 $row['reseller'],
                 $row['name'] ?? $row['reseller'],
                 $row['address'] ?? null,
@@ -399,7 +361,7 @@ class OrderImportService
 
             $sku = $row['sku'] ?? null;
             $produk = $this->isRealProductName($row['produk'])
-                ? $resolveProduk($row['brand'] ?? 'Lainnya', $row['produk'], $sku)
+                ? $this->resolveProduk($row['brand'] ?? 'Lainnya', $row['produk'], $sku)
                 : null;
 
             OrderItem::create([
@@ -420,6 +382,59 @@ class OrderImportService
                 Order::where('id', $orderId)->update(['id_channel' => $row['id_channel']]);
             }
         }
+    }
+
+    /**
+     * Find-or-create a Mitra by kode_mitra. Shared by the manual Excel
+     * import path (persistRows) and PerpackOrderSyncService, so both go
+     * through the exact same matching/update rules.
+     */
+    public function resolveMitra(string $kode, string $nama, ?string $alamat, ?string $kaeCode): Mitra
+    {
+        $mitra = $this->mitraCache[$kode] ?? Mitra::firstOrNew(['kode_mitra' => $kode]);
+
+        $mitra->nama = $nama ?: ($mitra->nama ?? $kode);
+        if ($alamat) {
+            $mitra->alamat = $alamat;
+        }
+        if ($kaeCode) {
+            $mitra->kae_code = $kaeCode;
+        }
+        if (! $mitra->exists) {
+            $mitra->status = 'aktif';
+        }
+        if ($mitra->isDirty()) {
+            $mitra->save();
+        }
+
+        return $this->mitraCache[$kode] = $mitra;
+    }
+
+    /**
+     * Find-or-create a Produk by SKU (falling back to brand+nama). Shared by
+     * the manual Excel import path (persistRows) and PerpackOrderSyncService.
+     */
+    public function resolveProduk(string $brand, string $nama, ?string $sku): Produk
+    {
+        $sku ??= self::PRODUK_ALIASES[$brand][$nama] ?? null;
+        $cacheKey = $sku ? 'sku:'.mb_strtolower($sku) : mb_strtolower($brand.'|'.$nama);
+        if (isset($this->produkCache[$cacheKey])) {
+            return $this->produkCache[$cacheKey];
+        }
+
+        $produk = $sku ? Produk::where('kode_sku', $sku)->first() : null;
+        $produk ??= Produk::where('brand', $brand)->where('nama', $nama)->first();
+
+        if ($produk) {
+            if ($sku && ! $produk->kode_sku) {
+                $produk->kode_sku = $sku;
+                $produk->save();
+            }
+        } else {
+            $produk = Produk::create(['brand' => $brand, 'nama' => $nama, 'kode_sku' => $sku, 'status' => 'aktif', 'auto_created' => true]);
+        }
+
+        return $this->produkCache[$cacheKey] = $produk;
     }
 
     /**
@@ -444,7 +459,7 @@ class OrderImportService
      * placeholder name is now trusted as real regardless of price; only the
      * blank/too-short/numeric/known-placeholder checks below still reject.
      */
-    private function isRealProductName(string $value): bool
+    public function isRealProductName(string $value): bool
     {
         $trimmed = trim($value);
 

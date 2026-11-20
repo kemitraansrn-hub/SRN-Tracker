@@ -6,6 +6,7 @@ use App\Models\ImportBatch;
 use App\Models\Order;
 use App\Services\ImportTemplateService;
 use App\Services\OrderImportService;
+use App\Services\PerpackOrderSyncService;
 use App\Services\TargetImportService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -44,7 +45,19 @@ class ImportController extends Controller
         return view('import.index', [
             'history' => ImportBatch::with('uploader')->latest()->limit(15)->get(),
             'pending' => null,
+            'perpackConfigured' => app(\App\Services\PerpackApiClient::class)->isConfigured(),
         ]);
+    }
+
+    public function sync(PerpackOrderSyncService $syncer): RedirectResponse
+    {
+        $result = $syncer->sync();
+
+        if (! $result['ok']) {
+            return back()->withErrors(['sync' => $result['pesan']]);
+        }
+
+        return redirect()->route('import.index')->with('status', $result['pesan']);
     }
 
     public function store(Request $request): View|RedirectResponse
