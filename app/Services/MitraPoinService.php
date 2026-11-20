@@ -42,6 +42,12 @@ class MitraPoinService
             ->whereYear('orders.tanggal_order', $tahun)
             ->whereNotNull('produk.qty_per_poin')
             ->where('produk.qty_per_poin', '>', 0)
+            // Produk tanpa harga (gratis/giveaway, mis. FREE-RG-REP-20) gak
+            // pernah ikut hitungan poin, apapun qty_per_poin-nya -- supaya
+            // pengaturan qty_per_poin yang gak sengaja ke-isi di produk
+            // gratis gak bikin mitra "nyuri start" poin dari barang gratis.
+            ->whereNotNull('produk.harga')
+            ->where('produk.harga', '>', 0)
             ->selectRaw('orders.mitra_id as mitra_id, order_items.produk_id as produk_id, produk.qty_per_poin as qty_per_poin, MONTH(orders.tanggal_order) as bulan, SUM(order_items.qty) as qty')
             ->groupBy('orders.mitra_id', 'order_items.produk_id', 'produk.qty_per_poin', 'bulan')
             ->get();

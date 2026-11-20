@@ -398,7 +398,7 @@ class OrderImportService
             );
 
             $sku = $row['sku'] ?? null;
-            $produk = $this->isRealProductName($row['produk'], $row['harga'] ?? null, $row['total'] ?? null)
+            $produk = $this->isRealProductName($row['produk'])
                 ? $resolveProduk($row['brand'] ?? 'Lainnya', $row['produk'], $sku)
                 : null;
 
@@ -435,7 +435,16 @@ class OrderImportService
      * leave HARGA empty, and a missing HARGA must not be read as "no
      * value" when TOTAL clearly shows real revenue.
      */
-    private function isRealProductName(string $value, $harga = null, $subtotal = null): bool
+    /**
+     * 2026-11-20: previously also required harga>0 or subtotal>0 to count as
+     * real, which wrongly rejected legitimately-named FREE items (harga=0,
+     * subtotal=0 by definition for a giveaway) — e.g. "FREE-RG-REP-20" never
+     * got its own Produk row because of this, even though its name/SKU was
+     * perfectly clear and not a placeholder. A free item with a real, non-
+     * placeholder name is now trusted as real regardless of price; only the
+     * blank/too-short/numeric/known-placeholder checks below still reject.
+     */
+    private function isRealProductName(string $value): bool
     {
         $trimmed = trim($value);
 
@@ -443,19 +452,12 @@ class OrderImportService
             return false;
         }
 
-        // 'pch' (pouch) is deliberately here too: confirmed with the user
-        // it's a free giveaway, never a real sellable SKU, regardless of
-        // what a stray non-zero total on one row might suggest.
         static $placeholders = ['no product', 'tidak ada', 'n/a', 'na', 'kosong', 'none', '-', '--', 'pch'];
         if (in_array(mb_strtolower($trimmed), $placeholders, true)) {
             return false;
         }
 
-        if ($harga !== null && (float) $harga > 0) {
-            return true;
-        }
-
-        return $subtotal !== null && (float) $subtotal > 0;
+        return true;
     }
 
     /**
