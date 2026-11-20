@@ -143,18 +143,23 @@ class PerpackOrderSyncService
             $salesmanCode ?: null,
         );
 
-        // "amount" dari API belum dipotong discount_shipping_fee -- dicocokkan
-        // langsung ke file export manual (kolom TOTAL TRANSAKSI/ONGKIR sudah
-        // bersih/net), ongkir & total_transaksi dibikin net di sini juga biar
-        // sama persis. "status_pembayaran" juga BUKAN dari amount vs
-        // amount_paid (order kredit/jatuh tempo bisa amount_paid < amount
-        // tapi tetap tercatat "paid" begitu lewat tahap waiting_payment) --
-        // dicocokkan ke 390 order asli: status==waiting_payment -> unpaid,
-        // selain itu -> paid, konsisten 98%+.
+        // orders.total_transaksi historis selalu diisi dari kolom Excel
+        // "TOTAL" (nilai PRODUK SAJA, belum termasuk ongkir -- bukan kolom
+        // "TOTAL TRANSAKSI" yang namanya mirip tapi beda arti, lihat
+        // HEADER_ALIASES_TRANSAKSI['total'] di OrderImportService).
+        // Dicocokkan ke file export mentah: TOTAL = amount - shipping_fee
+        // (discount_shipping_fee saling coret, gak usah dipakai di sini).
+        // ongkir tetap net dari diskonnya sendiri (= kolom ONGKIR di Excel).
+        // "status_pembayaran" juga BUKAN dari amount vs amount_paid (order
+        // kredit/jatuh tempo bisa amount_paid < amount tapi tetap tercatat
+        // "paid" begitu lewat tahap waiting_payment) -- dicocokkan ke 390
+        // order asli: status==waiting_payment -> unpaid, selain itu -> paid,
+        // konsisten 98%+.
         $amountPaid = (float) ($row['amount_paid'] ?? 0);
+        $shippingFee = (float) ($row['shipping_fee'] ?? 0);
         $discountShippingFee = (float) ($row['discount_shipping_fee'] ?? 0);
-        $totalTransaksi = (float) ($row['amount'] ?? 0) - $discountShippingFee;
-        $ongkir = (float) ($row['shipping_fee'] ?? 0) - $discountShippingFee;
+        $totalTransaksi = (float) ($row['amount'] ?? 0) - $shippingFee;
+        $ongkir = $shippingFee - $discountShippingFee;
         $status = $row['status'] ?? null;
         $tanggalOrder = $this->resolveTanggalOrder($row);
 
