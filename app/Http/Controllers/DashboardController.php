@@ -53,22 +53,38 @@ class DashboardController extends Controller
         $companyAchPct = $companyTarget ? round($totalOmsetBulanIni / $companyTarget * 100, 1) : null;
 
         $prevMonthRef = $now->copy()->subMonthNoOverflow();
-        // Bulan berjalan: bandingkan sampai hari ini (MTD asli). Bulan lain
-        // (histori/masa depan): bandingkan sebulan penuh vs sebulan penuh.
-        $dayCap = $isBulanIni ? min(today()->day, $prevMonthRef->daysInMonth) : $prevMonthRef->daysInMonth;
-        $mtdLalu = Order::query()
-            ->whereBetween('tanggal_order', [
-                $prevMonthRef->copy()->startOfMonth(),
-                $prevMonthRef->copy()->startOfMonth()->addDays($dayCap - 1)->endOfDay(),
-            ])
-            ->when(! $canViewAll, fn ($q) => $q->where('kae_code', $user->kae_code))
-            ->sum('total_transaksi');
+        // Bulan berjalan: data hari ini sering belum lengkap (upload Order
+        // Harian biasanya nyusul H+1), jadi perbandingan dipotong ke H-1
+        // (kemarin) -- bandingkan 1 s/d kemarin bulan ini vs 1 s/d hari yang
+        // sama kemarin di bulan lalu, bukan sampai hari ini yang datanya
+        // belum tentu lengkap. Permintaan eksplisit 2026-11-20. Bulan lain
+        // (histori/masa depan): tetap bandingkan sebulan penuh vs sebulan
+        // penuh seperti biasa, gak kena potongan H-1 ini.
+        $dayCap = $isBulanIni ? min(max(today()->day - 1, 0), $prevMonthRef->daysInMonth) : $prevMonthRef->daysInMonth;
+        $mtdLalu = $dayCap > 0
+            ? Order::query()
+                ->whereBetween('tanggal_order', [
+                    $prevMonthRef->copy()->startOfMonth(),
+                    $prevMonthRef->copy()->startOfMonth()->addDays($dayCap - 1)->endOfDay(),
+                ])
+                ->when(! $canViewAll, fn ($q) => $q->where('kae_code', $user->kae_code))
+                ->sum('total_transaksi')
+            : 0.0;
+        // Sisi bulan ini juga dipotong sama persis ke H-1 (bulan berjalan
+        // saja) -- $totalOmsetBulanIni sendiri TIDAK diubah karena masih
+        // dipakai apa adanya (termasuk data hari ini) buat card lain
+        // (Realisasi vs Target Perusahaan, Komit/Target/Stretch).
+        $mtdIniDipotong = $isBulanIni
+            ? ($dayCap > 0
+                ? (clone $ordersThisMonth)->whereDate('tanggal_order', '<=', $now->copy()->startOfMonth()->addDays($dayCap - 1))->sum('total_transaksi')
+                : 0.0)
+            : $totalOmsetBulanIni;
         // Growth ikutin Total Real + Parsial (bukan cuma omset database),
         // biar persentasenya cerminin pencapaian real yang sebenarnya —
         // permintaan eksplisit 2026-10-16. $omsetParsial null kalau belum
         // diisi admin atau yang lihat bukan canViewAll, jadi otomatis balik
         // ke omset real polos kayak sebelumnya.
-        $mtdIniTermasukParsial = $totalOmsetBulanIni + (float) ($omsetParsial?->jumlah ?? 0);
+        $mtdIniTermasukParsial = $mtdIniDipotong + (float) ($omsetParsial?->jumlah ?? 0);
         $mtdGrowthPct = $mtdLalu > 0 ? round((($mtdIniTermasukParsial - $mtdLalu) / $mtdLalu) * 100, 1) : null;
 
         $adaTargetBulanIni = TargetBulanan::where('bulan', $now->month)->where('tahun', $now->year)->exists();
@@ -238,7 +254,7 @@ class DashboardController extends Controller
             'trendCard' => $trendCard,
             'companyTarget' => $companyTarget,
             'companyAchPct' => $companyAchPct,
-            'mtdIni' => $totalOmsetBulanIni,
+            'mtdIni' => $mtdIniDipotong,
             'mtdLalu' => $mtdLalu,
             'mtdGrowthPct' => $mtdGrowthPct,
             'dayCap' => $dayCap,
