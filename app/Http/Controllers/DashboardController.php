@@ -173,7 +173,15 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $orderTerbaru = (clone $ordersThisMonth)->with('mitra')->latest('tanggal_order')->limit(8)->get();
+        // Bulan berjalan: tampilkan SEMUA order hari ini (bukan dibatasi 8)
+        // -- sebelumnya limit(8) diurutkan by tanggal_order bikin bingung
+        // kalau hari ini order-nya lebih dari 8 (semua sama tanggalnya,
+        // cuma sebagian yang kelihatan, kesannya data gak update padahal
+        // cuma kepotong). Bulan lain (histori): tetap 8 terbaru seperti
+        // semula, karena "hari ini" gak relevan buat bulan yang sudah lewat.
+        $orderTerbaru = $isBulanIni
+            ? (clone $ordersThisMonth)->with('mitra')->whereDate('tanggal_order', today())->latest('id')->get()
+            : (clone $ordersThisMonth)->with('mitra')->latest('tanggal_order')->limit(8)->get();
 
         $runRate = $canViewAll ? RunRateService::mitraActiveTable($now->year, $now->month) : null;
 
