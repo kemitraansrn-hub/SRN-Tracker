@@ -60,14 +60,17 @@ class DashboardController extends Controller
         $companyAchPct = $companyTarget ? round($totalOmsetBulanIni / $companyTarget * 100, 1) : null;
 
         $prevMonthRef = $now->copy()->subMonthNoOverflow();
-        // Bulan berjalan: data hari ini sering belum lengkap (upload Order
-        // Harian biasanya nyusul H+1), jadi perbandingan dipotong ke H-1
-        // (kemarin) -- bandingkan 1 s/d kemarin bulan ini vs 1 s/d hari yang
-        // sama kemarin di bulan lalu, bukan sampai hari ini yang datanya
-        // belum tentu lengkap. Permintaan eksplisit 2026-11-20. Bulan lain
+        // Bulan berjalan: bandingkan 1 s/d hari ini bulan ini vs 1 s/d hari
+        // yang sama bulan lalu (day-count matching, bukan sebulan penuh vs
+        // sebulan penuh). Sempat dipotong ke H-1 (kemarin) 2026-11-20 karena
+        // waktu itu data hari ini cuma dari upload Order Harian manual yang
+        // suka telat H+1 -- sejak tombol Synchronize ada (menu Import Data,
+        // narik langsung dari Perpack real-time), data hari ini sudah bisa
+        // lengkap begitu di-sync, jadi potongan H-1 itu dicabut lagi hari
+        // yang sama (2026-11-20, permintaan eksplisit user). Bulan lain
         // (histori/masa depan): tetap bandingkan sebulan penuh vs sebulan
-        // penuh seperti biasa, gak kena potongan H-1 ini.
-        $dayCap = $isBulanIni ? min(max(today()->day - 1, 0), $prevMonthRef->daysInMonth) : $prevMonthRef->daysInMonth;
+        // penuh seperti biasa, gak kena logic day-count ini.
+        $dayCap = $isBulanIni ? min(today()->day, $prevMonthRef->daysInMonth) : $prevMonthRef->daysInMonth;
         $mtdLalu = $dayCap > 0
             ? Order::query()
                 ->whereBetween('tanggal_order', [
@@ -77,10 +80,11 @@ class DashboardController extends Controller
                 ->when(! $canViewAll, fn ($q) => $q->where('kae_code', $user->kae_code))
                 ->sum('total_transaksi')
             : 0.0;
-        // Sisi bulan ini juga dipotong sama persis ke H-1 (bulan berjalan
-        // saja) -- $totalOmsetBulanIni sendiri TIDAK diubah karena masih
-        // dipakai apa adanya (termasuk data hari ini) buat card lain
-        // (Realisasi vs Target Perusahaan, Komit/Target/Stretch).
+        // Sisi bulan ini dipotong ke tanggal yang sama dgn $dayCap (bulan
+        // berjalan = sampai hari ini, sudah termasuk) -- untuk bulan
+        // berjalan nilainya jadi sama dengan $totalOmsetBulanIni, variabel
+        // terpisah ini tetap dipakai supaya bulan histori/masa depan juga
+        // konsisten day-count-matched terhadap $mtdLalu di atas.
         $mtdIniDipotong = $isBulanIni
             ? ($dayCap > 0
                 ? (clone $ordersThisMonth)->whereDate('tanggal_order', '<=', $now->copy()->startOfMonth()->addDays($dayCap - 1))->sum('total_transaksi')
