@@ -248,7 +248,7 @@ class ImportController extends Controller
 
     public function destroy(ImportBatch $importBatch): RedirectResponse
     {
-        if (in_array($importBatch->jenis, ['order_harian', 'order_historis'], true)) {
+        if (in_array($importBatch->jenis, ['order_harian', 'order_historis', 'order_sync'], true)) {
             $orderIds = $importBatch->orders()->pluck('id');
             $itemCount = \App\Models\OrderItem::whereIn('order_id', $orderIds)->count();
             $orderCount = $orderIds->count();

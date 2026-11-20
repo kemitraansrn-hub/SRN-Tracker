@@ -143,8 +143,19 @@ class PerpackOrderSyncService
             $salesmanCode ?: null,
         );
 
-        $amount = (float) ($row['amount'] ?? 0);
+        // "amount" dari API belum dipotong discount_shipping_fee -- dicocokkan
+        // langsung ke file export manual (kolom TOTAL TRANSAKSI/ONGKIR sudah
+        // bersih/net), ongkir & total_transaksi dibikin net di sini juga biar
+        // sama persis. "status_pembayaran" juga BUKAN dari amount vs
+        // amount_paid (order kredit/jatuh tempo bisa amount_paid < amount
+        // tapi tetap tercatat "paid" begitu lewat tahap waiting_payment) --
+        // dicocokkan ke 390 order asli: status==waiting_payment -> unpaid,
+        // selain itu -> paid, konsisten 98%+.
         $amountPaid = (float) ($row['amount_paid'] ?? 0);
+        $discountShippingFee = (float) ($row['discount_shipping_fee'] ?? 0);
+        $totalTransaksi = (float) ($row['amount'] ?? 0) - $discountShippingFee;
+        $ongkir = (float) ($row['shipping_fee'] ?? 0) - $discountShippingFee;
+        $status = $row['status'] ?? null;
         $tanggalOrder = $this->resolveTanggalOrder($row);
 
         $order = Order::create([
@@ -153,16 +164,16 @@ class PerpackOrderSyncService
             'no_order_perpack' => $row['reference_no'],
             'tanggal_order' => $tanggalOrder,
             'mitra_id' => $mitra->id,
-            'total_transaksi' => $amount,
+            'total_transaksi' => $totalTransaksi,
             'qty' => $row['qty_order'] ?? $row['qty'] ?? null,
             'diskon' => $row['discount_order'] ?? 0,
             'diskon_claim' => $row['discount_claim'] ?? null,
             'diskon_return' => $row['discount_return'] ?? null,
             'biaya_pendaftaran' => 0,
-            'ongkir' => $row['shipping_fee'] ?? 0,
+            'ongkir' => $ongkir,
             'total_transfer' => $amountPaid,
-            'status_pembayaran' => $amountPaid >= $amount ? 'Lunas' : 'Tempo',
-            'status' => null,
+            'status_pembayaran' => $status === 'waiting_payment' ? 'unpaid' : 'paid',
+            'status' => $status,
             'kae_code' => $salesmanCode ?: null,
             'id_channel' => isset($row['channel_id']) ? (string) $row['channel_id'] : null,
         ]);
