@@ -26,7 +26,7 @@
         @include('partials.bulan-tahun-filter', ['action' => route('dashboard'), 'bulan' => $bulanIni, 'tahun' => $tahunIni, 'isBulanIni' => $isBulanIni, 'extraHidden' => ['tab' => 'sales'], 'resetAction' => route('dashboard', ['tab' => 'sales'])])
     </div>
 
-    @php $kpiTileCount = ($companyTarget ? 1 : 0) + 1 + ($trendCard ? 1 : 0) + ($omsetHariIni !== null ? 1 : 0); @endphp
+    @php $kpiTileCount = ($companyTarget ? 1 : 0) + 1 + ($trendCard ? 1 : 0); @endphp
     <section style="display:grid; grid-template-columns:repeat(12, 1fr); gap:16px; margin-bottom:20px; align-items:stretch;">
         <div style="grid-column:span {{ $pencapaianTigaTier ? 6 : 12 }}; min-width:0; display:grid; grid-template-columns:repeat({{ $kpiTileCount }}, 1fr); gap:16px;">
             @if ($companyTarget)
@@ -142,13 +142,6 @@
                     </div>
                 </div>
             @endif
-            @if ($omsetHariIni !== null)
-                <div class="card" style="min-width:0;">
-                    <div class="info-label" style="margin-bottom:10px;">Omset Hari Ini</div>
-                    <div style="font-size:19px; font-weight:700; min-width:0; overflow-wrap:anywhere;" class="tnum">{{ $rp($omsetHariIni) }}</div>
-                    <div style="font-size:11.5px; color:var(--ink-muted); margin-top:6px;">{{ $jumlahOrderHariIni }} order &middot; reset tiap ganti tanggal &middot; buat cek hasil Synchronize</div>
-                </div>
-            @endif
         </div>
 
         @if ($pencapaianTigaTier)
@@ -180,6 +173,16 @@
             </div>
         @endif
     </section>
+
+    @if ($omsetHariIni !== null)
+        <div class="card" style="margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:14px; min-width:0;">
+                <div class="info-label" style="white-space:nowrap;">Omset Hari Ini</div>
+                <div style="font-size:19px; font-weight:700; overflow-wrap:anywhere;" class="tnum">{{ $rp($omsetHariIni) }}</div>
+            </div>
+            <div style="font-size:11.5px; color:var(--ink-muted); white-space:nowrap;">{{ $jumlahOrderHariIni }} order &middot; reset tiap ganti tanggal &middot; buat cek hasil Synchronize</div>
+        </div>
+    @endif
 
     @unless ($adaTargetBulanIni)
         <div class="alert-error" style="background:var(--warn-soft); color:var(--warn);">
