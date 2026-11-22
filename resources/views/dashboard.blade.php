@@ -26,9 +26,16 @@
         @include('partials.bulan-tahun-filter', ['action' => route('dashboard'), 'bulan' => $bulanIni, 'tahun' => $tahunIni, 'isBulanIni' => $isBulanIni, 'extraHidden' => ['tab' => 'sales'], 'resetAction' => route('dashboard', ['tab' => 'sales'])])
     </div>
 
-    @php $kpiTileCount = ($companyTarget ? 1 : 0) + 1 + ($trendCard ? 1 : 0); @endphp
+    @php $kpiTileCount = ($omsetHariIni !== null ? 1 : 0) + ($companyTarget ? 1 : 0) + 1 + ($trendCard ? 1 : 0); @endphp
     <section style="display:grid; grid-template-columns:repeat(12, 1fr); gap:16px; margin-bottom:20px; align-items:stretch;">
-        <div style="grid-column:span {{ $pencapaianTigaTier ? 6 : 12 }}; min-width:0; display:grid; grid-template-columns:repeat({{ $kpiTileCount }}, 1fr); gap:16px;">
+        <div style="grid-column:span 12; min-width:0; display:grid; grid-template-columns:repeat({{ $kpiTileCount }}, 1fr); gap:16px;">
+            @if ($omsetHariIni !== null)
+                <div class="card" style="min-width:0;">
+                    <div class="info-label" style="margin-bottom:10px;">Omset Hari Ini</div>
+                    <div style="font-size:19px; font-weight:700; min-width:0; overflow-wrap:anywhere;" class="tnum">{{ $rp($omsetHariIni) }}</div>
+                    <div style="font-size:11.5px; color:var(--ink-muted); margin-top:6px;">{{ $jumlahOrderHariIni }} order &middot; reset tiap ganti tanggal &middot; buat cek hasil Synchronize</div>
+                </div>
+            @endif
             @if ($companyTarget)
                 @php
                     $donutR = 40;
@@ -143,44 +150,36 @@
                 </div>
             @endif
         </div>
-
-        @if ($pencapaianTigaTier)
-            <div class="card" style="grid-column:span 6; min-width:0;">
-                <div class="card-head" style="flex-wrap:wrap; row-gap:4px;">
-                    <div class="card-title" style="flex-shrink:0;">Pencapaian vs 3 Tier Target</div>
-                    <div class="card-hint" style="white-space:nowrap;">Omset {{ $periodeLabel }}: {{ $rp($totalOmsetBulanIni) }}</div>
-                </div>
-                <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; min-width:0;">
-                    @foreach (['komit' => 'Komit', 'target' => 'Target', 'stretch' => 'Stretch'] as $key => $label)
-                        @php $t = $pencapaianTigaTier[$key]; @endphp
-                        <div style="min-width:0;">
-                            <div class="info-label" style="margin-bottom:6px;">{{ $label }}</div>
-                            <div style="font-size:13px; color:var(--ink-muted); margin-bottom:8px; overflow-wrap:anywhere;" class="tnum">{{ $rp($t['target']) }}</div>
-                            <div style="height:6px; border-radius:4px; background:var(--line); overflow:hidden;">
-                                <div style="height:100%; border-radius:4px; background:var(--accent); width:{{ $t['pct'] !== null ? min($t['pct'], 100) : 0 }}%;"></div>
-                            </div>
-                            <div style="margin-top:8px;">
-                                @if ($t['pct'] === null)
-                                    <span style="font-size:11.5px; color:var(--ink-faint);">Belum ada target</span>
-                                @else
-                                    @php $tColor = $t['pct'] >= 100 ? 'good' : ($t['pct'] >= 70 ? 'warn' : 'critical'); @endphp
-                                    <span class="chip chip-{{ $tColor }}">{{ $t['pct'] }}%</span>
-                                @endif
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        @endif
     </section>
 
-    @if ($omsetHariIni !== null)
-        <div class="card" style="margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
-            <div style="display:flex; align-items:center; gap:14px; min-width:0;">
-                <div class="info-label" style="white-space:nowrap;">Omset Hari Ini</div>
-                <div style="font-size:19px; font-weight:700; overflow-wrap:anywhere;" class="tnum">{{ $rp($omsetHariIni) }}</div>
+    @if ($pencapaianTigaTier)
+        <div class="card" style="margin-bottom:20px;">
+            <div class="card-head" style="flex-wrap:wrap; row-gap:4px;">
+                <div class="card-title" style="flex-shrink:0;">Pencapaian vs 3 Tier Target</div>
+                <div class="card-hint" style="white-space:nowrap;">Omset {{ $periodeLabel }}: {{ $rp($totalOmsetBulanIni) }}</div>
             </div>
-            <div style="font-size:11.5px; color:var(--ink-muted); white-space:nowrap;">{{ $jumlahOrderHariIni }} order &middot; reset tiap ganti tanggal &middot; buat cek hasil Synchronize</div>
+            <div style="display:flex; gap:24px; flex-wrap:wrap; margin-top:6px;">
+                @foreach (['komit' => 'Komit', 'target' => 'Target', 'stretch' => 'Stretch'] as $key => $label)
+                    @php $t = $pencapaianTigaTier[$key]; @endphp
+                    <div style="flex:1; min-width:160px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                            <span class="info-label">{{ $label }}</span>
+                            <span style="font-size:12.5px; color:var(--ink-muted); overflow-wrap:anywhere;" class="tnum">{{ $rp($t['target']) }}</span>
+                        </div>
+                        <div style="height:6px; border-radius:4px; background:var(--line); overflow:hidden; margin-top:8px;">
+                            <div style="height:100%; border-radius:4px; background:var(--accent); width:{{ $t['pct'] !== null ? min($t['pct'], 100) : 0 }}%;"></div>
+                        </div>
+                        <div style="margin-top:8px;">
+                            @if ($t['pct'] === null)
+                                <span style="font-size:11.5px; color:var(--ink-faint);">Belum ada target</span>
+                            @else
+                                @php $tColor = $t['pct'] >= 100 ? 'good' : ($t['pct'] >= 70 ? 'warn' : 'critical'); @endphp
+                                <span class="chip chip-{{ $tColor }}">{{ $t['pct'] }}%</span>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
         </div>
     @endif
 
