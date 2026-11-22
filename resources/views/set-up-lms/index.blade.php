@@ -152,6 +152,7 @@
                     @if ($q !== '' || $status !== '' || request('kae_code'))
                         <a href="{{ route('growth-specialist.set-up-lms', ['tab' => $tab]) }}" class="btn" style="width:auto;">Reset</a>
                     @endif
+                    <a href="{{ route('growth-specialist.set-up-lms.export', array_merge(['tab' => $tab], request()->only(['q', 'status', 'kae_code']))) }}" class="btn" style="width:auto;">Download Excel</a>
                 </form>
             </div>
             <div class="table-scroll" style="max-height:none; overflow-y:visible;">

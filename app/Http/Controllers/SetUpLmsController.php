@@ -12,8 +12,13 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Set Up LMS (Growth Specialist > Special Reg & Reg) — tracking mitra yang
@@ -50,44 +55,8 @@ class SetUpLmsController extends Controller
         }
 
         $q = trim((string) $request->input('q'));
-        $enrolledIds = LmsEnrollment::where('platform', $tab)->pluck('mitra_id');
-        $mitraRows = $this->scopedMitra($user)
-            ->whereIn('id', $enrolledIds)
-            ->when($q !== '', fn ($qr) => $qr->where(fn ($w) => $w->where('nama', 'like', "%{$q}%")->orWhere('kode_mitra', 'like', "%{$q}%")))
-            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($qr) => $qr->where('kae_code', $request->input('kae_code')))
-            ->orderBy('nama')
-            ->get();
-
-        $completionsByMitra = LmsStepCompletion::whereIn('mitra_id', $mitraRows->pluck('id'))
-            ->whereIn('lms_step_id', $steps->pluck('id'))
-            ->get()
-            ->groupBy('mitra_id')
-            ->map(fn ($c) => $c->keyBy('lms_step_id'));
-
-        $segmenMap = SpecialDeal::segmenByMitraId(now());
-        $kaeMap = User::kaeNameMap();
-        $notesByMitra = SetUpLmsNote::where('platform', $tab)
-            ->whereIn('mitra_id', $mitraRows->pluck('id'))->get()->keyBy('mitra_id');
-
-        $rows = $mitraRows->map(function (Mitra $m) use ($completionsByMitra, $steps, $segmenMap, $kaeMap, $notesByMitra) {
-            $done = $completionsByMitra->get($m->id, collect());
-            $pct = $steps->count() > 0 ? (int) round($done->count() / $steps->count() * 100) : 0;
-
-            return (object) [
-                'mitra' => $m,
-                'kae' => $m->kae_code ? ($kaeMap[$m->kae_code] ?? $m->kae_code) : null,
-                'segmen' => $segmenMap[$m->id] ?? null,
-                'completions' => $done,
-                'pct' => $pct,
-                'status' => self::statusLabel($pct),
-                'note' => $notesByMitra->get($m->id),
-            ];
-        });
-
         $status = trim((string) $request->input('status'));
-        if ($status !== '') {
-            $rows = $rows->where('status', $status)->values();
-        }
+        $rows = $this->filteredRows($request, $tab, $steps);
 
         $perPage = 20;
         $page = (int) $request->input('page', 1);
@@ -207,6 +176,118 @@ class SetUpLmsController extends Controller
 
         return redirect()->route('growth-specialist.set-up-lms', ['tab' => $data['platform']])
             ->with('status', 'Catatan untuk '.$mitra->nama.' tersimpan.');
+    }
+
+    /**
+     * Excel-nya kolomnya disamain persis sama tabel Progres LMS di halaman
+     * ini -- satu kolom per video (centang/kosong + link GDrive-nya) plus
+     * kolom Catatan di akhir, biar bisa dicek lengkap tanpa buka SRN.
+     */
+    public function export(Request $request): StreamedResponse
+    {
+        $user = $request->user();
+        $tab = array_key_exists((string) $request->input('tab'), LmsStep::PLATFORMS) ? $request->input('tab') : 'shopee';
+        $platformLabel = LmsStep::PLATFORMS[$tab];
+        $steps = LmsStep::aktifUntuk($tab)->get();
+        $rows = $this->filteredRows($request, $tab, $steps);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Set Up LMS '.$platformLabel);
+
+        $header = ['ID Mitra', 'Nama Mitra', 'KAE', 'Segmen'];
+        foreach ($steps as $step) {
+            $header[] = $step->urutan.'. '.$step->judul;
+        }
+        $header[] = '% Selesai';
+        $header[] = 'Status';
+        $header[] = 'Catatan';
+        $sheet->fromArray($header, null, 'A1', true);
+        $lastCol = Coordinate::stringFromColumnIndex(count($header));
+        $sheet->getStyle('A1:'.$lastCol.'1')->getFont()->setBold(true);
+
+        $r = 2;
+        foreach ($rows as $row) {
+            $line = [
+                $row->mitra->kode_mitra,
+                $row->mitra->nama,
+                $row->kae,
+                $row->segmen,
+            ];
+            foreach ($steps as $step) {
+                $completion = $row->completions->get($step->id);
+                $line[] = $completion?->link_gdrive;
+            }
+            $line[] = $row->pct.'%';
+            $line[] = $row->status;
+            $line[] = $row->note->catatan ?? null;
+
+            $sheet->fromArray($line, null, 'A'.$r, true);
+            $r++;
+        }
+
+        for ($i = 1; $i <= count($header); $i++) {
+            $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($i))->setAutoSize(true);
+        }
+
+        $filename = 'set_up_lms_'.$tab.'_'.now()->format('Y-m-d').'.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    /**
+     * Filter/urutan/status-komputasi dipakai bareng oleh index() (dipaginasi)
+     * dan export() (semua baris) -- satu sumber kebenaran.
+     */
+    private function filteredRows(Request $request, string $tab, Collection $steps): Collection
+    {
+        $user = $request->user();
+        $q = trim((string) $request->input('q'));
+        $status = trim((string) $request->input('status'));
+
+        $enrolledIds = LmsEnrollment::where('platform', $tab)->pluck('mitra_id');
+        $mitraRows = $this->scopedMitra($user)
+            ->whereIn('id', $enrolledIds)
+            ->when($q !== '', fn ($qr) => $qr->where(fn ($w) => $w->where('nama', 'like', "%{$q}%")->orWhere('kode_mitra', 'like', "%{$q}%")))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($qr) => $qr->where('kae_code', $request->input('kae_code')))
+            ->orderBy('nama')
+            ->get();
+
+        $completionsByMitra = LmsStepCompletion::whereIn('mitra_id', $mitraRows->pluck('id'))
+            ->whereIn('lms_step_id', $steps->pluck('id'))
+            ->get()
+            ->groupBy('mitra_id')
+            ->map(fn ($c) => $c->keyBy('lms_step_id'));
+
+        $segmenMap = SpecialDeal::segmenByMitraId(now());
+        $kaeMap = User::kaeNameMap();
+        $notesByMitra = SetUpLmsNote::where('platform', $tab)
+            ->whereIn('mitra_id', $mitraRows->pluck('id'))->get()->keyBy('mitra_id');
+
+        $rows = $mitraRows->map(function (Mitra $m) use ($completionsByMitra, $steps, $segmenMap, $kaeMap, $notesByMitra) {
+            $done = $completionsByMitra->get($m->id, collect());
+            $pct = $steps->count() > 0 ? (int) round($done->count() / $steps->count() * 100) : 0;
+
+            return (object) [
+                'mitra' => $m,
+                'kae' => $m->kae_code ? ($kaeMap[$m->kae_code] ?? $m->kae_code) : null,
+                'segmen' => $segmenMap[$m->id] ?? null,
+                'completions' => $done,
+                'pct' => $pct,
+                'status' => self::statusLabel($pct),
+                'note' => $notesByMitra->get($m->id),
+            ];
+        });
+
+        if ($status !== '') {
+            $rows = $rows->where('status', $status)->values();
+        }
+
+        return $rows;
     }
 
     private function scopedMitra(User $user)

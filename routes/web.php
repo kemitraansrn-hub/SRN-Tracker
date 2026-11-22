@@ -408,6 +408,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::get('kartu-profil-mitra', [\App\Http\Controllers\GrowthSpecialistController::class, 'kartuPicker'])->name('kartu-profil-mitra');
 
         Route::get('set-up-lms', [\App\Http\Controllers\SetUpLmsController::class, 'index'])->name('set-up-lms');
+        Route::get('set-up-lms/export', [\App\Http\Controllers\SetUpLmsController::class, 'export'])->name('set-up-lms.export');
         Route::post('set-up-lms/enroll', [\App\Http\Controllers\SetUpLmsController::class, 'enroll'])->name('set-up-lms.enroll');
         Route::delete('set-up-lms/enroll', [\App\Http\Controllers\SetUpLmsController::class, 'destroyEnrollment'])->name('set-up-lms.enroll.destroy');
         Route::post('set-up-lms/step', [\App\Http\Controllers\SetUpLmsController::class, 'storeStep'])->name('set-up-lms.step.store');
