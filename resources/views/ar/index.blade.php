@@ -296,6 +296,9 @@
                                     @foreach ($ar->payments as $p)
                                         <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink-muted); margin-bottom:2px;">
                                             <span>Cicilan ke-{{ $p->cicilan_ke }}: {{ $rp($p->jumlah_bayar) }} &middot; {{ $p->tanggal_bayar->format('d/m/Y') }}</span>
+                                            @if ($p->buktiBayarUrl())
+                                                <a href="{{ $p->buktiBayarUrl() }}" target="_blank" rel="noopener" style="color:var(--accent);">Lihat Bukti</a>
+                                            @endif
                                             @if (auth()->user()->hasAdminAccess() || auth()->user()->kae_code === ($ar->order->mitra->kae_code ?? null))
                                                 <form method="POST" action="{{ route('ar.payment.destroy', $p) }}" onsubmit="return confirm('Hapus cicilan ke-{{ $p->cicilan_ke }} ini? Data tidak bisa dikembalikan.');">
                                                     @csrf
@@ -311,7 +314,7 @@
                         @if (! $ar->lunas && (auth()->user()->hasAdminAccess() || auth()->user()->kae_code === ($ar->order->mitra->kae_code ?? null)))
                             <tr id="bayar-ar-{{ $ar->id }}" style="display:none;">
                                 <td colspan="12" style="background:var(--surface-alt);">
-                                    <form method="POST" action="{{ route('ar.pay', $ar) }}" class="field-row" style="align-items:flex-end; padding:10px 4px;">
+                                    <form method="POST" action="{{ route('ar.pay', $ar) }}" enctype="multipart/form-data" class="field-row" style="align-items:flex-end; padding:10px 4px;">
                                         @csrf
                                         <div class="field" style="margin-bottom:0;">
                                             <label>Jumlah Bayar (maks. {{ $rp($ar->sisa_ar) }})</label>
@@ -320,6 +323,10 @@
                                         <div class="field" style="margin-bottom:0;">
                                             <label>Tgl Bayar</label>
                                             <input type="date" name="tanggal_bayar" value="{{ now()->toDateString() }}" required>
+                                        </div>
+                                        <div class="field" style="margin-bottom:0;">
+                                            <label>Bukti Bayar (opsional)</label>
+                                            <input type="file" name="bukti_bayar" accept=".jpg,.jpeg,.png,.pdf">
                                         </div>
                                         <button type="submit" class="btn btn-primary" style="width:auto;">Simpan Cicilan ke-{{ $ar->payments->count() + 1 }}</button>
                                     </form>

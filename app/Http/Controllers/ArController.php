@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -286,12 +287,14 @@ class ArController extends Controller
         $data = $request->validate([
             'jumlah_bayar' => ['required', 'integer', 'min:1', 'max:'.(int) $arReceivable->sisa()],
             'tanggal_bayar' => ['required', 'date'],
+            'bukti_bayar' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
         ]);
 
         $arReceivable->payments()->create([
             'cicilan_ke' => $arReceivable->payments->count() + 1,
             'jumlah_bayar' => $data['jumlah_bayar'],
             'tanggal_bayar' => $data['tanggal_bayar'],
+            'bukti_bayar' => $request->hasFile('bukti_bayar') ? $request->file('bukti_bayar')->store('ar-bukti-bayar', 'public') : null,
             'created_by' => $user->id,
         ]);
 
@@ -316,6 +319,10 @@ class ArController extends Controller
         }
 
         DB::transaction(function () use ($payment, $arReceivable) {
+            if ($payment->bukti_bayar) {
+                Storage::disk('public')->delete($payment->bukti_bayar);
+            }
+
             $payment->delete();
 
             $arReceivable->payments()->orderBy('cicilan_ke')->get()
