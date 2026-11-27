@@ -20,11 +20,12 @@ ALTER TABLE `ar_payments`
 -- 2) Catat migration ini sebagai "sudah jalan" di tabel migrations,
 --    supaya Laravel tidak mencoba menjalankannya lagi otomatis nanti.
 --    (batch diambil otomatis = batch terakhir yang ada di production + 1)
+--    Catatan: dibungkus pakai subquery FROM (derived table) karena MySQL
+--    tidak boleh INSERT ke tabel yang sama sambil SELECT langsung dari
+--    tabel itu di VALUES (error #1093).
 INSERT INTO `migrations` (`migration`, `batch`)
-VALUES (
-    '2026_11_27_010338_add_bukti_bayar_to_ar_payments_table',
-    (SELECT COALESCE(MAX(`batch`), 0) + 1 FROM `migrations`)
-);
+SELECT '2026_11_27_010338_add_bukti_bayar_to_ar_payments_table', `batch_baru`
+FROM (SELECT COALESCE(MAX(`batch`), 0) + 1 AS `batch_baru` FROM `migrations`) AS `t`;
 
 -- =============================================================
 -- Cara cek setelah dijalankan:
