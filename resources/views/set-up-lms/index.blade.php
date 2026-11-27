@@ -2,7 +2,7 @@
 
 @php
     $statusColor = ['Lengkap' => 'good', 'Proses' => 'warn', 'Awal' => 'critical'];
-    $platformLabel = $platforms[$tab];
+    $platformLabel = $tab === 'semua' ? 'Semua Platform' : $platforms[$tab];
 @endphp
 
 @section('content')
@@ -20,9 +20,69 @@
         @foreach ($platforms as $key => $label)
             <a href="{{ route('growth-specialist.set-up-lms', ['tab' => $key]) }}" style="padding:10px 4px; margin-right:22px; text-decoration:none; border-bottom:2px solid {{ $tab === $key ? 'var(--accent)' : 'transparent' }}; font-size:14px; font-weight:{{ $tab === $key ? '700' : '600' }}; color:var(--{{ $tab === $key ? 'ink' : 'ink-muted' }});">{{ $label }}</a>
         @endforeach
+        <a href="{{ route('growth-specialist.set-up-lms', ['tab' => 'semua']) }}" style="padding:10px 4px; margin-right:22px; text-decoration:none; border-bottom:2px solid {{ $tab === 'semua' ? 'var(--accent)' : 'transparent' }}; font-size:14px; font-weight:{{ $tab === 'semua' ? '700' : '600' }}; color:var(--{{ $tab === 'semua' ? 'ink' : 'ink-muted' }});">Semua Platform</a>
     </div>
 
-    @if ($steps->isEmpty())
+    @if ($tab === 'semua')
+        <section class="card table-card" style="padding:0;">
+            <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px; flex-wrap:wrap; gap:12px;">
+                <div>
+                    <div class="card-title">Progres LMS &mdash; Semua Platform</div>
+                    <div class="card-hint">{{ $rowsPage->total() }} mitra{{ $q !== '' || $status !== '' || request('kae_code') ? ' (hasil filter)' : '' }} — status Lengkap kalau Lengkap di platform manapun</div>
+                </div>
+                <form method="GET" action="{{ route('growth-specialist.set-up-lms') }}" class="field-row" style="margin-bottom:0; align-items:flex-end;">
+                    <input type="hidden" name="tab" value="semua">
+                    <div class="field" style="margin-bottom:0;">
+                        <input type="text" name="q" value="{{ $q }}" placeholder="Cari nama atau kode mitra...">
+                    </div>
+                    <div class="field" style="margin-bottom:0;">
+                        <select name="status" class="select-pill" onchange="this.form.submit()">
+                            <option value="">Semua Status</option>
+                            <option value="Lengkap" {{ $status === 'Lengkap' ? 'selected' : '' }}>Lengkap</option>
+                            <option value="belum-lengkap" {{ $status === 'belum-lengkap' ? 'selected' : '' }}>Belum Lengkap (Proses/Awal)</option>
+                            <option value="belum-masuk" {{ $status === 'belum-masuk' ? 'selected' : '' }}>Belum Masuk LMS</option>
+                        </select>
+                    </div>
+                    @if (auth()->user()->canViewAll())
+                        <div class="field" style="margin-bottom:0;">
+                            <select name="kae_code" class="select-pill" onchange="this.form.submit()">
+                                <option value="">Semua KAE</option>
+                                @foreach ($kaeOptions as $kae)
+                                    <option value="{{ $kae->kae_code }}" {{ request('kae_code') === $kae->kae_code ? 'selected' : '' }}>{{ $kae->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
+                    <button type="submit" class="btn" style="width:auto;">Cari</button>
+                    @if ($q !== '' || $status !== '' || request('kae_code'))
+                        <a href="{{ route('growth-specialist.set-up-lms', ['tab' => 'semua']) }}" class="btn" style="width:auto;">Reset</a>
+                    @endif
+                </form>
+            </div>
+            <div class="table-scroll" style="max-height:none; overflow-y:visible;">
+                <table>
+                    <thead>
+                        <tr><th>ID Mitra</th><th>Nama Mitra</th><th>KAE</th><th>Segmen</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($rowsPage as $r)
+                            <tr>
+                                <td style="font-size:12px;">{{ $r->mitra->kode_mitra }}</td>
+                                <td><a href="{{ route('growth-specialist.set-up-lms', ['tab' => 'shopee', 'mitra_id' => $r->mitra->id]) }}#input" style="color:var(--ink); text-decoration:none; font-weight:600;">{{ $r->mitra->nama }}</a></td>
+                                <td>{{ $r->kae ?? '—' }}</td>
+                                <td>{{ $r->segmen ?? '—' }}</td>
+                                <td><span class="chip chip-{{ $statusColor[$r->status] ?? 'neutral' }}">{{ $r->status }}</span></td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="5" style="color:var(--ink-muted);">Gak ada mitra yang cocok.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <div style="margin-top:16px;">{{ $rowsPage->links() }}</div>
+    @elseif ($steps->isEmpty())
         <div class="card" style="max-width:560px; color:var(--ink-muted);">
             Belum ada video LMS {{ $platformLabel }} yang diatur.
         </div>

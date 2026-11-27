@@ -914,44 +914,27 @@
                     </div>
                     <div class="card-title">Funnel Konversi Growth Specialist</div>
                 </div>
-                <div class="card-hint">Masuk Set Up LMS &rarr; Tercapai Target</div>
+                <div class="card-hint">Profiling &rarr; Tercapai Target</div>
             </div>
             @php $funnelTotal = $gs['funnelStages'][0]['count'] ?: 1; @endphp
             <div style="display:flex; flex-direction:column;">
                 @foreach ($gs['funnelStages'] as $i => $stage)
-                    @php
-                        $pctOfTotal = round($stage['count'] / $funnelTotal * 100, 1);
-                        $prevCount = $i > 0 ? $gs['funnelStages'][$i - 1]['count'] : null;
-                        $pctOfPrev = $prevCount ? round($stage['count'] / $prevCount * 100, 1) : null;
-
-                        // drop_off_label pada $stage menjelaskan celah KE stage BERIKUTNYA
-                        // (mis. stage 'LMS Lengkap' -> 'belum upload Tracking Performance'
-                        // menjelaskan kenapa gak semua lanjut ke stage 'Upload Tracking
-                        // Performance' sesudahnya) — jadi dibandingkan ke stage [$i+1],
-                        // bukan ke stage sebelumnya.
-                        $nextStage = $gs['funnelStages'][$i + 1] ?? null;
-                        $dropOff = $nextStage ? max(0, $stage['count'] - $nextStage['count']) : null;
-                        $dropOffPct = ($nextStage && $stage['count'] > 0) ? round($dropOff / $stage['count'] * 100, 1) : null;
-                    @endphp
+                    @php $pctOfTotal = round($stage['count'] / $funnelTotal * 100, 1); @endphp
                     <div style="display:flex; align-items:center; gap:12px;">
                         <div style="width:170px; flex-shrink:0; font-size:12px; color:var(--ink-muted); text-align:right;">{{ $stage['label'] }}</div>
-                        <a href="{{ $stage['url'] }}" style="flex:1; min-width:0; text-decoration:none;" title="Lihat {{ $stage['label'] }}">
+                        <a href="{{ $stage['done_url'] }}" style="flex:1; min-width:0; text-decoration:none;" title="Lihat sudah {{ $stage['label'] }}">
                             <div style="background:var(--line); border-radius:6px; height:36px; overflow:hidden;">
                                 <div style="height:100%; width:{{ max($pctOfTotal, $stage['count'] > 0 ? 6 : 0) }}%; background:var(--accent); display:flex; align-items:center; padding-left:12px; min-width:0; transition:width .3s ease;">
                                     <span class="tnum" style="color:#fff; font-weight:700; font-size:13px; white-space:nowrap;">{{ $stage['count'] }}</span>
                                 </div>
                             </div>
                         </a>
-                        <div style="width:150px; flex-shrink:0; font-size:11.5px; color:var(--ink-muted);">{{ $pctOfTotal }}% dari total{{ $pctOfPrev !== null ? ' · '.$pctOfPrev.'% dari sebelumnya' : '' }}</div>
+                        <div style="width:150px; flex-shrink:0; font-size:11.5px; color:var(--ink-muted);">{{ $pctOfTotal }}% dari total</div>
                     </div>
-                    @if ($stage['drop_off_label'] && $dropOff > 0)
-                        <div style="margin:4px 0 12px 182px; font-size:11.5px; color:var(--critical);">
-                            &#9660; {{ $dropOff }} {{ $stage['drop_off_label'] }} ({{ $dropOffPct }}%)
-                            <a href="{{ $stage['drop_off_url'] }}" style="color:var(--critical); text-decoration:underline; margin-left:4px;">lihat daftar</a>
-                        </div>
-                    @elseif (! $loop->last)
-                        <div style="margin:4px 0 12px 182px; font-size:11.5px; color:var(--ink-faint);">&#9660;</div>
-                    @endif
+                    <div style="margin:4px 0 12px 182px; font-size:11.5px; display:flex; gap:14px;">
+                        <a href="{{ $stage['done_url'] }}" style="color:var(--good); text-decoration:underline;">Lihat sudah</a>
+                        <a href="{{ $stage['todo_url'] }}" style="color:var(--critical); text-decoration:underline;">Lihat {{ $stage['todo_label'] }}</a>
+                    </div>
                 @endforeach
             </div>
         </section>

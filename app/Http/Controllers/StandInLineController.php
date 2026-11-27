@@ -169,7 +169,7 @@ class StandInLineController extends Controller
             ->whereIn('mitra_id', $mitraRows->pluck('id'))
             ->get()->keyBy('mitra_id');
 
-        return $mitraRows->map(fn (Mitra $m) => [
+        $rows = $mitraRows->map(fn (Mitra $m) => [
             'mitra_id' => $m->id,
             'kode_mitra' => $m->kode_mitra,
             'nama' => $m->nama,
@@ -178,6 +178,15 @@ class StandInLineController extends Controller
             'weeks' => $weeksByMitra->get($m->id, []),
             'note' => $notesByMitra->get($m->id),
         ]);
+
+        // ?belum_upload=1 -- dipakai link drop-off funnel Dashboard
+        // ("belum upload Tracking Performance"): mitra yang gak punya
+        // satupun minggu ter-ceklis kumulatif (lihat $weeksByMitra).
+        if ($request->boolean('belum_upload')) {
+            $rows = $rows->filter(fn ($r) => empty($r['weeks']))->values();
+        }
+
+        return $rows;
     }
 
     /**

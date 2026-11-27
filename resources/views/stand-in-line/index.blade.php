@@ -16,7 +16,14 @@
         <div class="alert-error">{{ $errors->first() }}</div>
     @endif
 
+    @if (request()->boolean('belum_upload'))
+        <div class="card-hint" style="margin-bottom:16px; background:var(--warn-soft); padding:10px 14px; border-radius:8px;">Menampilkan mitra yang belum pernah upload Tracking Performance sama sekali (tahap funnel Dashboard).</div>
+    @endif
+
     <form method="GET" action="{{ route('growth-specialist.tracking-performance.stand-in-line') }}" class="field-row" style="align-items:flex-end;">
+        @if (request()->boolean('belum_upload'))
+            <input type="hidden" name="belum_upload" value="1">
+        @endif
         <div class="field" style="margin-bottom:0; flex:1; min-width:200px;">
             <label>Cari Mitra</label>
             <input type="text" name="q" value="{{ $q }}" placeholder="Nama atau kode mitra...">

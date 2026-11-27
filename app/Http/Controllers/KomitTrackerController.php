@@ -100,7 +100,11 @@ class KomitTrackerController extends Controller
 
         $user = $request->user();
         $q = trim((string) $request->input('q'));
-        $statusBelanjaFilter = trim((string) $request->input('status_belanja'));
+        // status_belanja boleh 1 nilai (string, dari filter dropdown
+        // halaman ini) atau beberapa nilai (array, dari link funnel
+        // Dashboard yang butuh gabungan >1 status -- misal "sudah tercapai"
+        // = Tercapai + Over RO).
+        $statusBelanjaFilter = array_filter((array) $request->input('status_belanja', []));
 
         $mitraRows = Mitra::whereIn('id', $mitraIds)
             // 2026-10-12: sebelumnya gak ada pembatasan sama sekali di sini
@@ -170,8 +174,8 @@ class KomitTrackerController extends Controller
             ];
         });
 
-        if ($statusBelanjaFilter !== '') {
-            $rows = $rows->filter(fn ($r) => $r['status_belanja_label'] === $statusBelanjaFilter);
+        if (! empty($statusBelanjaFilter)) {
+            $rows = $rows->filter(fn ($r) => in_array($r['status_belanja_label'], $statusBelanjaFilter, true));
         }
 
         return $rows->values();

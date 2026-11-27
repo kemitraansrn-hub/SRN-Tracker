@@ -3,6 +3,7 @@
 @php
     $skorChip = fn (?int $s) => $s === null ? 'chip-neutral' : ($s >= 4 ? 'chip-good' : ($s == 3 ? 'chip-warn' : 'chip-critical'));
     $tipeMitraChip = fn (?string $t) => $t === 'Prioritas' ? 'chip-highlight' : 'chip-neutral';
+    $funnelBelum = ($funnelStatus ?? null) === 'belum';
 @endphp
 
 @section('content')
@@ -19,12 +20,19 @@
         <div class="alert-success">{{ session('status') }}</div>
     @endif
 
+    @if (($funnelStatus ?? null) === 'sudah')
+        <div class="card-hint" style="margin-bottom:16px; background:var(--good-soft); padding:10px 14px; border-radius:8px;">Menampilkan mitra dari Weekly Plan yang SUDAH masuk Profiling (tahap funnel Dashboard).</div>
+    @elseif ($funnelBelum)
+        <div class="card-hint" style="margin-bottom:16px; background:var(--warn-soft); padding:10px 14px; border-radius:8px;">Menampilkan mitra dari Weekly Plan yang BELUM masuk Profiling (tahap funnel Dashboard) — klik "Input Profil" buat mulai profiling mitra ini.</div>
+    @endif
+
     <form method="GET" action="{{ route('growth-specialist.profiling-mitra') }}" class="card" style="margin-bottom:16px;">
         <div class="field-row" style="align-items:flex-end;">
             <div class="field" style="flex:2;">
                 <label>Cari Nama Mitra</label>
                 <input type="text" name="cari" value="{{ $filters['cari'] ?? '' }}" placeholder="Ketik nama mitra...">
             </div>
+            @unless ($funnelBelum)
             <div class="field" style="flex:1;">
                 <label>Tipe Mitra</label>
                 <select name="tipe_mitra">
@@ -34,6 +42,7 @@
                     <option value="belum" @selected(($filters['tipe_mitra'] ?? '') === 'belum')>Belum Lengkap</option>
                 </select>
             </div>
+            @endunless
             @if (auth()->user()->canViewAll())
                 <div class="field" style="flex:1;">
                     <label>KAE RO</label>
@@ -45,6 +54,7 @@
                     </select>
                 </div>
             @endif
+            @unless ($funnelBelum)
             <div class="field" style="flex:1;">
                 <label>Status LMS</label>
                 <select name="lms_status">
@@ -54,6 +64,10 @@
                     <option value="belum" @selected(($filters['lms_status'] ?? '') === 'belum')>Belum Diisi</option>
                 </select>
             </div>
+            @endunless
+            @if ($funnelStatus)
+                <input type="hidden" name="funnel_status" value="{{ $funnelStatus }}">
+            @endif
             <div class="field" style="flex:none;">
                 <button type="submit" class="btn btn-primary" style="width:auto; padding:9px 18px;">Cari</button>
             </div>
@@ -63,6 +77,36 @@
         </div>
     </form>
 
+    @if ($funnelBelum)
+        <section class="card table-card reveal-on-scroll" style="padding:0;">
+            <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px;">
+                <div class="card-title">Belum Masuk Profiling</div>
+                <div class="card-hint">{{ $rowsPage->total() }} mitra dari Weekly Plan belum diprofiling</div>
+            </div>
+            <div class="table-scroll" style="max-height:none; overflow-y:visible;">
+                <table>
+                    <thead>
+                        <tr><th>Nama Mitra</th><th>KAE RO</th><th>Channel</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($rowsPage as $r)
+                            @php $m = $r['mitra']; @endphp
+                            <tr>
+                                <td style="font-weight:600;">{{ $m->nama }}<div style="font-size:11px; color:var(--ink-faint); font-weight:400;">{{ $m->kode_mitra }}</div></td>
+                                <td>{{ $r['kae_nama'] ?? '—' }}</td>
+                                <td>@if($r['channel'])<span class="chip chip-neutral">{{ $r['channel'] }}</span>@else — @endif</td>
+                                <td>
+                                    <a href="{{ route('growth-specialist.profiling-mitra.edit', $m) }}" class="btn btn-primary" style="width:auto; font-size:11.5px; padding:5px 9px; text-decoration:none; display:inline-block;">Input Profil</a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="4" style="text-align:center; color:var(--ink-muted); padding:24px;">Gak ada mitra yang cocok — semua mitra Weekly Plan sudah masuk Profiling.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    @else
     <section class="card table-card reveal-on-scroll" style="padding:0;">
         <div class="card-head" style="padding:18px 20px 0; margin-bottom:12px;">
             <div class="card-title">Master Database</div>
@@ -158,6 +202,7 @@
             </table>
         </div>
     </section>
+    @endif
 
     <div style="margin-top:16px;">
         {{ $rowsPage->links() }}

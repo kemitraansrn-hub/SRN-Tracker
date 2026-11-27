@@ -32,20 +32,26 @@ class SetUpLmsController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
-        $tab = array_key_exists((string) $request->input('tab'), LmsStep::PLATFORMS) ? $request->input('tab') : 'shopee';
-        $steps = LmsStep::aktifUntuk($tab)->get();
+        $tabInput = (string) $request->input('tab');
+        // 'semua' = pseudo-tab agregat (dipakai link funnel Dashboard,
+        // lihat filteredRowsSemuaPlatform()) -- BUKAN platform asli dari
+        // LmsStep::PLATFORMS, jadi gak ditambahkan ke konstanta itu.
+        $tab = $tabInput === 'semua' ? 'semua' : (array_key_exists($tabInput, LmsStep::PLATFORMS) ? $tabInput : 'shopee');
+        $steps = $tab === 'semua' ? collect() : LmsStep::aktifUntuk($tab)->get();
 
-        $mitraOptions = $this->scopedMitra($user)->where('status', 'aktif')->orderBy('nama')->get(['id', 'nama', 'kode_mitra'])
+        $mitraOptions = $tab === 'semua' ? collect() : $this->scopedMitra($user)->where('status', 'aktif')->orderBy('nama')->get(['id', 'nama', 'kode_mitra'])
             ->map(fn ($m) => (object) [
                 'id' => $m->id,
                 'label' => $m->nama.' ('.$m->kode_mitra.')',
                 'url' => route('growth-specialist.set-up-lms', ['tab' => $tab, 'mitra_id' => $m->id]).'#input',
             ]);
 
+        // Panel checklist video per-mitra gak relevan lintas platform, jadi
+        // dilewati sama sekali kalau tab=semua (lihat set-up-lms/index.blade.php).
         $selectedMitra = null;
         $selectedCompletions = collect();
         $isEnrolled = false;
-        if ($request->filled('mitra_id')) {
+        if ($tab !== 'semua' && $request->filled('mitra_id')) {
             $selectedMitra = $this->scopedMitra($user)->find($request->integer('mitra_id'));
         }
         if ($selectedMitra) {
@@ -249,6 +255,10 @@ class SetUpLmsController extends Controller
         $q = trim((string) $request->input('q'));
         $status = trim((string) $request->input('status'));
 
+        if ($tab === 'semua') {
+            return $this->filteredRowsSemuaPlatform($request, $user, $q, $status);
+        }
+
         $enrolledIds = LmsEnrollment::where('platform', $tab)->pluck('mitra_id');
         $mitraRows = $this->scopedMitra($user)
             ->whereIn('id', $enrolledIds)
@@ -284,6 +294,52 @@ class SetUpLmsController extends Controller
         });
 
         if ($status !== '') {
+            $rows = $rows->where('status', $status)->values();
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Mode agregat "Semua Platform" (?tab=semua) -- dipakai link funnel
+     * Dashboard (tahap "Masuk Set Up LMS"/"LMS Lengkap"), beda dari mode
+     * per-tab di atas: status per mitra dari LmsStep::statusByMitra()
+     * (Lengkap di MANAPUN platform), roster-nya semua mitra aktif
+     * terscope KAE (bukan cuma yang enrolled di 1 platform tertentu).
+     *
+     * `status` terima 2 pseudo-value tambahan khusus mode ini:
+     * - 'belum-masuk' -- mitra yang gak ada LmsEnrollment di platform manapun.
+     * - 'belum-lengkap' -- enrolled tapi status agregatnya Proses/Awal (gabungan).
+     */
+    private function filteredRowsSemuaPlatform(Request $request, User $user, string $q, string $status): Collection
+    {
+        $statusByMitra = LmsStep::statusByMitra();
+        $enrolledIds = $statusByMitra->keys();
+        $belumMasuk = $status === 'belum-masuk';
+
+        $mitraRows = $this->scopedMitra($user)->where('status', 'aktif')
+            ->when($belumMasuk, fn ($qr) => $qr->whereNotIn('id', $enrolledIds), fn ($qr) => $qr->whereIn('id', $enrolledIds))
+            ->when($q !== '', fn ($qr) => $qr->where(fn ($w) => $w->where('nama', 'like', "%{$q}%")->orWhere('kode_mitra', 'like', "%{$q}%")))
+            ->when($user->canViewAll() && $request->filled('kae_code'), fn ($qr) => $qr->where('kae_code', $request->input('kae_code')))
+            ->orderBy('nama')
+            ->get();
+
+        $segmenMap = SpecialDeal::segmenByMitraId(now());
+        $kaeMap = User::kaeNameMap();
+
+        $rows = $mitraRows->map(fn (Mitra $m) => (object) [
+            'mitra' => $m,
+            'kae' => $m->kae_code ? ($kaeMap[$m->kae_code] ?? $m->kae_code) : null,
+            'segmen' => $segmenMap[$m->id] ?? null,
+            'completions' => collect(),
+            'pct' => null,
+            'status' => $statusByMitra->get($m->id) ?? 'Belum Masuk',
+            'note' => null,
+        ]);
+
+        if ($status === 'belum-lengkap') {
+            $rows = $rows->whereIn('status', ['Proses', 'Awal'])->values();
+        } elseif ($status !== '' && ! $belumMasuk) {
             $rows = $rows->where('status', $status)->values();
         }
 

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\CpCase;
+use App\Models\DevelopmentFollowupLog;
 use App\Models\Mitra;
 use App\Models\NotificationDismissal;
 use App\Models\PriceAdjustmentRequest;
@@ -53,6 +54,18 @@ class NotificationCenter
                 (clone $query)->max('created_at'),
                 $dismissals,
                 route('mitra.index', ['kode_kosong' => 1])
+            );
+        }
+
+        if ($user->isGrowthSpecialist() || $user->canViewAll()) {
+            $partisi = DevelopmentFollowupLog::partisiRedZoneBelanja();
+            $items[] = self::buildItem(
+                'development_followup_redzone_resolved',
+                'Mitra Red Zone sudah belanja lagi',
+                $partisi['sudah']->count(),
+                $partisi['latestResolvedAt']?->toDateTimeString(),
+                $dismissals,
+                route('growth-specialist.followup.index')
             );
         }
 

@@ -507,6 +507,13 @@ class DashboardController extends Controller
             ->when(! $scopeBebas, fn ($q) => $q->where('kae_code', $kaeCode))
             ->pluck('id');
 
+        // --- Profiling: tahap funnel paling awal, basis roster Weekly Plan
+        // all-time (WeeklyPlanController::rosterMitraIds(), 2026-11-27) —
+        // dari situ, berapa yang berhasil masuk Profiling (whereHas
+        // profilGrowth, sama kriteria GrowthSpecialistController::index()).
+        $rosterWeeklyPlanIds = \App\Http\Controllers\WeeklyPlanController::rosterMitraIds()->intersect($mitraAktifIds)->values();
+        $totalMitraProfiling = Mitra::whereIn('id', $rosterWeeklyPlanIds)->whereHas('profilGrowth')->count();
+
         // --- Set Up LMS: status ringkas per mitra + breakdown ---
         $lmsStatusByMitra = LmsStep::statusByMitra()->only($mitraAktifIds->all());
         $totalMitraLms = $lmsStatusByMitra->count();
@@ -557,14 +564,54 @@ class DashboardController extends Controller
 
         $funnelTercapai = $statusBelanjaCounts->get('tercapai', 0) + $statusBelanjaCounts->get('over-ro', 0);
 
+        // Tiap tahap funnel sekarang punya 2 link: done_url (sudah, persis
+        // di tahap ini) dan todo_url (belum, dari roster yang sama) — beda
+        // dari sebelumnya yang cuma 1 url + drop_off ke tahap BERIKUTNYA.
+        // Lihat masing-masing controller tujuan (GrowthSpecialistController
+        // ?funnel_status=, SetUpLmsController ?tab=semua&status=,
+        // StandInLineController ?belum_upload=, KomitTrackerController
+        // status_belanja[]=) buat detail filter yang bikin link ini PAS
+        // sama angka $count di sini, 2026-11-27.
         $funnelStages = [
-            ['label' => 'Masuk Set Up LMS', 'count' => $totalMitraLms, 'url' => route('growth-specialist.set-up-lms'), 'drop_off_label' => 'belum Lengkap LMS', 'drop_off_url' => route('growth-specialist.set-up-lms')],
-            ['label' => 'LMS Lengkap', 'count' => $lmsStatusCounts->get('Lengkap', 0), 'url' => route('growth-specialist.set-up-lms'), 'drop_off_label' => 'belum upload Tracking Performance', 'drop_off_url' => route('growth-specialist.tracking-performance.stand-in-line')],
-            ['label' => 'Upload Tracking Performance', 'count' => $totalMitraUnikTp, 'url' => route('growth-specialist.tracking-performance'), 'drop_off_label' => 'belum tercapai target bulan ini', 'drop_off_url' => route('growth-specialist.komit-tracker')],
-            ['label' => 'Tercapai Target', 'count' => $funnelTercapai, 'url' => route('growth-specialist.komit-tracker', ['status_belanja' => AchievementStatus::label('tercapai')]), 'drop_off_label' => null, 'drop_off_url' => null],
+            [
+                'label' => 'Profiling',
+                'count' => $totalMitraProfiling,
+                'done_url' => route('growth-specialist.profiling-mitra', ['funnel_status' => 'sudah']),
+                'todo_url' => route('growth-specialist.profiling-mitra', ['funnel_status' => 'belum']),
+                'todo_label' => 'belum masuk Profiling',
+            ],
+            [
+                'label' => 'Masuk Set Up LMS',
+                'count' => $totalMitraLms,
+                'done_url' => route('growth-specialist.set-up-lms', ['tab' => 'semua']),
+                'todo_url' => route('growth-specialist.set-up-lms', ['tab' => 'semua', 'status' => 'belum-masuk']),
+                'todo_label' => 'belum masuk Set Up LMS',
+            ],
+            [
+                'label' => 'LMS Lengkap',
+                'count' => $lmsStatusCounts->get('Lengkap', 0),
+                'done_url' => route('growth-specialist.set-up-lms', ['tab' => 'semua', 'status' => 'Lengkap']),
+                'todo_url' => route('growth-specialist.set-up-lms', ['tab' => 'semua', 'status' => 'belum-lengkap']),
+                'todo_label' => 'belum Lengkap LMS',
+            ],
+            [
+                'label' => 'Upload Tracking Performance',
+                'count' => $totalMitraUnikTp,
+                'done_url' => route('growth-specialist.tracking-performance'),
+                'todo_url' => route('growth-specialist.tracking-performance.stand-in-line', ['belum_upload' => 1]),
+                'todo_label' => 'belum upload Tracking Performance',
+            ],
+            [
+                'label' => 'Tercapai Target',
+                'count' => $funnelTercapai,
+                'done_url' => route('growth-specialist.komit-tracker', ['status_belanja' => [AchievementStatus::label('tercapai'), AchievementStatus::label('over-ro')]]),
+                'todo_url' => route('growth-specialist.komit-tracker', ['status_belanja' => [AchievementStatus::label('kurang'), AchievementStatus::label('mendekati'), AchievementStatus::label('belum-belanja')]]),
+                'todo_label' => 'belum tercapai target bulan ini',
+            ],
         ];
 
         return [
+            'totalMitraProfiling' => $totalMitraProfiling,
             'totalMitraLms' => $totalMitraLms,
             'lmsStatusCounts' => $lmsStatusCounts,
             'totalMitraUnikTp' => $totalMitraUnikTp,

@@ -433,6 +433,16 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::delete('tracking-performance/stand-in-line/note/{standInLineNote}', [\App\Http\Controllers\StandInLineController::class, 'destroyNote'])->name('tracking-performance.stand-in-line.note.destroy');
 
         Route::post('set-up-lms/note', [\App\Http\Controllers\SetUpLmsController::class, 'storeNote'])->name('set-up-lms.note.store');
+
+        Route::prefix('followup')->name('followup.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\DevelopmentFollowupLogController::class, 'index'])->name('index');
+            Route::get('/export', [\App\Http\Controllers\DevelopmentFollowupLogController::class, 'export'])->name('export');
+            Route::get('/create', [\App\Http\Controllers\DevelopmentFollowupLogController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\DevelopmentFollowupLogController::class, 'store'])->name('store');
+            Route::get('/{followupLog}/edit', [\App\Http\Controllers\DevelopmentFollowupLogController::class, 'edit'])->name('edit');
+            Route::put('/{followupLog}', [\App\Http\Controllers\DevelopmentFollowupLogController::class, 'update'])->name('update');
+            Route::delete('/{followupLog}', [\App\Http\Controllers\DevelopmentFollowupLogController::class, 'destroy'])->name('destroy');
+        });
     });
 
     Route::prefix('notifications')->name('notifications.')->group(function () {

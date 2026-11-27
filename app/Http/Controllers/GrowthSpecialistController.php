@@ -52,7 +52,8 @@ class GrowthSpecialistController extends Controller
             'rowsPage' => $rowsPage,
             'totalMitra' => MitraProfilGrowth::count(),
             'kaeOptions' => $kaeMap,
-            'filters' => $request->only(['cari', 'tipe_mitra', 'kae_code', 'lms_status']),
+            'filters' => $request->only(['cari', 'tipe_mitra', 'kae_code', 'lms_status', 'funnel_status']),
+            'funnelStatus' => $request->input('funnel_status'),
         ]);
     }
 
@@ -69,6 +70,7 @@ class GrowthSpecialistController extends Controller
     {
         $user = $request->user();
         $now = now();
+        $funnelStatus = $request->input('funnel_status');
 
         $segmenMap = TargetBulanan::where('bulan', $now->month)
             ->where('tahun', $now->year)
@@ -78,7 +80,20 @@ class GrowthSpecialistController extends Controller
         $kaeMap = User::kaeNameMap();
 
         $rows = Mitra::with('profilGrowth')
-            ->whereHas('profilGrowth')
+            // Dipanggil dari dashboard (kartu Funnel Konversi, tahap
+            // "Profiling") lewat ?funnel_status=sudah/belum — mode ini
+            // nge-scope ke roster Weekly Plan (all-time) + membalik
+            // whereHas jadi whereDoesntHave buat "belum". Tanpa param ini
+            // (pemakaian normal menu Profiling Mitra), perilaku SAMA
+            // seperti sebelumnya: semua mitra yang sudah profiling.
+            ->when(
+                $funnelStatus === 'belum',
+                fn ($q) => $q->whereDoesntHave('profilGrowth')->whereIn('id', \App\Http\Controllers\WeeklyPlanController::rosterMitraIds()),
+                fn ($q) => $q->whereHas('profilGrowth')->when(
+                    $funnelStatus === 'sudah',
+                    fn ($qq) => $qq->whereIn('id', \App\Http\Controllers\WeeklyPlanController::rosterMitraIds())
+                )
+            )
             // 2026-10-12: sebelumnya gak ada pembatasan KAE sama sekali di
             // sini — akun KAE bisa lihat profil SEMUA mitra, bukan cuma
             // mitra sendiri. Dibenerin konsisten sama menu Growth
@@ -87,6 +102,10 @@ class GrowthSpecialistController extends Controller
             ->orderBy('nama')
             ->get()
             ->map(function (Mitra $m) use ($segmenMap, $kaeMap) {
+                // Mode ?funnel_status=belum balikin mitra yang BELUM punya
+                // profilGrowth sama sekali (lihat whereDoesntHave di atas)
+                // — $p null di mode ini, makanya semua pemanggilan method-
+                // nya pakai null-safe (?->).
                 $p = $m->profilGrowth;
 
                 return [
@@ -94,10 +113,10 @@ class GrowthSpecialistController extends Controller
                     'kae_nama' => $m->kae_code ? ($kaeMap[$m->kae_code] ?? $m->kae_code) : null,
                     'channel' => $segmenMap[$m->id] ?? null,
                     'profil' => $p,
-                    'pct' => $p->persenOperationalCost(),
-                    'toleransi_cashflow' => $p->toleransiCashflow(),
-                    'tipe_mitra' => $p->tipeMitra(),
-                    'deadline_closing' => $p->deadlineClosingPertama(),
+                    'pct' => $p?->persenOperationalCost(),
+                    'toleransi_cashflow' => $p?->toleransiCashflow(),
+                    'tipe_mitra' => $p?->tipeMitra(),
+                    'deadline_closing' => $p?->deadlineClosingPertama(),
                 ];
             });
 
@@ -114,7 +133,7 @@ class GrowthSpecialistController extends Controller
         }
 
         if ($lmsStatus = $request->input('lms_status')) {
-            $rows = $rows->filter(fn ($r) => $lmsStatus === 'belum' ? $r['profil']->lms_status === null : $r['profil']->lms_status === $lmsStatus);
+            $rows = $rows->filter(fn ($r) => $lmsStatus === 'belum' ? $r['profil']?->lms_status === null : $r['profil']?->lms_status === $lmsStatus);
         }
 
         return $rows->values();
@@ -152,32 +171,32 @@ class GrowthSpecialistController extends Controller
                 $m->nama,
                 $row['kae_nama'] ?? '—',
                 $row['channel'] ?? '—',
-                $p->status ?? '—',
-                $p->no_wa ?? '—',
-                $p->domisili_kota ?? '—',
-                $p->tanggal_onboarding?->format('d/m/Y') ?? '—',
-                $p->modal_bisnis !== null ? (float) $p->modal_bisnis : null,
-                $p->modal_srn !== null ? (float) $p->modal_srn : null,
-                $p->cost !== null ? (float) $p->cost : null,
+                $p?->status ?? '—',
+                $p?->no_wa ?? '—',
+                $p?->domisili_kota ?? '—',
+                $p?->tanggal_onboarding?->format('d/m/Y') ?? '—',
+                $p?->modal_bisnis !== null ? (float) $p->modal_bisnis : null,
+                $p?->modal_srn !== null ? (float) $p->modal_srn : null,
+                $p?->cost !== null ? (float) $p->cost : null,
                 $row['pct'] !== null ? $row['pct'].'%' : '—',
                 $row['toleransi_cashflow'] ?? '—',
-                $p->tim_sendiri ?? '—',
-                $p->pengalaman_jualan ?? '—',
-                $p->platform_jualan ? implode(', ', $p->platform_jualan) : '—',
-                $p->jam_aktif ?? '—',
-                $p->tipe_channel ?? '—',
-                $p->channel_fokus_1 ? implode(', ', $p->channel_fokus_1) : '—',
-                $p->channel_fokus_2 ? implode(', ', $p->channel_fokus_2) : '—',
-                $p->motivasi ?? '—',
-                $p->kemampuan ?? '—',
-                $p->keaktifan ?? '—',
+                $p?->tim_sendiri ?? '—',
+                $p?->pengalaman_jualan ?? '—',
+                $p?->platform_jualan ? implode(', ', $p->platform_jualan) : '—',
+                $p?->jam_aktif ?? '—',
+                $p?->tipe_channel ?? '—',
+                $p?->channel_fokus_1 ? implode(', ', $p->channel_fokus_1) : '—',
+                $p?->channel_fokus_2 ? implode(', ', $p->channel_fokus_2) : '—',
+                $p?->motivasi ?? '—',
+                $p?->kemampuan ?? '—',
+                $p?->keaktifan ?? '—',
                 $row['tipe_mitra'] ?? '—',
-                $p->deadline_setup_channel?->format('d/m/Y') ?? '—',
-                $p->target_traffic ?? '—',
-                $p->target_leads ?? '—',
+                $p?->deadline_setup_channel?->format('d/m/Y') ?? '—',
+                $p?->target_traffic ?? '—',
+                $p?->target_leads ?? '—',
                 $row['deadline_closing']?->format('d/m/Y') ?? '—',
-                $p->lms_status ?? '—',
-                $p->catatan ?? '—',
+                $p?->lms_status ?? '—',
+                $p?->catatan ?? '—',
             ], null, 'A'.$r, true);
             $r++;
         }

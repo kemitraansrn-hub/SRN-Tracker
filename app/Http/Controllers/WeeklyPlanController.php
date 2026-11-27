@@ -22,6 +22,34 @@ class WeeklyPlanController extends Controller
 {
     private const WEEKS = ['W1', 'W2', 'W3', 'W4'];
 
+    /**
+     * Daftar Weekly Plan = mitra yang punya data upload (Target Bulanan
+     * atau Order), BUKAN semua mitra di Data Mitra — Data Mitra itu master
+     * keseluruhan, jadi mitra yang baru masuk lewat Upload Master Mitra
+     * tapi belum punya data upload gak ikut nongol di sini.
+     *
+     * Dipanggil dengan $bulan/$tahun (perilaku ASLI, dipakai halaman
+     * Weekly Plan sendiri) atau tanpa argumen (all-time, UNION semua baris
+     * target_bulanan + orders sepanjang waktu) — dipakai Dashboard >
+     * Development (basis tahap funnel "Profiling") dan menu Follow Up
+     * Development, yang butuh "mitra yang PERNAH muncul di Weekly Plan
+     * kapan pun", bukan snapshot bulan berjalan saja.
+     *
+     * @return \Illuminate\Support\Collection<int, int>
+     */
+    public static function rosterMitraIds(?int $bulan = null, ?int $tahun = null): \Illuminate\Support\Collection
+    {
+        return DB::table('target_bulanan')
+            ->when($bulan && $tahun, fn ($q) => $q->where('bulan', $bulan)->where('tahun', $tahun))
+            ->pluck('mitra_id')
+            ->merge(
+                DB::table('orders')
+                    ->when($bulan && $tahun, fn ($q) => $q->whereYear('tanggal_order', $tahun)->whereMonth('tanggal_order', $bulan))
+                    ->pluck('mitra_id')
+            )
+            ->unique()->values();
+    }
+
     public function index(Request $request): View
     {
         $data = $this->buildPlan($request);
@@ -110,20 +138,7 @@ class WeeklyPlanController extends Controller
         // sama Forecast/Special Deal Performance/Data Mitra.
         $segmenByMitraId = SpecialDeal::segmenByMitraId($now);
 
-        // Daftar Weekly Plan = mitra yang punya data upload di bulan yang
-        // dipilih (Target Bulanan atau Order), BUKAN semua mitra di Data
-        // Mitra — Data Mitra itu master keseluruhan, jadi mitra yang baru
-        // masuk lewat Upload Master Mitra tapi belum punya data upload
-        // bulan ini gak ikut nongol di sini.
-        $mitraIdsPeriode = DB::table('target_bulanan')
-            ->where('bulan', $now->month)->where('tahun', $now->year)
-            ->pluck('mitra_id')
-            ->merge(
-                DB::table('orders')
-                    ->whereYear('tanggal_order', $now->year)->whereMonth('tanggal_order', $now->month)
-                    ->pluck('mitra_id')
-            )
-            ->unique()->values();
+        $mitraIdsPeriode = self::rosterMitraIds($now->month, $now->year);
 
         $mitraList = Mitra::where('status', 'aktif')
             ->whereIn('id', $mitraIdsPeriode)
