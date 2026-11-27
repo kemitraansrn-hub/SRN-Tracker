@@ -177,6 +177,9 @@ class FollowupLogController extends Controller
             'catatan' => ['nullable', 'string'],
             'jam_mulai' => ['nullable', 'date_format:H:i'],
             'jam_selesai' => ['nullable', 'date_format:H:i', 'after:jam_mulai'],
+        ], [
+            'mitra_id.required' => 'Pilih mitra dari daftar dulu (ketik nama lalu klik salah satu saran yang muncul).',
+            'mitra_id.exists' => 'Mitra yang dipilih tidak valid, coba pilih ulang dari daftar.',
         ]);
     }
 

@@ -16,6 +16,10 @@
       butuh harga_het buat auto-isi field lain)
     - onchangeJs: nama fungsi JS global yang dipanggil tiap kali user
       milih/ganti pilihan, dikasih 1 argumen: value hidden input-nya
+    - required: true kalau field ini wajib diisi - nambah pengecekan pas
+      form di-submit (jaga-jaga kalau event 'input'/'change' telat kepicu
+      pas user pilih dari datalist), + pesan error inline di bawah kolom
+      kalau user belum milih dari daftar pas mau submit (2026-11-27)
 --}}
 @php
     $fieldId = $id ?? 'ss_'.$name;
@@ -30,11 +34,12 @@
     }
     $displayValue = $selectedOption->label ?? '';
 @endphp
-<div class="searchable-select-wrap" data-onchange="{{ $onchangeJs ?? '' }}">
+<div class="searchable-select-wrap" data-onchange="{{ $onchangeJs ?? '' }}" @if (! empty($required)) data-required="true" @endif>
     <input
         type="text"
         class="searchable-select-input"
         id="{{ $fieldId }}_search"
+        name="{{ $name }}_label"
         list="{{ $fieldId }}_list"
         value="{{ old($name.'_label', $displayValue) }}"
         placeholder="{{ $placeholder ?? '— pilih —' }}"
@@ -53,4 +58,7 @@
             <option data-id="{{ $opt->id }}" @if (! empty($extraAttr)) data-extra="{{ $opt->{$extraAttr} }}" @endif value="{{ $opt->label }}"></option>
         @endforeach
     </datalist>
+    @if (! empty($required))
+        <div class="field-error searchable-select-error" style="display:none;">Pilih dari daftar dulu.</div>
+    @endif
 </div>

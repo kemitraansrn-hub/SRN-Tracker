@@ -775,6 +775,7 @@
                 const search = wrap.querySelector('.searchable-select-input');
                 const hidden = wrap.querySelector('input[type="hidden"]');
                 const datalist = wrap.querySelector('datalist');
+                const errorEl = wrap.querySelector('.searchable-select-error');
                 if (! search || ! hidden || ! datalist) return;
                 const onchangeFn = wrap.dataset.onchange;
 
@@ -787,14 +788,37 @@
                     hidden.value = matched ? matched.dataset.id : '';
                     hidden.dataset.extra = matched && matched.dataset.extra !== undefined ? matched.dataset.extra : '';
                     hidden.dataset.label = matched ? matched.value : '';
+                    if (errorEl) errorEl.style.display = 'none';
                     if (onchangeFn && typeof window[onchangeFn] === 'function') {
                         window[onchangeFn](hidden.value, matched ? matched.dataset.extra : null);
                     }
+                    return matched;
                 }
 
                 search.addEventListener('input', sync);
                 search.addEventListener('change', sync);
                 if (search.value) sync();
+
+                // 2026-11-27: pengaman ekstra pas form di-submit - beberapa
+                // browser gak selalu kepicu 'input'/'change' pas user pilih
+                // dari <datalist> (klik mouse vs native autofill), jadi
+                // di sini dicek ulang sekali lagi sebelum beneran submit.
+                // Kalau field ini wajib (data-required) dan belum ada yang
+                // match, batalkan submit + kasih peringatan di kolomnya
+                // sendiri (bukan error server yang membingungkan).
+                if (wrap.dataset.required === 'true') {
+                    const form = wrap.closest('form');
+                    if (form) {
+                        form.addEventListener('submit', function (e) {
+                            const matched = sync();
+                            if (! matched) {
+                                e.preventDefault();
+                                if (errorEl) errorEl.style.display = '';
+                                search.focus();
+                            }
+                        });
+                    }
+                }
             });
         }
         document.addEventListener('DOMContentLoaded', initSearchableSelects);

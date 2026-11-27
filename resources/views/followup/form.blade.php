@@ -28,6 +28,7 @@
                     'options' => $mitraOptions->map(fn ($m) => (object) ['id' => $m->id, 'label' => $m->nama.' ('.$m->kode_mitra.')']),
                     'selectedId' => old('mitra_id', $selectedMitraId),
                     'placeholder' => 'Ketik buat cari mitra...',
+                    'required' => true,
                 ])
             </div>
             <div class="field" style="width:180px;">
