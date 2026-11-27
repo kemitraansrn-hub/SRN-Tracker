@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\DevelopmentFollowupLog;
 use App\Models\Mitra;
+use App\Models\SpecialDeal;
 use App\Models\User;
 use App\Services\NotificationCenter;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
@@ -19,10 +21,19 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /**
  * Follow Up Development (Growth Specialist) — beda dari Follow-up Log
  * Sales (FollowupLogController/followup_logs): mitra-nya dari roster
- * Weekly Plan (WeeklyPlanController::rosterMitraIds(), all-time), gak ada
- * Status Belanja/Nominal Belanja, dan Status Follow-up BUKAN dropdown —
- * dihitung otomatis per mitra (FU 1 -> FU 2 -> Red Zone, lihat
+ * Weekly Plan (WeeklyPlanController::rosterMitraIds()), gak ada Status
+ * Belanja/Nominal Belanja, dan Status Follow-up BUKAN dropdown — dihitung
+ * otomatis per mitra (FU 1 -> FU 2 -> Red Zone, lihat
  * DevelopmentFollowupLog::statusUntukFollowupBaru()).
+ *
+ * index() (2026-11-27, update) BUKAN log-list kayak Follow-up Log Sales —
+ * satu baris per MITRA dari roster Weekly Plan bulan/tahun terpilih
+ * (default bulan berjalan), dengan histori follow-up-nya ditampilin
+ * berjejer sebagai chip yang bisa diklik (lihat riwayatnya), bukan numpuk
+ * jadi baris-baris baru. Gak ada lagi halaman create() terpisah — nyatat
+ * follow-up baru lewat modal langsung dari baris mitranya (lihat
+ * development-followup/index.blade.php), store() balik ke index()
+ * (bukan ke halaman create yang sudah dihapus).
  *
  * Scoping mitra pakai pola SetUpLmsController::scopedMitra() (cuma dibatasi
  * KAE kalau role 'kae', role growth_specialist/admin lihat semua) — BUKAN
@@ -31,7 +42,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class DevelopmentFollowupLogController extends Controller
 {
-    public const ALASAN_KENDALA = FollowupLogController::ALASAN_KENDALA;
+    public const ALASAN_KENDALA = ['Respon', 'Tidak Respon'];
 
     public function index(Request $request): View
     {
@@ -39,10 +50,59 @@ class DevelopmentFollowupLogController extends Controller
 
         NotificationCenter::dismiss($user, 'development_followup_redzone_resolved');
 
-        $query = $this->filteredQuery($request)->latest('tanggal_fu');
+        $bulan = max(1, min(12, (int) $request->input('bulan', now()->month)));
+        $tahun = max(2000, min(2100, (int) $request->input('tahun', now()->year)));
+        $now = Carbon::create($tahun, $bulan, 1)->startOfMonth();
+        $q = trim((string) $request->input('q'));
+
+        // Roster = SAMA PERSIS sumbernya kayak menu Weekly Plan (mitra yang
+        // punya data upload bulan/tahun ini), bukan semua mitra Data Mitra.
+        $mitraIdsPeriode = WeeklyPlanController::rosterMitraIds($bulan, $tahun);
+
+        $mitraList = $this->scopedMitra($user)
+            ->whereIn('id', $mitraIdsPeriode)
+            ->when($q !== '', fn ($qr) => $qr->where('nama', 'like', "%{$q}%"))
+            ->when($user->role !== 'kae' && $request->filled('kae_code'), fn ($qr) => $qr->where('kae_code', $request->input('kae_code')))
+            ->orderBy('nama')
+            ->get();
+
+        $segmenMap = SpecialDeal::segmenByMitraId($now);
+        $kaeMap = User::kaeNameMap();
+
+        // Histori follow-up per mitra, urut kronologis -- ditampilin
+        // berjejer sebagai chip yang bisa diklik (bukan satu baris per
+        // follow-up kayak Follow-up Log Sales).
+        $logsByMitra = DevelopmentFollowupLog::whereIn('mitra_id', $mitraList->pluck('id'))
+            ->orderBy('tanggal_fu')->orderBy('id')
+            ->get()
+            ->groupBy('mitra_id');
+
+        $mitraSedangRedZone = DevelopmentFollowupLog::mitraIdsSedangRedZone();
+
+        $rows = $mitraList->map(fn (Mitra $m) => (object) [
+            'mitra' => $m,
+            'kae' => $m->kae_code ? ($kaeMap[$m->kae_code] ?? $m->kae_code) : null,
+            'segmen' => $segmenMap[$m->id] ?? null,
+            'logs' => $logsByMitra->get($m->id, collect()),
+            'sedangRedZone' => $mitraSedangRedZone->contains($m->id),
+        ]);
+
+        $perPage = 20;
+        $page = (int) $request->input('page', 1);
+        $rowsPage = new LengthAwarePaginator(
+            $rows->forPage($page, $perPage)->values(),
+            $rows->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
 
         return view('development-followup.index', [
-            'logs' => $query->paginate(20)->withQueryString(),
+            'rowsPage' => $rowsPage,
+            'bulan' => $bulan,
+            'tahun' => $tahun,
+            'periodeLabel' => $now->translatedFormat('F Y'),
+            'q' => $q,
             'alasanOptions' => self::ALASAN_KENDALA,
             'kaeOptions' => $user->role === 'kae' ? collect() : User::where('role', 'kae')->orderBy('name')->get(),
         ]);
@@ -61,15 +121,6 @@ class DevelopmentFollowupLogController extends Controller
             ->when($user->role !== 'kae' && $request->filled('kae_code'), fn ($q) => $q->whereHas('mitra', fn ($m) => $m->where('kae_code', $request->input('kae_code'))))
             ->when($request->filled('dari'), fn ($q) => $q->whereDate('tanggal_fu', '>=', $request->input('dari')))
             ->when($request->filled('sampai'), fn ($q) => $q->whereDate('tanggal_fu', '<=', $request->input('sampai')));
-    }
-
-    public function create(Request $request): View
-    {
-        return view('development-followup.form', [
-            'mitraOptions' => $this->scopedMitraBisaDifollowup($request->user())->orderBy('nama')->get(['id', 'nama', 'kode_mitra']),
-            'selectedMitraId' => $request->integer('mitra_id') ?: null,
-            'alasanOptions' => self::ALASAN_KENDALA,
-        ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -93,7 +144,10 @@ class DevelopmentFollowupLogController extends Controller
             'total_menit' => $this->hitungTotalMenit($data),
         ]);
 
-        return redirect()->route('growth-specialist.followup.create')->with('status', 'Follow-up berhasil dicatat.');
+        // Modal Catat Follow Up dipanggil langsung dari tabel index() --
+        // balik ke situ (bukan ke halaman create, yang sudah dihapus
+        // 2026-11-27 karena digantikan modal inline).
+        return back()->with('status', 'Follow-up untuk '.$mitra->nama.' berhasil dicatat.');
     }
 
     public function edit(Request $request, DevelopmentFollowupLog $followupLog): View
@@ -144,8 +198,8 @@ class DevelopmentFollowupLogController extends Controller
             'jam_mulai' => ['nullable', 'date_format:H:i'],
             'jam_selesai' => ['nullable', 'date_format:H:i', 'after:jam_mulai'],
         ], [
-            'mitra_id.required' => 'Pilih mitra dari daftar dulu (ketik nama lalu klik salah satu saran yang muncul).',
-            'mitra_id.exists' => 'Mitra yang dipilih tidak valid, coba pilih ulang dari daftar.',
+            'mitra_id.required' => 'Mitra tidak ditemukan, coba muat ulang halaman lalu buka lagi modal Catat Follow-up-nya.',
+            'mitra_id.exists' => 'Mitra tidak valid, coba muat ulang halaman lalu buka lagi modal Catat Follow-up-nya.',
         ]);
     }
 
@@ -177,8 +231,9 @@ class DevelopmentFollowupLogController extends Controller
      * scopedMitra() TAPI ngecualikan mitra yang masih Red Zone (belum
      * belanja lagi sejak follow-up ke-3 -- lihat
      * DevelopmentFollowupLog::mitraIdsSedangRedZone()) — dipakai buat
-     * create()/store(): mitra Red Zone sengaja gak muncul lagi di
-     * pencarian follow-up BARU sampai dia belanja lagi, 2026-11-27.
+     * store(): mitra Red Zone sengaja gak boleh di-follow-up BARU lagi
+     * sampai dia belanja lagi (tombol "Catat Follow Up"-nya juga
+     * disembunyikan di index(), lihat $row->sedangRedZone), 2026-11-27.
      */
     private function scopedMitraBisaDifollowup(User $user)
     {

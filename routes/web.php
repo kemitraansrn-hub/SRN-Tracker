@@ -437,7 +437,6 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictFinanceAccess::class])->
         Route::prefix('followup')->name('followup.')->group(function () {
             Route::get('/', [\App\Http\Controllers\DevelopmentFollowupLogController::class, 'index'])->name('index');
             Route::get('/export', [\App\Http\Controllers\DevelopmentFollowupLogController::class, 'export'])->name('export');
-            Route::get('/create', [\App\Http\Controllers\DevelopmentFollowupLogController::class, 'create'])->name('create');
             Route::post('/', [\App\Http\Controllers\DevelopmentFollowupLogController::class, 'store'])->name('store');
             Route::get('/{followupLog}/edit', [\App\Http\Controllers\DevelopmentFollowupLogController::class, 'edit'])->name('edit');
             Route::put('/{followupLog}', [\App\Http\Controllers\DevelopmentFollowupLogController::class, 'update'])->name('update');

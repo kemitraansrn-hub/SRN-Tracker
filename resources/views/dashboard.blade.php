@@ -766,7 +766,36 @@
         <h2 style="font-size:16px; font-weight:700; margin:28px 0 4px;">Growth Specialist</h2>
         <div style="font-size:12px; color:var(--ink-muted); margin-bottom:14px;">Set Up LMS &amp; Tracking Performance: snapshot terkini (gak terikat filter Bulan/Tahun). Komit Tracker &amp; Status Belanja: {{ $periodeLabel }}.</div>
 
-        <section style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-bottom:16px; align-items:stretch;">
+        <section style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:16px; align-items:stretch;">
+            @php
+                $profDonutR = 40; $profDonutCirc = 2 * M_PI * $profDonutR;
+                $profDonutFilled = $gs['totalPctProfiling'] !== null ? min($gs['totalPctProfiling'], 100) / 100 * $profDonutCirc : 0;
+            @endphp
+            <a href="{{ route('growth-specialist.profiling-mitra', ['funnel_status' => 'sudah']) }}" class="card" style="min-width:0; text-decoration:none; color:inherit; display:block;" title="Lihat Profiling">
+                <div class="info-label" style="margin-bottom:10px;">Profiling — Pencapaian vs Target</div>
+                <div style="display:flex; align-items:center; gap:14px;">
+                    <svg width="80" height="80" viewBox="0 0 100 100" style="flex-shrink:0;">
+                        <circle cx="50" cy="50" r="{{ $profDonutR }}" fill="none" stroke="var(--line)" stroke-width="11"/>
+                        <circle cx="50" cy="50" r="{{ $profDonutR }}" fill="none" stroke="var(--accent)" stroke-width="11"
+                            stroke-linecap="round" transform="rotate(-90 50 50)"
+                            stroke-dasharray="{{ $profDonutFilled }} {{ $profDonutCirc }}"/>
+                        <text x="50" y="50" text-anchor="middle" dominant-baseline="central" class="tnum" style="font-size:15px; font-weight:700; fill:var(--ink);">{{ $gs['totalPctProfiling'] !== null ? $gs['totalPctProfiling'].'%' : '—' }}</text>
+                    </svg>
+                    <div style="flex:1; min-width:0;">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="width:8px; height:8px; border-radius:50%; background:var(--accent); flex-shrink:0;"></span>
+                            <span style="font-size:11px; color:var(--ink-muted);">Pencapaian</span>
+                        </div>
+                        <div class="tnum" style="font-size:12.5px; font-weight:700; margin:2px 0 7px 14px;">{{ $gs['totalMitraProfiling'] }} mitra</div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="width:8px; height:8px; border-radius:50%; background:var(--line); flex-shrink:0;"></span>
+                            <span style="font-size:11px; color:var(--ink-muted);">Target</span>
+                        </div>
+                        <div class="tnum" style="font-size:12.5px; font-weight:700; margin:2px 0 0 14px;">{{ $gs['totalMitraWeeklyPlan'] }} mitra</div>
+                    </div>
+                </div>
+            </a>
+
             <a href="{{ route('growth-specialist.set-up-lms') }}" class="card" style="min-width:0; text-decoration:none; color:inherit; display:block;" title="Lihat Set Up LMS">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:8px;">
                     <div class="info-label" style="margin-bottom:0;">Mitra Progress Set Up LMS</div>

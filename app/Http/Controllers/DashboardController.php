@@ -610,8 +610,12 @@ class DashboardController extends Controller
             ],
         ];
 
+        $totalPctProfiling = $rosterWeeklyPlanIds->count() > 0 ? round($totalMitraProfiling / $rosterWeeklyPlanIds->count() * 100, 1) : null;
+
         return [
+            'totalMitraWeeklyPlan' => $rosterWeeklyPlanIds->count(),
             'totalMitraProfiling' => $totalMitraProfiling,
+            'totalPctProfiling' => $totalPctProfiling,
             'totalMitraLms' => $totalMitraLms,
             'lmsStatusCounts' => $lmsStatusCounts,
             'totalMitraUnikTp' => $totalMitraUnikTp,
