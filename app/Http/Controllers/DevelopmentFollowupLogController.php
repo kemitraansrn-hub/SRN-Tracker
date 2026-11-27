@@ -58,10 +58,15 @@ class DevelopmentFollowupLogController extends Controller
 
         // Roster = SAMA PERSIS sumbernya kayak menu Weekly Plan (mitra yang
         // punya data upload bulan/tahun ini), bukan semua mitra Data Mitra.
+        // whereDoesntHave('profilGrowth') -- cuma tampilin mitra yang BELUM
+        // masuk Profiling (2026-11-27, per instruksi user): tujuan menu ini
+        // mendorong mitra masuk Profiling, begitu sudah masuk gak perlu
+        // di-follow-up lagi lewat sini.
         $mitraIdsPeriode = WeeklyPlanController::rosterMitraIds($bulan, $tahun);
 
         $mitraList = $this->scopedMitra($user)
             ->whereIn('id', $mitraIdsPeriode)
+            ->whereDoesntHave('profilGrowth')
             ->when($q !== '', fn ($qr) => $qr->where('nama', 'like', "%{$q}%"))
             ->when($user->role !== 'kae' && $request->filled('kae_code'), fn ($qr) => $qr->where('kae_code', $request->input('kae_code')))
             ->orderBy('nama')
@@ -250,16 +255,21 @@ class DevelopmentFollowupLogController extends Controller
     }
 
     /**
-     * scopedMitra() TAPI ngecualikan mitra yang masih Red Zone (belum
+     * scopedMitra() TAPI ngecualikan: (1) mitra yang masih Red Zone (belum
      * belanja lagi sejak follow-up ke-3 -- lihat
-     * DevelopmentFollowupLog::mitraIdsSedangRedZone()) — dipakai buat
-     * store(): mitra Red Zone sengaja gak boleh di-follow-up BARU lagi
-     * sampai dia belanja lagi (tombol "Catat Follow Up"-nya juga
-     * disembunyikan di index(), lihat $row->sedangRedZone), 2026-11-27.
+     * DevelopmentFollowupLog::mitraIdsSedangRedZone()), dan (2) mitra yang
+     * SUDAH masuk Profiling (sama seperti index(), tujuan follow-up ini
+     * mendorong mitra masuk Profiling) — dipakai buat store(): mitra yang
+     * sudah masuk salah satu kondisi di atas sengaja gak boleh
+     * di-follow-up BARU lagi (tombol "Catat Follow Up"-nya juga gak
+     * muncul di index() karena baris mitranya sendiri udah gak
+     * ditampilkan), 2026-11-27.
      */
     private function scopedMitraBisaDifollowup(User $user)
     {
-        return $this->scopedMitra($user)->whereNotIn('id', DevelopmentFollowupLog::mitraIdsSedangRedZone());
+        return $this->scopedMitra($user)
+            ->whereDoesntHave('profilGrowth')
+            ->whereNotIn('id', DevelopmentFollowupLog::mitraIdsSedangRedZone());
     }
 
     public function export(Request $request): StreamedResponse
