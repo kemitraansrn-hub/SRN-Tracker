@@ -5,7 +5,7 @@
         <div>
             <h1 class="display" style="font-size:24px;">Follow Up</h1>
             <div style="color:var(--ink-muted); font-size:13px; margin-top:4px;">
-                {{ $rowsPage->total() }} mitra dari Weekly Plan {{ $periodeLabel }}
+                {{ $rowsPage->total() }} mitra dari Weekly Plan yang belum masuk Profiling
             </div>
         </div>
         <a href="{{ route('growth-specialist.followup.export', request()->query()) }}" class="btn" style="width:auto; display:inline-flex; align-items:center; gap:6px;">
@@ -25,22 +25,6 @@
         <div class="field" style="margin-bottom:0;">
             <label>Cari Nama Mitra</label>
             <input type="text" name="q" value="{{ $q }}" placeholder="Ketik nama mitra...">
-        </div>
-        <div class="field" style="margin-bottom:0;">
-            <label>Bulan</label>
-            <select class="select-pill" name="bulan" onchange="this.form.submit()">
-                @foreach (['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] as $i => $nama)
-                    <option value="{{ $i + 1 }}" {{ $bulan == $i + 1 ? 'selected' : '' }}>{{ $nama }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="field" style="margin-bottom:0;">
-            <label>Tahun</label>
-            <select class="select-pill" name="tahun" onchange="this.form.submit()">
-                @for ($y = now()->year + 1; $y >= now()->year - 2; $y--)
-                    <option value="{{ $y }}" {{ $tahun == $y ? 'selected' : '' }}>{{ $y }}</option>
-                @endfor
-            </select>
         </div>
         @if (auth()->user()->role !== 'kae')
             <div class="field" style="margin-bottom:0;">
@@ -64,7 +48,7 @@
         </div>
         <button type="submit" class="btn" style="width:auto;">Cari</button>
         @if ($q !== '' || request('kae_code') || $statusFu !== '')
-            <a href="{{ route('growth-specialist.followup.index', ['bulan' => $bulan, 'tahun' => $tahun]) }}" class="btn" style="width:auto;">Reset</a>
+            <a href="{{ route('growth-specialist.followup.index') }}" class="btn" style="width:auto;">Reset</a>
         @endif
     </form>
 

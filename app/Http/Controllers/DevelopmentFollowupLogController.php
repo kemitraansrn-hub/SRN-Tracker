@@ -50,29 +50,27 @@ class DevelopmentFollowupLogController extends Controller
 
         NotificationCenter::dismiss($user, 'development_followup_redzone_resolved');
 
-        $bulan = max(1, min(12, (int) $request->input('bulan', now()->month)));
-        $tahun = max(2000, min(2100, (int) $request->input('tahun', now()->year)));
-        $now = Carbon::create($tahun, $bulan, 1)->startOfMonth();
         $q = trim((string) $request->input('q'));
         $statusFu = trim((string) $request->input('status_fu'));
 
-        // Roster = SAMA PERSIS sumbernya kayak menu Weekly Plan (mitra yang
-        // punya data upload bulan/tahun ini), bukan semua mitra Data Mitra.
+        // Roster = Weekly Plan ALL-TIME (WeeklyPlanController::rosterMitraIds()
+        // tanpa argumen, dipanggil dari scopedMitra()) -- SENGAJA bukan bulan
+        // berjalan saja, biar basisnya SAMA PERSIS dengan kartu "Profiling —
+        // Pencapaian vs Target" di Dashboard (DashboardController::
+        // growthSpecialistData()). Sebelumnya pakai roster bulan berjalan
+        // doang, bikin angka "belum profiling" di sini lebih kecil dari
+        // "Target - Pencapaian" di kartu Dashboard (2026-11-27, laporan user).
         // whereDoesntHave('profilGrowth') -- cuma tampilin mitra yang BELUM
-        // masuk Profiling (2026-11-27, per instruksi user): tujuan menu ini
-        // mendorong mitra masuk Profiling, begitu sudah masuk gak perlu
-        // di-follow-up lagi lewat sini.
-        $mitraIdsPeriode = WeeklyPlanController::rosterMitraIds($bulan, $tahun);
-
+        // masuk Profiling: tujuan menu ini mendorong mitra masuk Profiling,
+        // begitu sudah masuk gak perlu di-follow-up lagi lewat sini.
         $mitraList = $this->scopedMitra($user)
-            ->whereIn('id', $mitraIdsPeriode)
             ->whereDoesntHave('profilGrowth')
             ->when($q !== '', fn ($qr) => $qr->where('nama', 'like', "%{$q}%"))
             ->when($user->role !== 'kae' && $request->filled('kae_code'), fn ($qr) => $qr->where('kae_code', $request->input('kae_code')))
             ->orderBy('nama')
             ->get();
 
-        $segmenMap = SpecialDeal::segmenByMitraId($now);
+        $segmenMap = SpecialDeal::segmenByMitraId(now());
         $kaeMap = User::kaeNameMap();
 
         // Histori follow-up per mitra, urut kronologis -- ditampilin
@@ -125,9 +123,6 @@ class DevelopmentFollowupLogController extends Controller
 
         return view('development-followup.index', [
             'rowsPage' => $rowsPage,
-            'bulan' => $bulan,
-            'tahun' => $tahun,
-            'periodeLabel' => $now->translatedFormat('F Y'),
             'q' => $q,
             'statusFu' => $statusFu,
             'alasanOptions' => self::ALASAN_KENDALA,
