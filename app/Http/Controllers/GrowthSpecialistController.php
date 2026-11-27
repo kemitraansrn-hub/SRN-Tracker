@@ -50,7 +50,18 @@ class GrowthSpecialistController extends Controller
 
         return view('growth-specialist.profiling-mitra-index', [
             'rowsPage' => $rowsPage,
-            'totalMitra' => MitraProfilGrowth::count(),
+            // SENGAJA bukan MitraProfilGrowth::count() -- itu raw count
+            // tabel profil, bisa lebih besar dari jumlah mitra beneran
+            // kalau ada baris profil yatim piatu/dobel di production (bikin
+            // "138 mitra sudah diinput" vs pagination "137 data" gak
+            // sinkron, laporan user 2026-11-27). Dihitung dari Mitra yang
+            // PUNYA profilGrowth (distinct), discope KAE sama kayak
+            // filteredRows() -- SENGAJA gak ikut filter cari/tipe_mitra/
+            // lms_status/funnel_status, biar tetap jadi angka total "Master
+            // Database" yang stabil walau user lagi nyari/filter.
+            'totalMitra' => Mitra::whereHas('profilGrowth')
+                ->when($request->user()->role === 'kae', fn ($q) => $q->where('kae_code', $request->user()->kae_code))
+                ->count(),
             'kaeOptions' => $kaeMap,
             'filters' => $request->only(['cari', 'tipe_mitra', 'kae_code', 'lms_status', 'funnel_status']),
             'funnelStatus' => $request->input('funnel_status'),
