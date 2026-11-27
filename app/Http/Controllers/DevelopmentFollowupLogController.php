@@ -54,6 +54,7 @@ class DevelopmentFollowupLogController extends Controller
         $tahun = max(2000, min(2100, (int) $request->input('tahun', now()->year)));
         $now = Carbon::create($tahun, $bulan, 1)->startOfMonth();
         $q = trim((string) $request->input('q'));
+        $statusFu = trim((string) $request->input('status_fu'));
 
         // Roster = SAMA PERSIS sumbernya kayak menu Weekly Plan (mitra yang
         // punya data upload bulan/tahun ini), bukan semua mitra Data Mitra.
@@ -79,13 +80,33 @@ class DevelopmentFollowupLogController extends Controller
 
         $mitraSedangRedZone = DevelopmentFollowupLog::mitraIdsSedangRedZone();
 
-        $rows = $mitraList->map(fn (Mitra $m) => (object) [
-            'mitra' => $m,
-            'kae' => $m->kae_code ? ($kaeMap[$m->kae_code] ?? $m->kae_code) : null,
-            'segmen' => $segmenMap[$m->id] ?? null,
-            'logs' => $logsByMitra->get($m->id, collect()),
-            'sedangRedZone' => $mitraSedangRedZone->contains($m->id),
-        ]);
+        $rows = $mitraList->map(function (Mitra $m) use ($kaeMap, $segmenMap, $logsByMitra, $mitraSedangRedZone) {
+            $logs = $logsByMitra->get($m->id, collect());
+
+            return (object) [
+                'mitra' => $m,
+                'kae' => $m->kae_code ? ($kaeMap[$m->kae_code] ?? $m->kae_code) : null,
+                'segmen' => $segmenMap[$m->id] ?? null,
+                'logs' => $logs,
+                'statusTerakhir' => $logs->last()->status_followup ?? 'Belum FU',
+                'sedangRedZone' => $mitraSedangRedZone->contains($m->id),
+            ];
+        });
+
+        // Filter by Status FU, diterapkan sesudah $rows dirakit karena
+        // status-nya hasil hitungan dari histori log, bukan kolom di
+        // tabel mitra, 2026-11-27. "Red Zone" BUKAN label literal yang
+        // tersimpan (itu "FU 3", lihat
+        // DevelopmentFollowupLog::STATUS_PEMICU_RED_ZONE) -- filter ini
+        // cocokkan ke $sedangRedZone (lagi diblokir, belum belanja lagi),
+        // bukan ke teks statusTerakhir, biar mitra yang sudah lulus/belanja
+        // lagi (gak lagi diblokir) gak ikut kefilter walau log terakhirnya
+        // masih "FU 3".
+        if ($statusFu === 'Red Zone') {
+            $rows = $rows->where('sedangRedZone', true)->values();
+        } elseif ($statusFu !== '') {
+            $rows = $rows->where('statusTerakhir', $statusFu)->values();
+        }
 
         $perPage = 20;
         $page = (int) $request->input('page', 1);
@@ -103,6 +124,7 @@ class DevelopmentFollowupLogController extends Controller
             'tahun' => $tahun,
             'periodeLabel' => $now->translatedFormat('F Y'),
             'q' => $q,
+            'statusFu' => $statusFu,
             'alasanOptions' => self::ALASAN_KENDALA,
             'kaeOptions' => $user->role === 'kae' ? collect() : User::where('role', 'kae')->orderBy('name')->get(),
         ]);

@@ -53,8 +53,17 @@
                 </select>
             </div>
         @endif
+        <div class="field" style="margin-bottom:0;">
+            <label>Status FU</label>
+            <select class="select-pill" name="status_fu" onchange="this.form.submit()">
+                <option value="">Semua</option>
+                @foreach (['Belum FU', 'FU 1', 'FU 2', 'FU 3', 'Red Zone'] as $status)
+                    <option value="{{ $status }}" {{ $statusFu === $status ? 'selected' : '' }}>{{ $status }}</option>
+                @endforeach
+            </select>
+        </div>
         <button type="submit" class="btn" style="width:auto;">Cari</button>
-        @if ($q !== '' || request('kae_code'))
+        @if ($q !== '' || request('kae_code') || $statusFu !== '')
             <a href="{{ route('growth-specialist.followup.index', ['bulan' => $bulan, 'tahun' => $tahun]) }}" class="btn" style="width:auto;">Reset</a>
         @endif
     </form>
@@ -76,18 +85,21 @@
                             <td style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ $m->alamat }}">{{ $m->alamat ?: '—' }}</td>
                             <td>@if ($r->segmen)<span class="chip chip-neutral">{{ $r->segmen }}</span>@else — @endif</td>
                             <td>{{ $m->no_wa ?: '—' }}</td>
-                            <td>
-                                <div style="display:flex; gap:4px; flex-wrap:wrap; max-width:260px;">
+                            <td style="max-width:280px;">
+                                <div style="display:flex; gap:4px; flex-wrap:nowrap; overflow-x:auto; padding-bottom:2px;">
                                     @forelse ($r->logs as $log)
-                                        <button type="button" class="chip {{ $log->status_followup === 'Red Zone' ? 'chip-critical' : 'chip-neutral' }}" style="cursor:pointer;" title="Lihat kendala" onclick="openDetailFu('{{ $log->status_followup }}', '{{ $log->tanggal_fu->format('d/m/Y') }}', @js($log->alasan_kendala ?? ''), @js($log->catatan ?? ''), '{{ route('growth-specialist.followup.edit', $log) }}', '{{ route('growth-specialist.followup.destroy', $log) }}')">{{ $log->status_followup }}</button>
+                                        <button type="button" class="chip chip-neutral" style="cursor:pointer; flex-shrink:0; white-space:nowrap;" title="Lihat kendala" onclick="openDetailFu('{{ $log->status_followup }}', '{{ $log->tanggal_fu->format('d/m/Y') }}', @js($log->alasan_kendala ?? ''), @js($log->catatan ?? ''), '{{ route('growth-specialist.followup.edit', $log) }}', '{{ route('growth-specialist.followup.destroy', $log) }}')">{{ $log->status_followup }}</button>
                                     @empty
-                                        <span class="chip chip-neutral">Belum FU</span>
+                                        <span class="chip chip-neutral" style="flex-shrink:0; white-space:nowrap;">Belum FU</span>
                                     @endforelse
+                                    @if ($r->sedangRedZone)
+                                        <span class="chip chip-critical" style="flex-shrink:0; white-space:nowrap;" title="Belum bisa di-follow-up lagi sampai belanja">Red Zone</span>
+                                    @endif
                                 </div>
                             </td>
                             <td style="white-space:nowrap;">
                                 @if ($r->sedangRedZone)
-                                    <span style="font-size:11px; color:var(--critical); font-weight:600;" title="Mitra ini Red Zone -- baru bisa di-follow-up lagi setelah belanja">Red Zone</span>
+                                    <span style="font-size:11px; color:var(--ink-faint);">—</span>
                                 @else
                                     <button type="button" class="btn btn-primary" style="width:auto; font-size:11.5px; padding:5px 10px;" onclick="openCatatFuModal({{ $m->id }}, @js($m->nama))">Catat Follow Up</button>
                                 @endif

@@ -32,12 +32,23 @@ class DevelopmentFollowupLog extends Model
     }
 
     /**
+     * Label "FU 3" dipakai sebagai PEMICU status Red Zone (lihat
+     * mitraIdsSedangRedZone()) — sengaja BUKAN disimpan literal "Red Zone"
+     * di kolom status_followup, biar gak dobel tampil "Red Zone" + "Red
+     * Zone" di tabel (chip histori + label kolom Aksi) — chip histori
+     * tetap nampilin "FU 3" apa adanya, status "Red Zone"-nya cuma
+     * muncul di kolom Aksi (2026-11-27, koreksi dari user).
+     */
+    public const STATUS_PEMICU_RED_ZONE = 'FU 3';
+
+    /**
      * Status eskalasi follow-up buat mitra ini SETELAH baris baru ini
      * dicatat — all-time, gak reset bulanan: follow-up ke-1 "FU 1", ke-2
-     * "FU 2", ke-3 dan seterusnya otomatis "Red Zone". KECUALI mitra ini
-     * sudah pernah "lulus" dari Red Zone (belanja lagi sesudahnya, lihat
-     * resolvedRedZoneInfo() di bawah) — follow-up SESUDAH titik lulus itu
-     * dihitung dari 1 lagi (siklus baru), 2026-11-27.
+     * "FU 2", ke-3 dan seterusnya "FU 3" (yang otomatis bikin mitra ini
+     * masuk status Red Zone, lihat mitraIdsSedangRedZone()). KECUALI
+     * mitra ini sudah pernah "lulus" dari Red Zone (belanja lagi
+     * sesudahnya) — follow-up SESUDAH titik lulus itu dihitung dari 1
+     * lagi (siklus baru), 2026-11-27.
      */
     public static function statusUntukFollowupBaru(int $mitraId): string
     {
@@ -46,7 +57,7 @@ class DevelopmentFollowupLog extends Model
         return match (true) {
             $n === 1 => 'FU 1',
             $n === 2 => 'FU 2',
-            default => 'Red Zone',
+            default => self::STATUS_PEMICU_RED_ZONE,
         };
     }
 
@@ -66,7 +77,7 @@ class DevelopmentFollowupLog extends Model
 
         $titikLulusTerakhir = null;
         foreach ($logs as $log) {
-            if ($log->status_followup === 'Red Zone' && self::sudahBelanjaSetelah($mitraId, $log->tanggal_fu)) {
+            if ($log->status_followup === self::STATUS_PEMICU_RED_ZONE && self::sudahBelanjaSetelah($mitraId, $log->tanggal_fu)) {
                 $titikLulusTerakhir = $log->tanggal_fu;
             }
         }
@@ -87,8 +98,9 @@ class DevelopmentFollowupLog extends Model
     }
 
     /**
-     * Follow-up TERAKHIR per mitra (cuma yang statusnya Red Zone) —
-     * basis buat mitraIdsSedangRedZone()/resolvedRedZoneInfo() di bawah.
+     * Follow-up TERAKHIR per mitra (cuma yang statusnya "FU 3", si pemicu
+     * Red Zone) — basis buat mitraIdsSedangRedZone()/partisiRedZoneBelanja()
+     * di bawah.
      *
      * @return \Illuminate\Support\Collection<int, self> mitra_id => log terakhir
      */
@@ -98,7 +110,7 @@ class DevelopmentFollowupLog extends Model
             ->get(['mitra_id', 'tanggal_fu', 'status_followup'])
             ->groupBy('mitra_id')
             ->map(fn ($logs) => $logs->last())
-            ->filter(fn ($log) => $log->status_followup === 'Red Zone');
+            ->filter(fn ($log) => $log->status_followup === self::STATUS_PEMICU_RED_ZONE);
     }
 
     /**

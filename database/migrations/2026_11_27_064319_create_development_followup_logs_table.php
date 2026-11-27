@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('minggu', 5); // W1-W4
             $table->foreignId('mitra_id')->constrained('mitra');
             $table->foreignId('user_id')->constrained('users');
-            $table->string('status_followup'); // FU 1 / FU 2 / Red Zone, dihitung otomatis, bukan input form
+            $table->string('status_followup'); // FU 1 / FU 2 / FU 3 (pemicu status Red Zone), dihitung otomatis, bukan input form
             $table->string('alasan_kendala')->nullable();
             $table->text('catatan')->nullable();
             $table->time('jam_mulai')->nullable();

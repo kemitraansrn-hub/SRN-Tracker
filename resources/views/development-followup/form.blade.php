@@ -41,8 +41,8 @@
             <div class="field">
                 <label>Status Follow-up</label>
                 <div>
-                    @if ($log->status_followup === 'Red Zone')
-                        <span class="chip chip-critical">Red Zone</span>
+                    @if ($log->status_followup === \App\Models\DevelopmentFollowupLog::STATUS_PEMICU_RED_ZONE)
+                        <span class="chip chip-critical">{{ $log->status_followup }}</span>
                     @else
                         <span class="chip chip-neutral">{{ $log->status_followup }}</span>
                     @endif
